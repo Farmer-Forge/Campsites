@@ -2,11 +2,15 @@
 
 ## What this project is
 
-Campsites is **CampsiteFinder V1.1**: a rebuild of the live CampsiteFinder site (V1, Angular + PrimeNG + Supabase), built by a Ralph loop from written specs. It follows the model of the MyGear project (`~/ReactProjects/myGear`, React).
+Campsites is **CampsiteFinder V1.1**: a rebuild of the live CampsiteFinder site (V1), built by a Ralph loop from written specs.
 
-- **V1.1 matches V1's behavior exactly.** No new features. New ideas wait for V1.2.
+**The goal driving this project is to move MyGear's Ralph loop (`~/ReactProjects/myGear/ralphloop/`, React) over to Angular** and prove it can rebuild a real, shipped app. V1.1 is the test case.
+
+- **V1** is `~/projects/PrimeNG`. Its code is on GitHub (`Farmer-Forge/CampsiteFinder`), its database on Supabase cloud, and the site on Vercel. **Shawn isn't changing V1's app or database until the loop can rebuild it.**
+- **V1.1** is this repo: a new git repo, which eventually gets its own GitHub repo, then its own Supabase cloud project and Vercel site when it's ready. Those cloud steps are done by hand, never by the loop.
+- **V1.1 matches V1's behavior and look exactly.** No new features. New ideas wait for V1.2.
 - **Stack:** Angular + PrimeNG + Supabase, the same as V1.
-- **Strategy:** rebuild from specs, not a retrofit of V1's code.
+- **Strategy:** the loop rebuilds the app from specs. V1's code isn't copied in, except the schema (below).
 
 ## Hard rules
 
@@ -15,20 +19,33 @@ Campsites is **CampsiteFinder V1.1**: a rebuild of the live CampsiteFinder site 
 3. **The schema is a fixed contract.** `supabase/migrations/0001–0018` and `supabase/functions/` are copied unchanged from V1 (`v1.0` tag), because production data depends on them. Don't edit them. If V1.1 truly needs a schema change, write it up as an additive migration for Shawn to review and apply by hand. The loop never writes or applies migrations.
 4. **Spec first.** Shawn approves a spec, then a checkbox plan, before any code is written. Plans list what's out of scope.
 5. **Loops belong to this project and run on the Ralph server** (in Docker, as MyGear's do). No shared, cross-project loop scripts.
-6. **The loop gates on real checks.** The loop script, not the worker, runs build, lint and tests before a step's checkbox is committed. A step that fails its checks is un-ticked.
+6. **Every step is checked before it's ticked.** As in MyGear today, `task.md` gives each step its own checks (`ng build`, `deno test`, `psql` queries), and the worker runs them before ticking the box. An extra check run by the loop script itself, MyGear's "verification gate" (spec on MyGear's unmerged `loop-verification-gate` branch, no code yet), is **deferred** (Shawn, 2026-10-20). The loop moves over as it works today. The gate can be added to both projects later as its own spec. The scaffold adds `angular-eslint`, so each step's checks include lint.
 
 ## The V1 reference
 
-- **Read-only copy of V1:** `~/projects/CampsiteFinder-v1.0`, a git worktree at tag `v1.0`. Read it, never edit it.
+- **Where V1 is:** `~/projects/PrimeNG`. Read it, never edit it. Tag `v1.0` marks the version V1.1 copies (commit `3f85a8a`, which is also `main`).
+- **There's no separate V1 copy.** A pinned checkout at `~/projects/CampsiteFinder-v1.0` was removed on 2026-10-20, since V1 is frozen. To read V1 exactly as tagged, use `git -C ~/projects/PrimeNG show v1.0:<path>`.
 - **What's in it:** V1's specs and plans (`docs/superpowers/specs/`, `docs/superpowers/plans/`) and V1's code, with its features in `src/app/features/`: about, account, admin, auth, favorites, finder, trips.
+- **V1's specs describe changes, not the finished app, and V1's code wins.** Each spec changes the one before. Five October changes shipped without a spec (their plans were written afterwards). The first spec promises a PWA that was never built. V1.1's specs are written from V1's **code**, with V1's specs and plans as background.
 - **Who uses it:** only interactive spec-writing sessions. The loop worker never sees V1's code; it builds from this repo's specs and `task.md`.
 - **Don't copy from it:** `src/environments/` holds V1's production Supabase URL and key, and `supabase/.temp/` links to the production project. Neither may come into this repo.
-- **Later V1 changes:** fixes Shawn ships to live V1 after `v1.0` go on a "V1 changes since v1.0" list and get folded into the specs.
+- **If V1 changes anyway:** a fix Shawn ships to V1 after `v1.0` goes on a "V1 changes since v1.0" list and gets folded into the specs.
+
+## Production backup (taken by Shawn, 2026-10-18)
+
+`~/backups/campsitefinder/2026-10-18/`, with a copy in OneDrive (`backups/campsitefinder/`). `manifest.txt` lists the files, row counts and checksums:
+- `schema.sql`: the `public` schema (tables, functions, RLS policies, grants);
+- `auth_triggers.sql`: the `on_auth_user_created` trigger;
+- `roles.sql`: custom roles, with no passwords;
+- `data.sql` and `full.dump`: all data.
+
+**`data.sql` and `full.dump` hold real users' password hashes and session tokens.** They never come into this repo, never go into a seed, and are never read whole. The seed takes only the campground reference data from them: `campgrounds`, `parks`, and `campground_attributes`, if it has rows (the manifest gives no count for it). That data is copied as it is, including what older sync functions left behind (for example, NPS rows with no `state`), because that's what V1 users see. The backup doesn't include production's project settings, API keys or deployed edge-function versions.
 
 ## What's here so far
 
 - `supabase/`: V1's migrations, edge functions and `config.toml`, copied unchanged from `v1.0` (`project_id` set to `Campsites`).
-- `docs/design/`: the '50s road-trip design assets.
+- `docs/design/`: the '50s road-trip design assets. This is V1's current look (shipped 2026-10-08), not a redesign.
+- `docs/superpowers/specs/2026-10-20-v1.1-roadmap-design.md`: the plan forward (approved 2026-10-20).
 - `create-new-project.md`, `reviewing-a-loop-project.md`: MyGear's checklists for setting up and reviewing a loop project.
 - `forge/db-conventions.md`: MyGear's SQL rules. **Where they conflict with V1's existing schema, the schema wins.**
 
@@ -43,12 +60,15 @@ Campsites uses L0, L1 and its own Angular setup. **It does not use Forge's core 
 
 ## Order of work
 
-1. **Specs.** Read the V1 reference and write V1.1 specs in `docs/superpowers/specs/`, one per feature. Include a "do not change" spec for the schema covering tables, RPCs, RLS policies and edge functions. Shawn reviews each and marks what's intended and what's accidental. Not started.
-   - **Check the schema contract against production.** V1's migrations were applied to production one at a time through MCP, and production records them under different names (for example, repo `0014_nearest_campgrounds_null_state` is production `nearest_campgrounds_null_state`). So `0001–0018` hasn't been proved to equal production's real schema. Once Shawn has taken the production backup (`supabase db dump`, schema only, run by Shawn), compare it with a local stack built from `0001–0018`, and resolve any differences before the schema spec is approved. Read-only on production; Shawn runs the dump.
-2. **Parity tests.** Playwright end-to-end tests are being written by another agent against V1. They must run against a local stack, never production, and use a configurable base URL so the same tests run against V1 and V1.1. Database tests (pgTAP via `supabase test db`) and edge-function tests carry over to V1.1 unchanged and belong in the step check.
-3. **Loop setup.** Follow `create-new-project.md`. Copy `ralphloop/` from MyGear only **after** its step check is built (see `~/ReactProjects/myGear/docs/superpowers/handoff-2026-10-10-loop-verification-gate.md`), and make the React-specific parts per-project (worker prompt rule 8, `review.sh`'s dev-server command and port, the check commands).
-4. **`task.md`,** written from the approved specs. Task 1 (local Supabase stack, migrations, seed) is done by hand. The seed uses V1's campground data and fake users, so the loop never calls the live RIDB, NPS or National Archives APIs. Migration `0007_set_shawnpfarmer_admin.sql` promotes Shawn's real email, so the local dev admin comes from the seed instead.
+The full version, with checkboxes, is in the roadmap spec.
+
+1. **Specs.** Write V1.1 specs in `docs/superpowers/specs/` from V1's code, one per area. Include a "do not change" spec for the schema covering tables, RPCs, RLS policies and edge functions. Shawn reviews each and marks what's intended and what's accidental. Not started.
+   - **Check the schema contract against production.** V1's migrations were applied to production one at a time through MCP, so `0001–0018` hasn't been proved to equal production's real schema. Compare the backup's `schema.sql` and `auth_triggers.sql` with a schema dump of a local stack built from `0001–0018`, and resolve any differences before the schema spec is approved.
+2. **Tests.** Playwright and app unit tests are **dropped** (Shawn, 2026-10-19). V1 has no database tests. V1's Deno tests for the edge functions (`ridb-sync`, `nps-sync`) are part of the copied `supabase/functions/` and run as a step check.
+3. **Loop setup: the main goal.** Follow `create-new-project.md`. Copy `ralphloop/` from MyGear, which works as it is today, and make Angular versions of its React-specific parts: worker prompt rule 8, `review.sh`'s dev-server command and port, the worker image (add Deno), and the seed scripts. Skip the parts of `create-new-project.md` that assume Forge's core plan and Tailwind.
+4. **`task.md`,** written from the approved specs. Task 1 (local Supabase stack, migrations, seed) is done by hand. The seed uses the campground data from the production backup and fake users, so the loop never calls the live RIDB, NPS or National Archives APIs. Migration `0007_set_shawnpfarmer_admin.sql` promotes Shawn's real email, so the local dev admin comes from the seed instead.
 5. **Run the loop,** one task per PR, reviewed by Shawn.
+6. **Later, by hand:** V1.1's own Supabase cloud project and Vercel site, once V1.1 is ready.
 
 ---
 
