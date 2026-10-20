@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Yellowtail&family=Alfa+Slab+One&family=Work+Sans:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0;background:#f3e9d2;}
+a{color:#c63a2f;} a:hover{color:#9e2a21;}
+.leaflet-container{font:inherit;}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:3px solid #e8a93a;outline-offset:2px;}
+</style>
+</helmet>
+<div style="height:100vh;overflow:hidden;background:#f3e9d2;color:#2b2522;font-family:'Work Sans',sans-serif;display:flex;flex-direction:column;">
+  <nav style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 24px;min-width:0;padding:12px 32px;min-height:76px;box-sizing:border-box;background:#2f8f8a;border-bottom:4px solid #2b2522;flex:none;">
+    <div onClick="{{ goFinder }}" style="font-family:'Yellowtail',cursive;font-size:40px;color:#fff6e3;text-shadow:3px 3px 0 #c63a2f;line-height:1;cursor:pointer;white-space:nowrap;">Campsite Finder</div>
+    <div style="display:flex;gap:6px;">
+      <sc-for list="{{ navMain }}" as="n" hint-placeholder-count="4">
+        <button onClick="{{ n.go }}" style="font:inherit;padding:8px 16px;border-radius:999px;border:none;cursor:pointer;background:{{ n.bg }};color:{{ n.fg }};font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:0.08em;white-space:nowrap;">{{ n.label }}</button>
+      </sc-for>
+    </div>
+    <div style="margin-left:auto;display:flex;gap:10px;align-items:center;">
+      <sc-for list="{{ navUser }}" as="n" hint-placeholder-count="2">
+        <button onClick="{{ n.go }}" style="font:inherit;font-weight:700;font-size:14px;padding:8px 18px;border-radius:999px;border:2px solid #fff6e3;cursor:pointer;background:{{ n.bg }};color:{{ n.fg }};">{{ n.label }}</button>
+      </sc-for>
+      <sc-if value="{{ signedIn }}" hint-placeholder-val="{{ true }}">
+        <button onClick="{{ signOut }}" style="font:inherit;font-weight:700;font-size:14px;padding:8px 18px;border-radius:999px;border:2px solid #2b2522;background:#e8a93a;color:#2b2522;cursor:pointer;box-shadow:2px 2px 0 #2b2522;">Sign out</button>
+      </sc-if>
+    </div>
+  </nav>
+
+  <sc-if value="{{ isFinder }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:16px 24px;padding:16px 32px;flex:none;border-bottom:2px dashed #2b2522;">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span style="font-family:'Alfa Slab One',serif;font-size:14px;letter-spacing:0.04em;">AGENCY</span>
+        <sc-for list="{{ agencyChips }}" as="c" hint-placeholder-count="5">
+          <button onClick="{{ c.toggle }}" style="font:inherit;font-size:13px;font-weight:700;padding:5px 12px;border-radius:999px;border:2px solid #2b2522;cursor:pointer;background:{{ c.bg }};color:{{ c.fg }};">{{ c.name }}</button>
+        </sc-for>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 14px;border-radius:10px;border:2px solid #2b2522;background:#fff6e3;font-size:14px;font-weight:600;cursor:pointer;">All regions<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"></path></svg></div>
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 14px;border-radius:10px;border:2px solid #2b2522;background:#fff6e3;font-size:14px;font-weight:600;cursor:pointer;">All states<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"></path></svg></div>
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 14px;border-radius:10px;border:2px solid #2b2522;background:#fff6e3;font-size:14px;font-weight:600;cursor:pointer;">All parks<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"></path></svg></div>
+      </div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+        <span style="font-family:'Alfa Slab One',serif;font-size:14px;letter-spacing:0.04em;">MILES FROM ME</span>
+        <div style="display:flex;border:2px solid #2b2522;border-radius:999px;overflow:hidden;background:#fff6e3;">
+          <sc-for list="{{ radiusOpts }}" as="o" hint-placeholder-count="5">
+            <button onClick="{{ o.pick }}" style="font:inherit;font-size:13px;font-weight:700;padding:5px 12px;border:none;cursor:pointer;background:{{ o.bg }};color:{{ o.fg }};">{{ o.label }}</button>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isMapPage }}" hint-placeholder-val="{{ true }}">
+    <div style="flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(380px,500px);gap:24px;padding:24px 32px 32px;box-sizing:border-box;">
+      <div style="border:4px solid #2b2522;border-radius:18px;overflow:hidden;box-shadow:6px 6px 0 #2b2522;min-height:0;">
+        <div ref="{{ mapRef }}" style="height:100%;"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;min-height:0;gap:14px;">
+
+        <sc-if value="{{ isFinder }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;align-items:baseline;gap:12px;">
+            <div style="font-family:'Alfa Slab One',serif;font-size:30px;color:#c63a2f;line-height:1;">{{ countLabel }}</div>
+            <div style="font-size:14px;font-weight:600;">nearest first</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isFav }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div style="font-family:'Alfa Slab One',serif;font-size:30px;color:#c63a2f;line-height:1;">Favorites</div>
+              <sc-if value="{{ hasFavs }}" hint-placeholder-val="{{ true }}">
+                <button onClick="{{ togglePlanning }}" style="margin-left:auto;font:inherit;font-weight:700;font-size:14px;padding:8px 16px;border-radius:999px;border:2px solid #2b2522;background:{{ planBtnBg }};color:{{ planBtnFg }};cursor:pointer;box-shadow:2px 2px 0 #2b2522;">{{ planBtnLabel }}</button>
+              </sc-if>
+            </div>
+            <sc-if value="{{ planning }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:10px;padding:14px;border:2px dashed #2b2522;border-radius:14px;background:#fff6e3;">
+                <div style="font-size:14px;font-weight:600;">Tick the stops below, name the trip, and save.</div>
+                <div style="display:flex;gap:8px;">
+                  <input type="text" placeholder="Trip name" value="{{ planName }}" onChange="{{ onPlanName }}" style="flex:1;font:inherit;font-size:15px;padding:9px 14px;border:2px solid #2b2522;border-radius:10px;background:#fbf4e4;color:#2b2522;">
+                  <button onClick="{{ saveTrip }}" disabled="{{ cantSaveTrip }}" style="font:inherit;font-weight:700;font-size:14px;padding:8px 16px;border-radius:999px;border:2px solid #2b2522;background:#c63a2f;color:#fff6e3;cursor:pointer;opacity:{{ saveTripOpacity }};">Save Trip</button>
+                </div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ noFavs }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:15px;line-height:1.5;">No favorites yet. Star a campground from the Finder to save it here.</div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isTrip }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <button onClick="{{ goTrips }}" style="align-self:flex-start;font:inherit;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;border:none;background:none;padding:0;cursor:pointer;color:#2f8f8a;">‹ All trips</button>
+            <sc-if value="{{ renaming }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;gap:8px;">
+                <input type="text" value="{{ renameDraft }}" onChange="{{ onRenameDraft }}" style="flex:1;font:inherit;font-size:18px;padding:8px 14px;border:2px solid #2b2522;border-radius:10px;background:#fff6e3;color:#2b2522;">
+                <button onClick="{{ saveRename }}" style="font:inherit;font-weight:700;font-size:14px;padding:8px 16px;border-radius:999px;border:2px solid #2b2522;background:#c63a2f;color:#fff6e3;cursor:pointer;">Save</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{ notRenaming }}" hint-placeholder-val="{{ true }}">
+              <div style="font-family:'Alfa Slab One',serif;font-size:30px;color:#c63a2f;line-height:1.1;">{{ tripName }}</div>
+            </sc-if>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <span style="font-size:14px;font-weight:600;">{{ tripMeta }}</span>
+              <button onClick="{{ startRename }}" style="margin-left:auto;font:inherit;font-weight:700;font-size:13px;padding:6px 14px;border-radius:999px;border:2px solid #2b2522;background:#fff6e3;color:#2b2522;cursor:pointer;">Rename</button>
+              <button onClick="{{ deleteTrip }}" style="font:inherit;font-weight:700;font-size:13px;padding:6px 14px;border-radius:999px;border:2px solid #c63a2f;background:transparent;color:#c63a2f;cursor:pointer;">Delete trip</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <div style="flex:1;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:10px;padding:2px 8px 8px 2px;">
+          <sc-for list="{{ rows }}" as="r" hint-placeholder-count="6">
+            <div style="border:2px solid #2b2522;border-radius:14px;background:{{ r.bg }};box-shadow:3px 3px 0 #2b2522;flex:none;">
+              <div onClick="{{ r.toggle }}" style="display:flex;gap:14px;align-items:center;padding:12px 14px;cursor:pointer;">
+                <sc-if value="{{ r.planMode }}" hint-placeholder-val="{{ false }}">
+                  <button onClick="{{ r.planToggle }}" title="Include in trip" style="width:28px;height:28px;flex:none;border:2px solid #2b2522;border-radius:8px;background:{{ r.planBg }};color:#fff6e3;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"></path></svg></button>
+                </sc-if>
+                <sc-if value="{{ r.hasBadge }}" hint-placeholder-val="{{ true }}">
+                  <div style="width:58px;height:58px;flex:none;border-radius:50%;background:{{ r.badgeBg }};color:{{ r.badgeFg }};border:2px solid #2b2522;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;gap:2px;">
+                    <span style="font-family:'Alfa Slab One',serif;font-size:17px;">{{ r.badgeTop }}</span>
+                    <span style="font-size:10px;font-weight:700;letter-spacing:0.1em;">{{ r.badgeSub }}</span>
+                  </div>
+                </sc-if>
+                <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;">
+                  <div style="font-weight:700;font-size:17px;">{{ r.name }}</div>
+                  <div style="display:flex;gap:6px;font-size:12px;font-weight:700;">
+                    <span style="padding:2px 8px;border-radius:999px;background:#2f8f8a;color:#fff6e3;">{{ r.agency }}</span>
+                    <span style="padding:2px 8px;border-radius:999px;border:1.5px solid #2b2522;">{{ r.park }}</span>
+                  </div>
+                </div>
+                <sc-if value="{{ r.showReorder }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;flex-direction:column;gap:4px;">
+                    <button onClick="{{ r.up }}" title="Move up" style="width:30px;height:24px;border:2px solid #2b2522;border-radius:6px;background:#fff6e3;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;opacity:{{ r.upOp }};"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m18 15-6-6-6 6"></path></svg></button>
+                    <button onClick="{{ r.down }}" title="Move down" style="width:30px;height:24px;border:2px solid #2b2522;border-radius:6px;background:#fff6e3;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;opacity:{{ r.downOp }};"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m6 9 6 6 6-6"></path></svg></button>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ r.showRemove }}" hint-placeholder-val="{{ false }}">
+                  <button onClick="{{ r.remove }}" style="font:inherit;font-weight:700;font-size:13px;padding:6px 12px;border-radius:999px;border:2px solid #c63a2f;background:transparent;color:#c63a2f;cursor:pointer;">Remove</button>
+                </sc-if>
+                <sc-if value="{{ r.showFav }}" hint-placeholder-val="{{ true }}">
+                  <button onClick="{{ r.fav }}" title="Favorite" style="width:40px;height:40px;flex:none;display:flex;align-items:center;justify-content:center;border:2px solid #2b2522;border-radius:50%;background:#fff6e3;cursor:pointer;color:#c63a2f;padding:0;"><svg width="18" height="18" viewBox="0 0 24 24" fill="{{ r.favFill }}" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg></button>
+                </sc-if>
+                <sc-if value="{{ r.showAdd }}" hint-placeholder-val="{{ true }}">
+                  <button onClick="{{ r.pick }}" title="Add to trip" style="width:40px;height:40px;flex:none;display:flex;align-items:center;justify-content:center;border:2px solid #2b2522;border-radius:50%;background:{{ r.addBg }};cursor:pointer;color:{{ r.addFg }};padding:0;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></button>
+                </sc-if>
+              </div>
+              <sc-if value="{{ r.picker }}" hint-placeholder-val="{{ false }}">
+                <div style="margin:0 14px 14px;padding:12px;border:2px dashed #2b2522;border-radius:12px;background:#fff6e3;display:flex;flex-direction:column;gap:8px;">
+                  <div style="font-family:'Alfa Slab One',serif;font-size:13px;letter-spacing:0.04em;">ADD TO TRIP</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                    <sc-for list="{{ r.tripOpts }}" as="t" hint-placeholder-count="2">
+                      <button onClick="{{ t.add }}" disabled="{{ t.added }}" style="font:inherit;font-size:13px;font-weight:700;padding:6px 12px;border-radius:999px;border:2px solid #2b2522;background:{{ t.bg }};color:#2b2522;cursor:pointer;">{{ t.label }}</button>
+                    </sc-for>
+                  </div>
+                  <div style="display:flex;gap:8px;">
+                    <input type="text" placeholder="New trip name" value="{{ newTripName }}" onChange="{{ onNewTripName }}" style="flex:1;min-width:0;font:inherit;font-size:14px;padding:7px 12px;border:2px solid #2b2522;border-radius:10px;background:#fbf4e4;color:#2b2522;">
+                    <button onClick="{{ r.createAdd }}" style="font:inherit;font-weight:700;font-size:13px;padding:6px 14px;border-radius:999px;border:2px solid #2b2522;background:#c63a2f;color:#fff6e3;cursor:pointer;">Create &amp; Add</button>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ r.showNote }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:0 14px 12px;">
+                  <input type="text" placeholder="Add a note" value="{{ r.note }}" onChange="{{ r.onNote }}" style="width:100%;box-sizing:border-box;font:inherit;font-size:14px;padding:7px 12px;border:none;border-bottom:2px dotted #2b2522;background:transparent;color:#2b2522;">
+                </div>
+              </sc-if>
+              <sc-if value="{{ r.open }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:2px 14px 16px 86px;display:flex;flex-direction:column;gap:12px;">
+                  <div style="font-size:15px;line-height:1.5;text-wrap:pretty;">{{ r.desc }}</div>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <a href="https://www.recreation.gov" target="_blank" rel="noopener" style="padding:8px 16px;border-radius:999px;border:2px solid #2b2522;background:#c63a2f;color:#fff6e3;text-decoration:none;font-weight:700;font-size:14px;box-shadow:2px 2px 0 #2b2522;">Reserve on recreation.gov</a>
+                    <a href="https://maps.google.com" target="_blank" rel="noopener" style="padding:8px 16px;border-radius:999px;border:2px solid #2b2522;background:#fff6e3;color:#2b2522;text-decoration:none;font-weight:700;font-size:14px;">Directions</a>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ isTrip }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:8px;padding-top:4px;border-top:2px dashed #2b2522;padding-top:14px;">
+            <select value="{{ addStopId }}" onChange="{{ onAddStopId }}" style="flex:1;font:inherit;font-size:14px;font-weight:600;padding:9px 12px;border:2px solid #2b2522;border-radius:10px;background:#fff6e3;color:#2b2522;">
+              <option value="">Choose a favorite to add...</option>
+              <sc-for list="{{ addOptions }}" as="o" hint-placeholder-count="2">
+                <option value="{{ o.id }}">{{ o.name }}</option>
+              </sc-for>
+            </select>
+            <button onClick="{{ addStop }}" disabled="{{ cantAddStop }}" style="font:inherit;font-weight:700;font-size:14px;padding:8px 18px;border-radius:999px;border:2px solid #2b2522;background:#e8a93a;color:#2b2522;cursor:pointer;opacity:{{ addStopOpacity }};">Add</button>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isTrips }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1;overflow-y:auto;overflow-x:hidden;"><div style="padding:40px 32px;max-width:1100px;width:100%;box-sizing:border-box;display:flex;flex-direction:column;gap:24px;">
+      <div style="font-family:'Alfa Slab One',serif;font-size:40px;color:#c63a2f;line-height:1;">Trips</div>
+      <sc-if value="{{ noTrips }}" hint-placeholder-val="{{ false }}">
+        <div style="font-size:16px;line-height:1.5;">No trips yet. Select some favorites on the <a href="#" onClick="{{ goFavorites }}">Favorites</a> page and choose "Plan a trip" to create one.</div>
+      </sc-if>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;">
+        <sc-for list="{{ tripCards }}" as="t" hint-placeholder-count="2">
+          <div style="border:3px solid #2b2522;border-radius:16px;background:#fbf4e4;box-shadow:5px 5px 0 #2b2522;display:flex;flex-direction:column;overflow:hidden;">
+            <div onClick="{{ t.open }}" style="padding:18px 20px;background:#2f8f8a;color:#fff6e3;cursor:pointer;border-bottom:3px solid #2b2522;">
+              <div style="font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;">Greetings from</div>
+              <div style="font-family:'Yellowtail',cursive;font-size:36px;line-height:1.1;text-shadow:2px 2px 0 #c63a2f;">{{ t.name }}</div>
+            </div>
+            <div style="padding:14px 20px;display:flex;flex-direction:column;gap:6px;font-size:14px;">
+              <div style="font-weight:600;">{{ t.stopsLabel }}</div>
+              <div>{{ t.route }}</div>
+            </div>
+            <div style="margin-top:auto;padding:12px 20px;border-top:2px dashed #2b2522;display:flex;align-items:center;gap:8px;font-size:13px;">
+              <span>Created {{ t.created }}</span>
+              <button onClick="{{ t.open }}" style="margin-left:auto;font:inherit;font-weight:700;font-size:13px;padding:6px 14px;border-radius:999px;border:2px solid #2b2522;background:#e8a93a;color:#2b2522;cursor:pointer;">Open</button>
+              <button onClick="{{ t.del }}" style="font:inherit;font-weight:700;font-size:13px;padding:6px 14px;border-radius:999px;border:2px solid #c63a2f;background:transparent;color:#c63a2f;cursor:pointer;">Delete</button>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isAccount }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1;overflow-y:auto;overflow-x:hidden;"><div style="padding:40px 32px;max-width:720px;width:100%;box-sizing:border-box;display:flex;flex-direction:column;gap:20px;">
+      <div style="font-family:'Alfa Slab One',serif;font-size:40px;color:#c63a2f;line-height:1;">Account</div>
+      <div style="border:3px solid #2b2522;border-radius:16px;background:#fbf4e4;box-shadow:5px 5px 0 #2b2522;padding:20px 24px;display:flex;flex-direction:column;gap:12px;">
+        <div style="font-family:'Alfa Slab One',serif;font-size:18px;">Display name</div>
+        <input type="text" value="{{ displayName }}" onChange="{{ onDisplayName }}" style="font:inherit;font-size:15px;padding:10px 14px;border:2px solid #2b2522;border-radius:10px;background:#fff6e3;color:#2b2522;">
+        <sc-if value="{{ nameSaved }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:14px;font-weight:600;color:#2f8f8a;">Display name saved.</div>
+        </sc-if>
+        <button onClick="{{ saveName }}" style="align-self:flex-start;font:inherit;font-weight:700;font-size:14px;padding:8px 18px;border-radius:999px;border:2px solid #2b2522;background:#c63a2f;color:#fff6e3;cursor:pointer;box-shadow:2px 2px 0 #2b2522;">Save Name</button>
+      </div>
+      <div style="border:3px solid #2b2522;border-radius:16px;background:#fbf4e4;box-shadow:5px 5px 0 #2b2522;padding:20px 24px;display:flex;flex-direction:column;gap:12px;">
+        <div style="font-family:'Alfa Slab One',serif;font-size:18px;">Password</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;">
+          <input type="password" placeholder="New password" style="font:inherit;font-size:15px;padding:10px 14px;border:2px solid #2b2522;border-radius:10px;background:#fff6e3;color:#2b2522;">
+          <input type="password" placeholder="Confirm password" style="font:inherit;font-size:15px;padding:10px 14px;border:2px solid #2b2522;border-radius:10px;background:#fff6e3;color:#2b2522;">
+        </div>
+        <button style="align-self:flex-start;font:inherit;font-weight:700;font-size:14px;padding:8px 18px;border-radius:999px;border:2px solid #2b2522;background:#c63a2f;color:#fff6e3;cursor:pointer;box-shadow:2px 2px 0 #2b2522;">Update Password</button>
+      </div>
+      <div style="border:3px solid #2b2522;border-radius:16px;background:#fbf4e4;box-shadow:5px 5px 0 #2b2522;padding:20px 24px;display:flex;align-items:center;gap:16px;">
+        <div style="font-family:'Alfa Slab One',serif;font-size:18px;">Theme</div>
+        <button onClick="{{ toggleDark }}" style="margin-left:auto;display:flex;align-items:center;gap:10px;font:inherit;font-weight:600;font-size:15px;border:none;background:none;cursor:pointer;color:#2b2522;padding:0;">
+          <span style="width:48px;height:26px;border-radius:999px;border:2px solid #2b2522;background:{{ darkTrack }};display:flex;align-items:center;padding:2px;box-sizing:border-box;justify-content:{{ darkJustify }};"><span style="width:18px;height:18px;border-radius:50%;background:#fff6e3;border:2px solid #2b2522;box-sizing:border-box;"></span></span>
+          Dark mode
+        </button>
+      </div>
+      <div style="border:3px solid #c63a2f;border-radius:16px;background:#fbf4e4;padding:20px 24px;display:flex;flex-direction:column;gap:12px;">
+        <div style="font-family:'Alfa Slab One',serif;font-size:18px;color:#c63a2f;">Delete Account</div>
+        <sc-if value="{{ confirmingDelete }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:15px;">Delete your account? This cannot be undone.</div>
+          <div style="display:flex;gap:8px;">
+            <button onClick="{{ cancelDelete }}" style="font:inherit;font-weight:700;font-size:14px;padding:8px 18px;border-radius:999px;border:2px solid #2b2522;background:#fff6e3;color:#2b2522;cursor:pointer;">Cancel</button>
+            <button style="font:inherit;font-weight:700;font-size:14px;padding:8px 18px;border-radius:999px;border:2px solid #2b2522;background:#c63a2f;color:#fff6e3;cursor:pointer;">Yes, delete my account</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{ notConfirmingDelete }}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{ askDelete }}" style="align-self:flex-start;font:inherit;font-weight:700;font-size:14px;padding:8px 18px;border-radius:999px;border:2px solid #c63a2f;background:transparent;color:#c63a2f;cursor:pointer;">Delete Account</button>
+        </sc-if>
+      </div>
+    </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1;overflow-y:auto;overflow-x:hidden;"><div style="padding:40px 32px;max-width:1200px;width:100%;box-sizing:border-box;display:flex;flex-direction:column;gap:24px;">
+      <div style="font-family:'Alfa Slab One',serif;font-size:40px;color:#c63a2f;line-height:1;">Admin</div>
+      <div style="display:flex;gap:20px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:14px;padding:14px 22px 14px 14px;border:3px solid #2b2522;border-radius:999px;background:#fbf4e4;box-shadow:4px 4px 0 #2b2522;">
+          <span style="width:64px;height:64px;border-radius:50%;background:#e8a93a;border:2px solid #2b2522;display:flex;align-items:center;justify-content:center;font-family:'Alfa Slab One',serif;font-size:22px;">27</span>
+          <span style="font-weight:700;font-size:15px;letter-spacing:0.08em;text-transform:uppercase;">Favorites</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;padding:14px 22px 14px 14px;border:3px solid #2b2522;border-radius:999px;background:#fbf4e4;box-shadow:4px 4px 0 #2b2522;">
+          <span style="width:64px;height:64px;border-radius:50%;background:#2f8f8a;color:#fff6e3;border:2px solid #2b2522;display:flex;align-items:center;justify-content:center;font-family:'Alfa Slab One',serif;font-size:22px;">9</span>
+          <span style="font-weight:700;font-size:15px;letter-spacing:0.08em;text-transform:uppercase;">Trips</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;border-bottom:3px solid #2b2522;">
+        <sc-for list="{{ adminTabs }}" as="t" hint-placeholder-count="2">
+          <button onClick="{{ t.go }}" style="font:inherit;font-weight:700;font-size:15px;padding:10px 20px;border:3px solid #2b2522;border-bottom:none;border-radius:12px 12px 0 0;margin-bottom:-3px;cursor:pointer;background:{{ t.bg }};color:{{ t.fg }};">{{ t.label }}</button>
+        </sc-for>
+      </div>
+      <sc-if value="{{ adminUsers }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <input type="email" placeholder="Email" style="flex:1;min-width:200px;font:inherit;font-size:15px;padding:9px 14px;border:2px solid #2b2522;border-radius:10px;background:#fff6e3;color:#2b2522;">
+            <input type="text" placeholder="Display name (optional)" style="flex:1;min-width:200px;font:inherit;font-size:15px;padding:9px 14px;border:2px solid #2b2522;border-radius:10px;background:#fff6e3;color:#2b2522;">
+            <button style="font:inherit;font-weight:700;font-size:14px;padding:8px 18px;border-radius:999px;border:2px solid #2b2522;background:#c63a2f;color:#fff6e3;cursor:pointer;box-shadow:2px 2px 0 #2b2522;">Invite User</button>
+          </div>
+          <div style="border:3px solid #2b2522;border-radius:16px;background:#fbf4e4;overflow:auto;">
+            <div style="display:grid;grid-template-columns:minmax(200px,1.6fr) minmax(120px,1fr) 110px 120px 120px 150px;gap:12px;padding:12px 18px;background:#2b2522;color:#fff6e3;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;min-width:860px;">
+              <span>Email</span><span>Display Name</span><span>Role</span><span>Suspended</span><span>Created</span><span></span>
+            </div>
+            <sc-for list="{{ users }}" as="u" hint-placeholder-count="4">
+              <div style="display:grid;grid-template-columns:minmax(200px,1.6fr) minmax(120px,1fr) 110px 120px 120px 150px;gap:12px;align-items:center;padding:12px 18px;border-top:2px dashed #2b2522;font-size:14px;min-width:860px;">
+                <span style="font-weight:600;overflow:hidden;text-overflow:ellipsis;">{{ u.email }}</span>
+                <span>{{ u.name }}</span>
+                <span><span style="padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;background:{{ u.roleBg }};color:{{ u.roleFg }};border:1.5px solid #2b2522;">{{ u.role }}</span></span>
+                <span><button onClick="{{ u.toggleSuspend }}" style="font:inherit;font-weight:700;font-size:13px;border:none;background:none;padding:0;cursor:pointer;color:#2f8f8a;">{{ u.suspendLabel }}</button></span>
+                <span>{{ u.created }}</span>
+                <span style="display:flex;gap:12px;"><button style="font:inherit;font-weight:700;font-size:13px;border:none;background:none;padding:0;cursor:pointer;color:#2b2522;">Edit</button><button style="font:inherit;font-weight:700;font-size:13px;border:none;background:none;padding:0;cursor:pointer;color:#c63a2f;">Delete</button></span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ adminAttrs }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border:2px solid #2b2522;border-radius:10px;background:#fff6e3;max-width:480px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+            <span style="font-size:15px;font-weight:600;">Blackwoods Campground</span>
+          </div>
+          <div style="border:3px solid #2b2522;border-radius:16px;background:#fbf4e4;overflow:hidden;">
+            <div style="display:grid;grid-template-columns:1fr 1.4fr 1fr 130px;gap:12px;padding:12px 18px;background:#2b2522;color:#fff6e3;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">
+              <span>Type</span><span>Name</span><span>Value</span><span></span>
+            </div>
+            <sc-for list="{{ attributes }}" as="a" hint-placeholder-count="4">
+              <div style="display:grid;grid-template-columns:1fr 1.4fr 1fr 130px;gap:12px;align-items:center;padding:12px 18px;border-top:2px dashed #2b2522;font-size:14px;">
+                <span>{{ a.type }}</span><span style="font-weight:600;">{{ a.name }}</span><span>{{ a.value }}</span>
+                <span style="display:flex;gap:12px;"><button style="font:inherit;font-weight:700;font-size:13px;border:none;background:none;padding:0;cursor:pointer;color:#2b2522;">Edit</button><button style="font:inherit;font-weight:700;font-size:13px;border:none;background:none;padding:0;cursor:pointer;color:#c63a2f;">Delete</button></span>
+              </div>
+            </sc-for>
+            <div style="display:grid;grid-template-columns:1fr 1.4fr 1fr 130px;gap:12px;align-items:center;padding:12px 18px;border-top:3px solid #2b2522;background:#fff6e3;">
+              <input type="text" placeholder="Type" style="min-width:0;font:inherit;font-size:14px;padding:7px 10px;border:2px solid #2b2522;border-radius:8px;background:#fbf4e4;">
+              <input type="text" placeholder="Name" style="min-width:0;font:inherit;font-size:14px;padding:7px 10px;border:2px solid #2b2522;border-radius:8px;background:#fbf4e4;">
+              <input type="text" placeholder="Value" style="min-width:0;font:inherit;font-size:14px;padding:7px 10px;border:2px solid #2b2522;border-radius:8px;background:#fbf4e4;">
+              <button style="justify-self:start;font:inherit;font-weight:700;font-size:13px;padding:6px 16px;border-radius:999px;border:2px solid #2b2522;background:#e8a93a;color:#2b2522;cursor:pointer;">Add</button>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isAbout }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;">
+      <div style="background:#c63a2f;border-bottom:4px solid #2b2522;padding:88px 32px 96px;display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;">
+        <div style="font-size:14px;font-weight:700;letter-spacing:0.3em;text-transform:uppercase;color:#fff6e3;">Campsite Finder</div>
+        <div style="font-family:'Yellowtail',cursive;font-size:120px;line-height:1;color:#fff6e3;text-shadow:5px 5px 0 #2b2522;">About Us</div>
+        <div style="font-family:'Alfa Slab One',serif;font-size:28px;color:#2b2522;background:#e8a93a;border:3px solid #2b2522;border-radius:999px;padding:10px 28px;box-shadow:4px 4px 0 #2b2522;">Because it sounded fun.</div>
+      </div>
+      <div style="padding:48px 32px;display:flex;justify-content:center;">
+        <div style="font-size:18px;line-height:1.6;max-width:640px;text-align:center;">Questions, bugs, or ideas? Reach the admin at <a href="mailto:shawnpfarmer@gmail.com">shawnpfarmer@gmail.com</a>.</div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isAuth }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1;overflow-y:auto;overflow-x:hidden;display:flex;align-items:flex-start;justify-content:center;padding:64px 32px;">
+      <div style="width:100%;max-width:420px;border:3px solid #2b2522;border-radius:18px;background:#fbf4e4;box-shadow:6px 6px 0 #2b2522;overflow:hidden;">
+        <div style="background:#2f8f8a;border-bottom:3px solid #2b2522;padding:20px 24px;">
+          <div style="font-family:'Yellowtail',cursive;font-size:44px;line-height:1;color:#fff6e3;text-shadow:3px 3px 0 #c63a2f;">{{ authTitle }}</div>
+        </div>
+        <div style="padding:24px;display:flex;flex-direction:column;gap:12px;">
+          <sc-if value="{{ isSignupForm }}" hint-placeholder-val="{{ false }}">
+            <input type="text" placeholder="Display name" style="font:inherit;font-size:15px;padding:10px 14px;border:2px solid #2b2522;border-radius:10px;background:#fff6e3;color:#2b2522;">
+          </sc-if>
+          <sc-if value="{{ signupDone }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:15px;font-weight:600;color:#2f8f8a;">Check your email to verify your account.</div>
+          </sc-if>
+          <sc-if value="{{ showAuthFields }}" hint-placeholder-val="{{ true }}">
+            <input type="email" placeholder="Email" style="font:inherit;font-size:15px;padding:10px 14px;border:2px solid #2b2522;border-radius:10px;background:#fff6e3;color:#2b2522;">
+            <input type="password" placeholder="Password" style="font:inherit;font-size:15px;padding:10px 14px;border:2px solid #2b2522;border-radius:10px;background:#fff6e3;color:#2b2522;">
+            <button onClick="{{ authSubmit }}" style="font:inherit;font-weight:700;font-size:15px;padding:11px 18px;border-radius:999px;border:2px solid #2b2522;background:#c63a2f;color:#fff6e3;cursor:pointer;box-shadow:3px 3px 0 #2b2522;">{{ authTitle }}</button>
+          </sc-if>
+          <a href="#" onClick="{{ authSwitch }}" style="font-size:14px;font-weight:600;">{{ authSwitchLabel }}</a>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;startPage&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;finder&quot;,&quot;favorites&quot;,&quot;trips&quot;,&quot;trip&quot;,&quot;account&quot;,&quot;admin&quot;,&quot;about&quot;,&quot;login&quot;,&quot;signup&quot;],&quot;default&quot;:&quot;finder&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;signedIn&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;admin&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Account&quot;}}">
+const CAMPS = [
+  { id: 'bw', name: 'Blackwoods Campground', park: 'ACAD', agency: 'NPS', lat: 44.309, lng: -68.204, mi: 0.4, desc: 'Wooded sites on the east side of Mount Desert Island, a short walk to the Ocean Path and the Island Explorer shuttle.' },
+  { id: 'sw', name: 'Seawall Campground', park: 'ACAD', agency: 'NPS', lat: 44.240, lng: -68.299, mi: 7.3, desc: 'Quieter side of the island near Bass Harbor. Tent, RV and walk-in sites.' },
+  { id: 'sc', name: 'Schoodic Woods Campground', park: 'ACAD', agency: 'NPS', lat: 44.387, lng: -68.069, mi: 9.6, desc: 'On the Schoodic Peninsula, with bike paths leading from camp to the point.' },
+  { id: 'dh', name: 'Duck Harbor Campground', park: 'ACAD', agency: 'NPS', lat: 44.032, lng: -68.649, mi: 30.1, desc: 'Five lean-to sites on Isle au Haut, reached by mail boat.' },
+  { id: 'cp', name: 'Crocker Pond Campground', park: 'WMNF', agency: 'USFS', lat: 44.310, lng: -70.825, mi: 136.2, desc: 'Small pond-side campground in the Maine section of White Mountain National Forest.' },
+  { id: 'bp', name: 'Basin Campground', park: 'WMNF', agency: 'USFS', lat: 44.272, lng: -70.979, mi: 143.5, desc: 'Sites along Basin Pond below the Baldface range, with a boat launch.' },
+  { id: 'dc', name: 'Dolly Copp Campground', park: 'WMNF', agency: 'USFS', lat: 44.330, lng: -71.217, mi: 156.0, desc: 'Large forest campground at the foot of Mount Washington, off Route 16.' },
+  { id: 'hc', name: 'Hancock Campground', park: 'WMNF', agency: 'USFS', lat: 44.065, lng: -71.590, mi: 177.4, desc: 'Year-round sites on the Kancamagus Highway near the Pemigewasset River.' },
+];
+const byId = id => CAMPS.find(c => c.id === id);
+const AGENCIES = ['NPS', 'USFS', 'BLM', 'USACE', 'FWS'];
+const RADII = [null, 25, 50, 100, 250];
+const USERS = [
+  { email: 'shawnpfarmer@gmail.com', name: 'Shawn', role: 'admin', created: 'Aug 18, 2026' },
+  { email: 'jamie.ruiz@example.com', name: 'Jamie', role: 'user', created: 'Aug 29, 2026' },
+  { email: 'pat.okafor@example.com', name: 'Pat O.', role: 'user', created: 'Sep 6, 2026' },
+  { email: 'lee.harmon@example.com', name: '', role: 'user', created: 'Sep 21, 2026' },
+];
+const ATTRS = [
+  { type: 'Amenity', name: 'Potable water', value: 'Yes' },
+  { type: 'Amenity', name: 'Flush toilets', value: 'Yes' },
+  { type: 'Site', name: 'Max RV length', value: '35 ft' },
+  { type: 'Season', name: 'Open', value: 'May to Oct' },
+];
+const CENTER = [44.4, -69.6];
+
+class Component extends DCLogic {
+  state = {
+    page: this.props.startPage ?? 'finder',
+    signedIn: this.props.signedIn ?? true,
+    agencies: AGENCIES.slice(), radius: null, openId: null, pickerId: null,
+    favs: { bw: true, sw: true, sc: true, dc: true, hc: true },
+    notes: { bw: 'Book early, fills by March' },
+    trips: [
+      { id: 't1', name: 'Downeast Loop', created: 'Sep 14, 2026', stops: ['bw', 'sc', 'sw'] },
+      { id: 't2', name: 'White Mountains Weekend', created: 'Aug 2, 2026', stops: ['dc', 'hc'] },
+    ],
+    tripId: 't1', planning: false, planSel: {}, planName: '', newTripName: '',
+    renaming: false, renameDraft: '', addStopId: '',
+    displayName: 'Shawn', nameSaved: false, dark: false, confirmingDelete: false,
+    adminTab: 'users', suspended: {}, signupDone: false,
+  };
+  mapRef = React.createRef();
+  m = null;
+
+  componentDidMount() { this.boot(); }
+  componentWillUnmount() { clearTimeout(this.t); if (this.onResize) window.removeEventListener('resize', this.onResize); if (this.m) this.m.map.remove(); }
+  componentDidUpdate() { this.ensureMap(); }
+
+  boot() {
+    if (!window.L) { this.t = setTimeout(() => this.boot(), 100); return; }
+    window.L.Icon.Default.imagePath = 'https://unpkg.com/leaflet@1.9.4/dist/images/';
+    this.onResize = () => this.m && this.m.map.invalidateSize();
+    window.addEventListener('resize', this.onResize);
+    this.ensureMap();
+  }
+
+  ensureMap() {
+    const L = window.L; if (!L) return;
+    const el = this.mapRef.current;
+    if (this.m && this.m.el !== el) { try { this.m.ro.disconnect(); this.m.map.remove(); } catch (e) {} this.m = null; }
+    if (!el) return;
+    if (!this.m) {
+      if (!el.offsetHeight) { clearTimeout(this.t); this.t = setTimeout(() => this.ensureMap(), 120); return; }
+      try {
+        const map = L.map(el, { zoom: 7, center: CENTER });
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
+        this.m = { map, el, layer: L.layerGroup().addTo(map), key: null, open: null };
+        this.m.ro = new ResizeObserver(() => map.invalidateSize()); this.m.ro.observe(el);
+      } catch (e) { console.warn('map init', e && e.message); return; }
+    }
+    this.syncMarkers();
+  }
+
+  mapList() {
+    const s = this.state;
+    if (s.page === 'favorites') return CAMPS.filter(c => s.favs[c.id]);
+    if (s.page === 'trip') { const t = this.trip(); return t ? t.stops.map(byId) : []; }
+    return this.filtered();
+  }
+
+  syncMarkers() {
+    const L = window.L, m = this.m, s = this.state;
+    const list = this.mapList();
+    const ordered = s.page === 'trip';
+    const key = s.page + ':' + list.map(c => c.id).join(',');
+    if (key !== m.key) {
+      m.key = key;
+      m.layer.clearLayers();
+      list.forEach((c, i) => {
+        const el = document.createElement('div');
+        const n = document.createElement('div'); n.textContent = c.name; el.appendChild(n);
+        const b = document.createElement('button');
+        b.textContent = 'View details ▸';
+        b.style.cssText = 'display:block;margin:6px 0 0;padding:0;border:none;background:none;color:#2563eb;font-weight:600;cursor:pointer;';
+        b.onclick = () => { m.map.closePopup(); this.setState({ openId: c.id }); };
+        el.appendChild(b);
+        const opts = ordered ? { icon: L.divIcon({ className: '', iconSize: [28, 28], html: '<span style="width:28px;height:28px;border-radius:50%;background:#c63a2f;color:#fff6e3;border:2px solid #2b2522;display:flex;align-items:center;justify-content:center;font:700 13px Work Sans,sans-serif;box-sizing:border-box;">' + (i + 1) + '</span>' }) } : {};
+        L.marker([c.lat, c.lng], opts).bindPopup(el).on('click', () => m.map.setView([c.lat, c.lng], 12)).addTo(m.layer);
+      });
+      if (ordered && list.length > 1) L.polyline(list.map(c => [c.lat, c.lng])).addTo(m.layer);
+      setTimeout(() => {
+        m.map.invalidateSize();
+        if (list.length) m.map.fitBounds(L.latLngBounds(list.map(c => [c.lat, c.lng])), { padding: [40, 40], maxZoom: 11 });
+        else m.map.setView(CENTER, 7);
+      }, 30);
+    }
+    if (s.openId !== m.open) {
+      m.open = s.openId;
+      const c = s.openId && byId(s.openId);
+      if (c && !ordered) m.map.setView([c.lat, c.lng], 12);
+    }
+  }
+
+  filtered() {
+    const { agencies, radius } = this.state;
+    return CAMPS.filter(c => agencies.includes(c.agency) && (radius == null || c.mi <= radius));
+  }
+  trip() { return this.state.trips.find(t => t.id === this.state.tripId); }
+  go(page, extra) { this.setState({ page, openId: null, pickerId: null, planning: false, renaming: false, ...(extra || {}) }); }
+  addToTrip(tripId, cid) { this.setState(s => ({ pickerId: null, trips: s.trips.map(t => t.id === tripId && !t.stops.includes(cid) ? { ...t, stops: [...t.stops, cid] } : t) })); }
+  newTrip(name, stops) {
+    const id = 't' + Date.now();
+    this.setState(s => ({ trips: [{ id, name, created: 'Oct 9, 2026', stops }, ...s.trips] }));
+    return id;
+  }
+
+  row(c, i, n, mode) {
+    const s = this.state;
+    const open = c.id === s.openId;
+    const picker = s.pickerId === c.id;
+    const stop = e => e.stopPropagation();
+    const r = {
+      ...c, open, picker,
+      bg: open ? '#fff6e3' : '#fbf4e4',
+      toggle: () => this.setState({ openId: open ? null : c.id }),
+      hasBadge: mode !== 'fav', showFav: mode !== 'trip', showAdd: mode !== 'trip' && s.signedIn,
+      showNote: mode === 'fav', showReorder: mode === 'trip', showRemove: mode === 'trip',
+      planMode: mode === 'fav' && s.planning, planBg: s.planSel[c.id] ? '#2f8f8a' : '#fff6e3',
+      planToggle: e => { stop(e); this.setState(st => ({ planSel: { ...st.planSel, [c.id]: !st.planSel[c.id] } })); },
+      favFill: s.favs[c.id] ? 'currentColor' : 'none',
+      fav: e => { stop(e); this.setState(st => ({ favs: { ...st.favs, [c.id]: !st.favs[c.id] } })); },
+      addBg: picker ? '#2b2522' : '#fff6e3', addFg: picker ? '#fff6e3' : '#2b2522',
+      pick: e => { stop(e); this.setState({ pickerId: picker ? null : c.id, newTripName: '' }); },
+      tripOpts: s.trips.map(t => {
+        const added = t.stops.includes(c.id);
+        return { label: t.name + (added ? ' (added)' : ''), added, bg: added ? '#e7dcc2' : '#fbf4e4', add: () => this.addToTrip(t.id, c.id) };
+      }),
+      createAdd: () => { const nm = s.newTripName.trim(); if (!nm) return; this.newTrip(nm, [c.id]); this.setState({ pickerId: null, newTripName: '' }); },
+      note: s.notes[c.id] || '',
+      onNote: e => { const v = e.target.value; this.setState(st => ({ notes: { ...st.notes, [c.id]: v } })); },
+    };
+    if (mode === 'trip') {
+      Object.assign(r, {
+        badgeTop: String(i + 1), badgeSub: 'STOP', badgeBg: '#c63a2f', badgeFg: '#fff6e3',
+        upOp: i === 0 ? 0.35 : 1, downOp: i === n - 1 ? 0.35 : 1,
+        up: e => { stop(e); this.move(i, -1); }, down: e => { stop(e); this.move(i, 1); },
+        remove: e => { stop(e); this.setState(st => ({ trips: st.trips.map(t => t.id === st.tripId ? { ...t, stops: t.stops.filter(x => x !== c.id) } : t) })); },
+      });
+    } else {
+      Object.assign(r, { badgeTop: c.mi < 100 ? c.mi.toFixed(1) : String(Math.round(c.mi)), badgeSub: 'MI', badgeBg: '#e8a93a', badgeFg: '#2b2522' });
+    }
+    return r;
+  }
+
+  move(i, d) {
+    this.setState(st => ({ trips: st.trips.map(t => {
+      if (t.id !== st.tripId) return t;
+      const j = i + d; if (j < 0 || j >= t.stops.length) return t;
+      const a = t.stops.slice(); [a[i], a[j]] = [a[j], a[i]]; return { ...t, stops: a };
+    }) }));
+  }
+
+  renderVals() {
+    const s = this.state;
+    const p = s.page;
+    const isMapPage = p === 'finder' || p === 'favorites' || p === 'trip';
+    const mode = p === 'favorites' ? 'fav' : p === 'trip' ? 'trip' : 'finder';
+    const list = this.mapList();
+    const trip = this.trip();
+    const showAdmin = this.props.admin ?? true;
+    const navActive = p === 'trip' ? 'trips' : p;
+    const navBtn = (label, page, light) => {
+      const on = navActive === page;
+      return { label, go: () => this.go(page), bg: on ? '#fff6e3' : 'transparent', fg: on ? '#2b2522' : '#fff6e3' };
+    };
+    const navUser = s.signedIn
+      ? [navBtn('Account', 'account'), ...(showAdmin ? [navBtn('Admin', 'admin')] : [])]
+      : [navBtn('Sign in', 'login')];
+    const favIds = CAMPS.filter(c => s.favs[c.id]).map(c => c.id);
+    const planCount = Object.keys(s.planSel).filter(k => s.planSel[k] && s.favs[k]).length;
+    const cantSave = !s.planName.trim() || planCount === 0;
+    const isAuth = p === 'login' || p === 'signup';
+    return {
+      mapRef: this.mapRef,
+      goFinder: () => this.go('finder'), goTrips: () => this.go('trips'),
+      goFavorites: e => { e.preventDefault(); this.go('favorites'); },
+      navMain: [navBtn('Finder', 'finder'), navBtn('Favorites', 'favorites'), navBtn('Trips', 'trips'), navBtn('About Us', 'about')],
+      navUser, signedIn: s.signedIn,
+      signOut: () => this.setState({ signedIn: false, page: 'login', pickerId: null }),
+      isFinder: p === 'finder', isFav: p === 'favorites', isTrip: p === 'trip', isTrips: p === 'trips',
+      isAccount: p === 'account', isAdmin: p === 'admin', isAbout: p === 'about', isAuth, isMapPage,
+      countLabel: list.length + (list.length === 1 ? ' campground' : ' campgrounds'),
+      agencyChips: AGENCIES.map(name => {
+        const on = s.agencies.includes(name);
+        return { name, bg: on ? '#2b2522' : '#fff6e3', fg: on ? '#fff6e3' : '#2b2522',
+          toggle: () => this.setState(st => ({ agencies: on ? st.agencies.filter(a => a !== name) : [...st.agencies, name] })) };
+      }),
+      radiusOpts: RADII.map(r => {
+        const on = r === s.radius;
+        return { label: r == null ? 'All' : String(r), pick: () => this.setState({ radius: r }), bg: on ? '#c63a2f' : 'transparent', fg: on ? '#fff6e3' : '#2b2522' };
+      }),
+      rows: isMapPage ? list.map((c, i) => this.row(c, i, list.length, mode)) : [],
+      newTripName: s.newTripName, onNewTripName: e => this.setState({ newTripName: e.target.value }),
+      hasFavs: favIds.length > 0, noFavs: favIds.length === 0, planning: s.planning,
+      planBtnLabel: s.planning ? 'Cancel' : 'Plan a trip',
+      planBtnBg: s.planning ? '#fff6e3' : '#e8a93a', planBtnFg: '#2b2522',
+      togglePlanning: () => this.setState(st => ({ planning: !st.planning, planSel: {}, planName: '' })),
+      planName: s.planName, onPlanName: e => this.setState({ planName: e.target.value }),
+      cantSaveTrip: cantSave, saveTripOpacity: cantSave ? 0.45 : 1,
+      saveTrip: () => {
+        if (cantSave) return;
+        const id = this.newTrip(s.planName.trim(), favIds.filter(k => s.planSel[k]));
+        this.go('trip', { tripId: id });
+      },
+      tripName: trip ? trip.name : '', tripMeta: trip ? trip.stops.length + ' stops · created ' + trip.created : '',
+      renaming: s.renaming, notRenaming: !s.renaming, renameDraft: s.renameDraft,
+      startRename: () => this.setState({ renaming: true, renameDraft: trip ? trip.name : '' }),
+      onRenameDraft: e => this.setState({ renameDraft: e.target.value }),
+      saveRename: () => this.setState(st => ({ renaming: false, trips: st.trips.map(t => t.id === st.tripId && st.renameDraft.trim() ? { ...t, name: st.renameDraft.trim() } : t) })),
+      deleteTrip: () => { if (window.confirm('Delete this trip?')) { this.setState(st => ({ trips: st.trips.filter(t => t.id !== st.tripId) })); this.go('trips'); } },
+      addOptions: trip ? favIds.filter(id => !trip.stops.includes(id)).map(byId) : [],
+      addStopId: s.addStopId, onAddStopId: e => this.setState({ addStopId: e.target.value }),
+      cantAddStop: !s.addStopId, addStopOpacity: s.addStopId ? 1 : 0.45,
+      addStop: () => { if (s.addStopId && trip) { this.addToTrip(trip.id, s.addStopId); this.setState({ addStopId: '' }); } },
+      noTrips: s.trips.length === 0,
+      tripCards: s.trips.map(t => ({
+        name: t.name, created: t.created,
+        stopsLabel: t.stops.length + (t.stops.length === 1 ? ' stop' : ' stops'),
+        route: t.stops.map(id => byId(id).name.replace(' Campground', '')).join(' → '),
+        open: () => this.go('trip', { tripId: t.id }),
+        del: () => { if (window.confirm('Delete this trip?')) this.setState(st => ({ trips: st.trips.filter(x => x.id !== t.id) })); },
+      })),
+      displayName: s.displayName, onDisplayName: e => this.setState({ displayName: e.target.value, nameSaved: false }),
+      nameSaved: s.nameSaved, saveName: () => this.setState({ nameSaved: true }),
+      toggleDark: () => this.setState(st => ({ dark: !st.dark })),
+      darkTrack: s.dark ? '#2f8f8a' : '#e7dcc2', darkJustify: s.dark ? 'flex-end' : 'flex-start',
+      confirmingDelete: s.confirmingDelete, notConfirmingDelete: !s.confirmingDelete,
+      askDelete: () => this.setState({ confirmingDelete: true }), cancelDelete: () => this.setState({ confirmingDelete: false }),
+      adminTabs: [['users', 'Users'], ['attrs', 'Campground Attributes']].map(([k, label]) => ({
+        label, go: () => this.setState({ adminTab: k }),
+        bg: s.adminTab === k ? '#fbf4e4' : '#e7dcc2', fg: '#2b2522',
+      })),
+      adminUsers: s.adminTab === 'users', adminAttrs: s.adminTab === 'attrs',
+      users: USERS.map(u => ({
+        ...u, name: u.name || '—',
+        roleBg: u.role === 'admin' ? '#e8a93a' : '#fff6e3', roleFg: '#2b2522',
+        suspendLabel: s.suspended[u.email] ? 'Unsuspend' : 'Suspend',
+        toggleSuspend: () => this.setState(st => ({ suspended: { ...st.suspended, [u.email]: !st.suspended[u.email] } })),
+      })),
+      attributes: ATTRS,
+      authTitle: p === 'signup' ? 'Sign Up' : 'Sign In',
+      isSignupForm: p === 'signup' && !s.signupDone,
+      signupDone: p === 'signup' && s.signupDone,
+      showAuthFields: !(p === 'signup' && s.signupDone),
+      authSubmit: () => p === 'signup' ? this.setState({ signupDone: true }) : this.setState({ signedIn: true, page: 'finder' }),
+      authSwitchLabel: p === 'signup' ? 'Already have an account? Sign in' : 'Need an account? Sign up',
+      authSwitch: e => { e.preventDefault(); this.go(p === 'signup' ? 'login' : 'signup', { signupDone: false }); },
+    };
+  }
+}
+</script>
+</body>
+</html>
