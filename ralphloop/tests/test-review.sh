@@ -30,16 +30,19 @@ docker_calls() { cat "$SB/docker.log" 2>/dev/null; }
 test_review_starts_app_for_the_lan() {
     review_sandbox; run_review
     assert_eq "exits 0" "$RC" 0
-    local env; env=$(cat "$SB/Campsites/.env.local" 2>/dev/null)
-    assert_contains "points the app at the LAN address" "$env" "VITE_SUPABASE_URL=http://10.9.8.7:54331"
-    assert_contains "carries the anon key" "$env" "VITE_SUPABASE_ANON_KEY=anon123"
-    assert_eq ".env.local is private" "$(stat -c %a "$SB/Campsites/.env.local" 2>/dev/null)" 600
+    local envf="$SB/Campsites/src/environments/environment.local.ts" env
+    env=$(cat "$envf" 2>/dev/null)
+    assert_contains "points the app at the LAN address" "$env" "supabaseUrl: 'http://10.9.8.7:54331'"
+    assert_contains "carries the anon key" "$env" "supabaseAnonKey: 'anon123'"
+    assert_contains "is a development environment" "$env" "production: false"
+    assert_eq "environment.local.ts is private" "$(stat -c %a "$envf" 2>/dev/null)" 600
     assert_contains "installs packages" "$(docker_calls)" "npm install"
     assert_contains "starts the container, surviving reboots" "$(docker_calls)" "run -d --name campsites-dev --restart unless-stopped"
-    assert_contains "serves on all interfaces" "$(docker_calls)" "npx vite --host 0.0.0.0 --port 5173 --strictPort"
-    assert_contains "prints the app URL" "$OUT" "http://10.9.8.7:5173"
+    assert_contains "serves Angular on all interfaces" "$(docker_calls)" "npx ng serve --host 0.0.0.0 --port 4200"
+    assert_contains "prints the app URL" "$OUT" "http://10.9.8.7:4200"
+    assert_contains "prints the dev login" "$OUT" "admin@campsites.test / campsites-admin"
     assert_contains "prints the Studio URL" "$OUT" "http://10.9.8.7:54333"
-    assert_contains "prints the one-time firewall command" "$OUT" "sudo ufw allow from 10.9.8.0/24 to any port 5173 proto tcp"
+    assert_contains "prints the one-time firewall command" "$OUT" "sudo ufw allow from 10.9.8.0/24 to any port 4200 proto tcp"
 }
 
 test_review_replaces_the_old_container() {

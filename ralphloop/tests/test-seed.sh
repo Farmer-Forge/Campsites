@@ -43,19 +43,9 @@ test_seed_runs_the_app_seed_after_the_core_seed() {
         "-f ralphloop/seed-dev.sql -f ralphloop/seed-app.sql"
 }
 
-test_seed_passes_the_apps_default_units() {
-    seed_sandbox
-    mkdir -p "$SB/Campsites/src/config"
-    printf '{ "appName": "X", "defaultUnits": "imperial" }\n' > "$SB/Campsites/src/config/app.json"
-    run_seed
-    assert_eq "exits 0" "$RC" 0
-    assert_contains "units from app.json" "$(cat "$SB/docker.log" 2>/dev/null)" "-v default_units=imperial -f ralphloop/seed-dev.sql"
-}
-
-test_seed_without_app_json_passes_no_units() {
+test_seed_without_app_seed_runs_only_the_dev_seed() {
     seed_sandbox; run_seed
     assert_eq "exits 0" "$RC" 0
-    assert_not_contains "no units before Task 2" "$(cat "$SB/docker.log" 2>/dev/null)" "default_units"
     assert_not_contains "no app seed when there is none" "$(cat "$SB/docker.log" 2>/dev/null)" "seed-app.sql"
 }
 

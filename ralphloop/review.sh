@@ -2,12 +2,14 @@
 # ==============================================================================
 # REVIEW — start (or refresh) the app on this server for browser QC.
 # ==============================================================================
-# Serves the canonical clone's current main at http://<this server's LAN
-# IP>:5173, so the app can be checked from a browser anywhere on the home
+# Serves the canonical clone's current main with Angular's dev server
+# (ng serve) at http://<this server's LAN IP>:4200, so the app can be checked from a browser anywhere on the home
 # network (e.g. Bart) — no SSH tunnels. GitHub stays the source of truth for
 # the code; this is only for looking at it running.
 #
-# Idempotent — run it any time: it rewrites .env.local, installs packages only
+# Idempotent — run it any time: it rewrites
+# src/environments/environment.local.ts (the app's local settings; the
+# development configuration swaps it in for environment.ts), installs packages only
 # when package.json/package-lock.json changed, and (re)starts the review
 # container. The container restarts on its own after a reboot, and the dev
 # server picks up new code by itself as main moves (e.g. as chain.sh merges
@@ -26,7 +28,7 @@ set -euo pipefail
 
 CONTAINER="campsites-dev"
 IMAGE="campsites-claude-worker:latest"
-PORT=5173
+PORT=4200
 SUPABASE_ENV="${RALPH_SUPABASE_ENV:-$HOME/.secrets/campsites-supabase.env}"
 WAIT_SECONDS="${RALPH_REVIEW_WAIT_SECONDS:-60}"
 
@@ -52,12 +54,13 @@ HOST="${RALPH_REVIEW_HOST:-$(ip -4 route get 1.1.1.1 2>/dev/null | awk '{ for (i
     API_PORT="${SUPABASE_URL##*:}"
     API_PORT="${API_PORT%%/*}"
     umask 077
-    printf 'VITE_SUPABASE_URL=http://%s:%s\nVITE_SUPABASE_ANON_KEY=%s\nDATABASE_URL=%s\n' \
-        "$HOST" "$API_PORT" "$SUPABASE_ANON_KEY" "$DATABASE_URL" > .env.local
+    mkdir -p src/environments
+    printf "export const environment = {\n  production: false,\n  supabaseUrl: 'http://%s:%s',\n  supabaseAnonKey: '%s',\n};\n" \
+        "$HOST" "$API_PORT" "$SUPABASE_ANON_KEY" > src/environments/environment.local.ts
 )
-chmod 600 .env.local
+chmod 600 src/environments/environment.local.ts
 
-# Make sure the dev login (admin@mygear.test / mygear-admin) and starter data exist.
+# Make sure the dev login (admin@campsites.test / campsites-admin) and starter data exist.
 SEED="${RALPH_SEED_SCRIPT:-$(dirname "${BASH_SOURCE[0]}")/seed-dev.sh}"
 bash "$SEED" || echo "⚠️  Dev seed failed — run ./ralphloop/seed-dev.sh by hand to see why."
 
@@ -76,7 +79,7 @@ fi
 docker rm -f "$CONTAINER" >/dev/null 2>&1 || true
 docker run -d --name "$CONTAINER" --restart unless-stopped --network host \
     --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD:$PWD" -w "$PWD" \
-    "$IMAGE" npx vite --host 0.0.0.0 --port "$PORT" --strictPort >/dev/null
+    "$IMAGE" npx ng serve --host 0.0.0.0 --port "$PORT" >/dev/null
 
 if [ "$WAIT_SECONDS" -gt 0 ]; then
     READY=0
@@ -92,7 +95,7 @@ fi
 
 STUDIO_PORT=$(awk '/^\[studio\]/ { s = 1; next } /^\[/ { s = 0 } s && /^port *=/ { print $3; exit }' supabase/config.toml 2>/dev/null || true)
 echo -e "\033[32m✅ Review app running: http://${HOST}:${PORT}\033[0m"
-echo "   Dev login: admin@mygear.test / mygear-admin"
+echo "   Dev login: admin@campsites.test / campsites-admin"
 if [ -n "$STUDIO_PORT" ]; then
     echo "   Supabase Studio (database): http://${HOST}:${STUDIO_PORT}"
 fi
