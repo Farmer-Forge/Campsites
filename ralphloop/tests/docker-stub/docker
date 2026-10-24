@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Fake `docker` for review.sh's tests — put this directory first on PATH.
+# Records every call (one line of args) in $RALPH_DOCKER_LOG and succeeds.
+printf '%s\n' "$*" >> "${RALPH_DOCKER_LOG:?}"
