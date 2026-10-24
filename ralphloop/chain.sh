@@ -13,7 +13,8 @@
 # merge any more, chain mode refuses to auto-merge a PR that changes the
 # loop's own files (anything under ralphloop/ except task.md/activity.md, or
 # .github/): those would run on ralph, outside the worker container, next
-# round. Spec: docs/superpowers/specs/2026-09-22-loop-chain-design.md
+# round. It also refuses one that changes the schema contract
+# (supabase/migrations/, supabase/functions/), which is fixed by V1. Spec: docs/superpowers/specs/2026-09-22-loop-chain-design.md
 #
 # Run ON ralph, as the claude account, from the repo root, inside tmux:
 #   set -a; source ~/.secrets/campsites-ralph-loop.env; set +a
@@ -192,9 +193,9 @@ ${PRS}"
         PR_BRANCH="${PRS#* }"
         CHANGED=$(retry "Reading PR #${PR_NUM}'s files" gh_ pr diff "$PR_NUM" --repo "$REPO" --name-only) \
             || stop "🛑 Chain stopped: couldn't read PR #${PR_NUM}'s changed files from GitHub."
-        FORBIDDEN=$(grep -E '^(ralphloop/|\.github/)' <<< "$CHANGED" | grep -vxE 'ralphloop/(task|activity)\.md' || true)
+        FORBIDDEN=$(grep -E '^(ralphloop/|\.github/|supabase/migrations/|supabase/functions/)' <<< "$CHANGED" | grep -vxE 'ralphloop/(task|activity)\.md' || true)
         if [ -n "$FORBIDDEN" ]; then
-            stop "🛑 Chain stopped: PR #${PR_NUM} changes the loop's own files, which chain mode never auto-merges (they would run on ralph next round). Review it by hand:
+            stop "🛑 Chain stopped: PR #${PR_NUM} changes the loop's own files or the schema contract (supabase/migrations/, supabase/functions/), which chain mode never auto-merges (loop files would run on ralph next round; the schema is fixed by V1). Review it by hand:
 ${FORBIDDEN}"
         fi
         say "Squash-merging PR #${PR_NUM} (${PR_BRANCH})…"

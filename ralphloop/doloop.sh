@@ -338,9 +338,10 @@ CORE OBJECTIVES:
    and lessons learned.
 3. Work exclusively on that ONE step. Do not try to solve multiple steps at
    once.
-4. NEVER call any mcp__claude_ai_Supabase__* tool for this project — the
-   backend is self-hosted on ralph, not Supabase Cloud, and none of those
-   tools reach it. Use psql "\$DATABASE_URL" instead, exactly as the step
+4. NEVER call any mcp__claude_ai_Supabase__* tool, and never run
+   supabase link, supabase db push or supabase functions deploy. This
+   project's database is the local Supabase stack on ralph; production
+   must never be touched. Use psql "\$DATABASE_URL" exactly as the step
    describes.
 5. Do NOT run git push, gh pr create, or any other step that publishes this
    branch — that happens after this script's inner loop finishes, not from
@@ -352,20 +353,20 @@ CORE OBJECTIVES:
    from Shawn, and stop without modifying '${TASK_FILE}'.
 7. Run this step's own validation (manual verification instructions as
    written, linter, local builds) to confirm it's actually done.
-8. If this step touches UI (writes or modifies a .jsx component), follow
-   'docs/superpowers/style-task.md' before marking it done — read
-   'docs/superpowers/Design.MD' first if you haven't this session, use the
-   existing 'src/components/ui/*' primitive for anything that has one
-   (never a one-off <button>/<input>/etc.), and run its self-check list
-   (no raw Tailwind colors outside the design tokens, no arbitrary values
-   like p-[13px], every button/input using the shared component) before
-   step 9 below. If you genuinely need a pattern Design.MD doesn't have,
-   add it to Design.MD AND the matching components/ui/ file in this same
-   step, per that file's own escalation rule — never improvise inline.
-   If this step writes SQL (a migration, a seed, a function or a policy),
-   follow 'forge/db-conventions.md' and run its self-check list before
-   step 9 below: plural table names, foreign keys named after the full
-   table they reference, types referred to by key, every table with RLS.
+8. If this step touches UI (writes or modifies an Angular component's
+   .ts, .html or .scss), follow 'docs/superpowers/style-task.md' before
+   marking it done: read 'docs/superpowers/Design.md' first if you
+   haven't this session, use the existing 'src/app/shared/ui/*'
+   component or shared rt-* class for anything that has one (never a
+   one-off button/input style), and run its self-check list before
+   step 9 below. If you genuinely need a pattern Design.md doesn't have,
+   add it to Design.md AND the matching shared/ui file in this same
+   step — never improvise inline.
+   NEVER create or edit anything under 'supabase/migrations/' or
+   'supabase/functions/': they are a fixed contract copied from V1. If a
+   step seems to need a schema or edge-function change, follow rule 6
+   (BLOCKED) instead. SQL you write in seeds uses the existing schema's
+   names as they are.
 9. If the step passes validation:
    - Change its checkbox from "- [ ]" to "- [x]" in '${TASK_FILE}'.
    - Append a short entry to '${LOG_FILE}' under a

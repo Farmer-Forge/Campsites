@@ -128,6 +128,29 @@ test_checkpoint_commit() {
     assert_not_contains "unstages a secret the worker staged itself" "$(git -C "$r" show --name-only --format= HEAD)" ".env.local"
 }
 
+test_checkpoint_never_commits_angular_cache_or_local_environment() {
+    local r files; r=$(new_repo)
+    echo code > "$r/app.ts"
+    mkdir -p "$r/.angular/cache" "$r/src/environments"
+    echo c > "$r/.angular/cache/x"
+    echo "export const environment = {};" > "$r/src/environments/environment.local.ts"
+    checkpoint_commit "$r" "Checkpoint: angular"
+    files=$(git -C "$r" show --name-only --format= HEAD)
+    assert_contains "commits normal files" "$files" "app.ts"
+    assert_not_contains "never commits the Angular cache" "$files" ".angular/"
+    assert_not_contains "never commits the local environment file" "$files" "environment.local.ts"
+    r=$(new_repo)
+    echo code > "$r/app.ts"
+    mkdir -p "$r/.angular/cache" "$r/src/environments"
+    echo c > "$r/.angular/cache/x"
+    echo "export const environment = {};" > "$r/src/environments/environment.local.ts"
+    git -C "$r" add -f src/environments/environment.local.ts .angular/cache/x
+    checkpoint_commit "$r" "Checkpoint: pre-staged angular"
+    files=$(git -C "$r" show --name-only --format= HEAD)
+    assert_not_contains "unstages a local environment file the worker staged itself" "$files" "environment.local.ts"
+    assert_not_contains "unstages an Angular cache file the worker staged itself" "$files" ".angular/"
+}
+
 test_push_branch_quietly() {
     local r bare out; r=$(new_repo); bare=$(mktemp -d); git init -q --bare "$bare"
     push_branch_quietly "$r" "$bare" "ralph-loop/task-2"

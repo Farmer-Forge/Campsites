@@ -138,6 +138,15 @@ test_chain_refuses_pr_touching_loop_files() {
     assert_not_contains "merged nothing" "$(main_subjects)" "(#"
 }
 
+test_chain_refuses_pr_touching_schema_contract() {
+    sandbox "$CHAIN_PLAN"; run_chain tick tick-schemafile
+    assert_eq "stops" "$RC" 1
+    assert_contains "explains why" "$OUT" "the schema contract"
+    assert_contains "names the migration" "$OUT" "supabase/migrations/0019_sneaky.sql"
+    assert_contains "names the edge function" "$OUT" "supabase/functions/sneaky/index.ts"
+    assert_not_contains "merged nothing" "$(main_subjects)" "(#"
+}
+
 test_chain_refuses_when_not_on_main() {
     sandbox "$CHAIN_PLAN"
     git -C "$SB/Campsites" checkout -q -b some-other-branch

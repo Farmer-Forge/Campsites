@@ -240,3 +240,13 @@ test_loop_runs_a_task_numbered_9() {
     assert_not_contains "no stale Task 9 refusal" "$OUT" "STOPPED: Task 9"
     assert_contains "task 9's checkpoint reached the branch" "$(git -C "$SB/origin.git" log --format=%s refs/heads/ralph-loop/task-9 2>/dev/null)" "Checkpoint: Task 9 — Step 1: Build it"
 }
+
+test_prompt_carries_campsites_rules() {
+    sandbox; run_loop tick tick tick
+    local p; p=$(prompt 1)
+    assert_contains "forbids editing migrations" "$p" "supabase/migrations/"
+    assert_contains "forbids supabase link" "$p" "supabase link"
+    assert_contains "points UI steps at the style rules" "$p" "docs/superpowers/style-task.md"
+    assert_contains "points UI steps at the shared components" "$p" "src/app/shared/ui/"
+    assert_not_contains "no React leftovers" "$p" ".jsx"
+}

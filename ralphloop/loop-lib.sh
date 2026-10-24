@@ -132,7 +132,8 @@ ralph_sleep() {
 }
 
 # checkpoint_commit <worktree> <message>
-# Commits everything the step changed except secrets and build output —
+# Commits everything the step changed except secrets and build output (including
+# Angular's .angular/ cache and the local src/environments/environment.local.ts) —
 # excluded here even if .gitignore is missing or wrong (e.g. early in a
 # scaffold task, before its .gitignore step has run). .env.example is the one
 # .env* file meant to be committed. No-op if nothing changed.
@@ -142,11 +143,13 @@ checkpoint_commit() {
         ':(exclude,glob)**/.env*' \
         ':(exclude,glob)**/node_modules/**' \
         ':(exclude,glob)**/dist/**' \
-        ':(exclude,glob)**/.vite/**'
+        ':(exclude,glob)**/.vite/**' \
+        ':(exclude,glob)**/.angular/**' \
+        ':(exclude,glob)**/environment.local.ts'
     if [ -f "$wt/.env.example" ]; then git -C "$wt" add -f -- .env.example; fi
     # Anything the worker staged itself bypasses the excludes above — unstage it.
     bad=$(git -C "$wt" diff --cached --name-only \
-        | grep -E '(^|/)(\.env[^/]*$|node_modules/|dist/|\.vite/)' \
+        | grep -E '(^|/)(\.env[^/]*$|node_modules/|dist/|\.vite/|\.angular/|environment\.local\.ts$)' \
         | grep -vE '(^|/)\.env\.example$' || true)
     if [ -n "$bad" ]; then
         while IFS= read -r p; do git -C "$wt" reset -q -- "$p"; done <<< "$bad"

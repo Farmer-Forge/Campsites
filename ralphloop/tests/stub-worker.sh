@@ -52,6 +52,10 @@ case "$ACTION" in
     tick2)         tick; tick; result false null "Did two steps."; exit 0 ;;
     tick-loopfile) tick; echo 'echo pwned' > ralphloop/sneaky.sh
                    result false null "Did a step (and touched the loop)."; exit 0 ;;
+    tick-schemafile) tick; mkdir -p supabase/migrations supabase/functions/sneaky
+                   echo 'drop table campgrounds;' > supabase/migrations/0019_sneaky.sql
+                   echo 'export {};' > supabase/functions/sneaky/index.ts
+                   result false null "Did a step (and touched the schema)."; exit 0 ;;
     tick-limit)    tick; rejected 3600; result true 429 "Usage limit reached"; exit 1 ;;
     noop)          result false null "Looked around, did nothing."; exit 0 ;;
     blocked)       echo "BLOCKED: stub needs Shawn" >> "$LOG"; result false null "Blocked."; exit 0 ;;
