@@ -8,8 +8,13 @@
 # project's secrets, and no Docker socket are ever mounted in, regardless
 # of what the host `claude` account could otherwise reach.
 #
-# Build once on ralph, from the repo root:
-#   docker build -t campsites-claude-worker:latest -f ralphloop/worker.Dockerfile .
+# Build once on ralph. It needs no build context, so from Lisa it's:
+#   ssh ralph 'docker build -t campsites-claude-worker:latest -' < ralphloop/worker.Dockerfile
+# (or on ralph, from the repo root: docker build -t campsites-claude-worker:latest - < ralphloop/worker.Dockerfile)
+#
+# Campsites adds two things to MyGear's image: Deno, for the edge functions'
+# tests (deno test supabase/functions), and NG_CLI_ANALYTICS=false, so the
+# Angular CLI never stops an unattended run to ask about analytics.
 #
 # Rebuild whenever this file changes or dependencies need bumping — it's
 # not tied to any one task's code, just the toolchain every task needs.
@@ -23,6 +28,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
+COPY --from=denoland/deno:bin-2.9.5 /deno /usr/local/bin/deno
+
 RUN npm install -g @anthropic-ai/claude-code
+
+ENV NG_CLI_ANALYTICS=false
 
 WORKDIR /workspace
