@@ -23,7 +23,7 @@ Its PR is closed without merging. The real plan is written in Phase 4.
 
   Verify: the file has four non-empty lines, and the user count is at least 1.
 
-- [ ] **Step 2: Build a throwaway Angular app outside the repo**
+- [x] **Step 2: Build a throwaway Angular app outside the repo**
 
   ```bash
   cd /tmp && npx --yes @angular/cli@22 new shakedown-app --defaults --ssr=false --skip-git --interactive=false
