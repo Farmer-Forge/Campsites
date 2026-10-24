@@ -6,3 +6,7 @@ Step 1: created ralphloop/shakedown.md with node v22.23.4, deno 2.9.5, Angular C
 ## Task 2, call 2
 
 Step 2: built throwaway app in /tmp/shakedown-app with Angular CLI 22; `ng build` exited 0. Appended "angular build: ok" to shakedown.md. Repo untouched apart from ralphloop/.
+
+## Task 2, call 3
+
+Step 3: ran `deno test supabase/functions`: 34 passed, 0 failed. Appended the summary to shakedown.md.

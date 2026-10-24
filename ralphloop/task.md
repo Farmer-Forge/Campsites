@@ -34,7 +34,7 @@ Its PR is closed without merging. The real plan is written in Phase 4.
 
   Verify: `npx ng build` exited 0, and nothing from `/tmp` was added to this repo (`git status --short` lists only `ralphloop/` files).
 
-- [ ] **Step 3: Run the edge functions' Deno tests**
+- [x] **Step 3: Run the edge functions' Deno tests**
 
   ```bash
   deno test supabase/functions
