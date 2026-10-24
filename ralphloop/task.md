@@ -44,7 +44,7 @@ Its PR is closed without merging. The real plan is written in Phase 4.
 
   Verify: the summary says `0 failed`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
   ```bash
   git add ralphloop/shakedown.md

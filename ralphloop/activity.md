@@ -10,3 +10,9 @@ Step 2: built throwaway app in /tmp/shakedown-app with Angular CLI 22; `ng build
 ## Task 2, call 3
 
 Step 3: ran `deno test supabase/functions`: 34 passed, 0 failed. Appended the summary to shakedown.md.
+
+## Task 2, call 4
+
+Step 4: commit step; shakedown.md already committed in checkpoint commits (git log main..HEAD --stat shows it), so nothing further to commit.
+
+TASK 2 COMPLETE
