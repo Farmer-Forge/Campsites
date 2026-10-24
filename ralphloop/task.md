@@ -10,7 +10,7 @@ Its PR is closed without merging. The real plan is written in Phase 4.
 
 ## Task 2: Shakedown: prove the Angular loop works
 
-- [ ] **Step 1: Record the toolchain in `ralphloop/shakedown.md`**
+- [x] **Step 1: Record the toolchain in `ralphloop/shakedown.md`**
 
   Create `ralphloop/shakedown.md` with exactly these four lines, each filled in from the command shown:
 
