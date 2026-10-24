@@ -250,3 +250,11 @@ test_prompt_carries_campsites_rules() {
     assert_contains "points UI steps at the shared components" "$p" "src/app/shared/ui/"
     assert_not_contains "no React leftovers" "$p" ".jsx"
 }
+
+test_prompt_forbids_schema_changes_through_psql() {
+    sandbox; run_loop tick tick tick
+    local p; p=$(prompt 1)
+    assert_contains "forbids DDL against the database" "$p" "Never run DDL"
+    assert_contains "forbids editing edge functions" "$p" "supabase/functions/"
+    assert_contains "forbids deploying functions" "$p" "supabase functions deploy"
+}

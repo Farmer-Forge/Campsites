@@ -343,6 +343,13 @@ CORE OBJECTIVES:
    project's database is the local Supabase stack on ralph; production
    must never be touched. Use psql "\$DATABASE_URL" exactly as the step
    describes.
+   NEVER create or edit anything under 'supabase/migrations/' or
+   'supabase/functions/': they are a fixed contract copied from V1.
+   Never run DDL against the database either (create, alter or drop;
+   grant or revoke; create or drop policy): only the reads and seed
+   writes a step describes. If a step seems to need a schema or
+   edge-function change, follow rule 6 (BLOCKED) instead. SQL you write
+   in seeds uses the existing schema's names as they are.
 5. Do NOT run git push, gh pr create, or any other step that publishes this
    branch — that happens after this script's inner loop finishes, not from
    within a step.
@@ -362,11 +369,6 @@ CORE OBJECTIVES:
    step 9 below. If you genuinely need a pattern Design.md doesn't have,
    add it to Design.md AND the matching shared/ui file in this same
    step — never improvise inline.
-   NEVER create or edit anything under 'supabase/migrations/' or
-   'supabase/functions/': they are a fixed contract copied from V1. If a
-   step seems to need a schema or edge-function change, follow rule 6
-   (BLOCKED) instead. SQL you write in seeds uses the existing schema's
-   names as they are.
 9. If the step passes validation:
    - Change its checkbox from "- [ ]" to "- [x]" in '${TASK_FILE}'.
    - Append a short entry to '${LOG_FILE}' under a

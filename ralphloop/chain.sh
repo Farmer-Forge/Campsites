@@ -194,6 +194,14 @@ ${PRS}"
         CHANGED=$(retry "Reading PR #${PR_NUM}'s files" gh_ pr diff "$PR_NUM" --repo "$REPO" --name-only) \
             || stop "🛑 Chain stopped: couldn't read PR #${PR_NUM}'s changed files from GitHub."
         FORBIDDEN=$(grep -E '^(ralphloop/|\.github/|supabase/migrations/|supabase/functions/)' <<< "$CHANGED" | grep -vxE 'ralphloop/(task|activity)\.md' || true)
+        # The worker can commit files itself (a task's Commit step), which skips
+        # checkpoint_commit's excludes — so local settings, secrets and build
+        # caches are checked here too.
+        LOCAL_FILES=$(grep -E '(^|/)(environment\.local\.ts$|\.env[^/]*$|\.angular/|node_modules/)' <<< "$CHANGED" | grep -vE '(^|/)\.env\.example$' || true)
+        if [ -n "$LOCAL_FILES" ]; then
+            stop "🛑 Chain stopped: PR #${PR_NUM} commits local settings, secrets or build caches, which must never reach main. Review it by hand:
+${LOCAL_FILES}"
+        fi
         if [ -n "$FORBIDDEN" ]; then
             stop "🛑 Chain stopped: PR #${PR_NUM} changes the loop's own files or the schema contract (supabase/migrations/, supabase/functions/), which chain mode never auto-merges (loop files would run on ralph next round; the schema is fixed by V1). Review it by hand:
 ${FORBIDDEN}"

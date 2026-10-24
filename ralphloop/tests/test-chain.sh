@@ -147,6 +147,14 @@ test_chain_refuses_pr_touching_schema_contract() {
     assert_not_contains "merged nothing" "$(main_subjects)" "(#"
 }
 
+test_chain_refuses_pr_with_local_config_the_worker_committed() {
+    sandbox "$CHAIN_PLAN"; run_chain tick tick-commit-localenv
+    assert_eq "stops" "$RC" 1
+    assert_contains "explains why" "$OUT" "local settings"
+    assert_contains "names the file" "$OUT" "src/environments/environment.local.ts"
+    assert_not_contains "merged nothing" "$(main_subjects)" "(#"
+}
+
 test_chain_refuses_when_not_on_main() {
     sandbox "$CHAIN_PLAN"
     git -C "$SB/Campsites" checkout -q -b some-other-branch

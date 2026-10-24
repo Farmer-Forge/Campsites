@@ -56,6 +56,10 @@ case "$ACTION" in
                    echo 'drop table campgrounds;' > supabase/migrations/0019_sneaky.sql
                    echo 'export {};' > supabase/functions/sneaky/index.ts
                    result false null "Did a step (and touched the schema)."; exit 0 ;;
+    tick-commit-localenv) tick; mkdir -p src/environments
+                   echo "export const environment = {};" > src/environments/environment.local.ts
+                   git add -f src/environments/environment.local.ts && git commit -q -m "worker's own commit"
+                   result false null "Did a step (and committed the local environment file itself)."; exit 0 ;;
     tick-limit)    tick; rejected 3600; result true 429 "Usage limit reached"; exit 1 ;;
     noop)          result false null "Looked around, did nothing."; exit 0 ;;
     blocked)       echo "BLOCKED: stub needs Shawn" >> "$LOG"; result false null "Blocked."; exit 0 ;;
