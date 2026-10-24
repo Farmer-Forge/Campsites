@@ -7,10 +7,16 @@ Campsites is **CampsiteFinder V1.1**: a rebuild of the live CampsiteFinder site 
 **The goal driving this project is to move MyGear's Ralph loop (`~/ReactProjects/myGear/ralphloop/`, React) over to Angular** and prove it can rebuild a real, shipped app. V1.1 is the test case.
 
 - **V1** is `~/projects/PrimeNG`. Its code is on GitHub (`Farmer-Forge/CampsiteFinder`), its database on Supabase cloud, and the site on Vercel. **Shawn isn't changing V1's app or database until the loop can rebuild it.**
-- **V1.1** is this repo: a new git repo, which eventually gets its own GitHub repo, then its own Supabase cloud project and Vercel site when it's ready. Those cloud steps are done by hand, never by the loop.
+- **V1.1** is this repo (GitHub `Farmer-Forge/Campsites`). It gets its own Supabase cloud project and Vercel site when it's ready. Those cloud steps are done by hand, never by the loop.
 - **V1.1 matches V1's behavior and look exactly.** No new features. New ideas wait for V1.2.
 - **Stack:** Angular + PrimeNG + Supabase, the same as V1.
 - **Strategy:** the loop rebuilds the app from specs. V1's code isn't copied in, except the schema (below).
+
+## Machines and repo
+
+- **Lisa:** this WSL machine. Interactive Claude sessions, spec writing, V1's code (`~/projects/PrimeNG`) and the production backup. **No Docker here, by choice.** Don't suggest setting it up.
+- **Ralph:** the loop server (`ssh ralph`: `claude@192.168.1.188`). Docker, the loop's worker image, and this project's local Supabase stack. Anything that needs Docker or a database runs here, including the schema comparison. MyGear's stack on Ralph uses ports 54330–54339; Campsites keeps the default 54320–54329.
+- **GitHub:** `Farmer-Forge/Campsites`, **public**, default branch `main`. The loop's repo-scoped token goes in `~/.secrets/campsites-ralph-loop.env` on Ralph (not created yet).
 
 ## Hard rules
 
@@ -63,7 +69,7 @@ Campsites uses L0, L1 and its own Angular setup. **It does not use Forge's core 
 The full version, with checkboxes, is in the roadmap spec.
 
 1. **Specs.** Write V1.1 specs in `docs/superpowers/specs/` from V1's code, one per area. Include a "do not change" spec for the schema covering tables, RPCs, RLS policies and edge functions. Shawn reviews each and marks what's intended and what's accidental. Not started.
-   - **Check the schema contract against production.** V1's migrations were applied to production one at a time through MCP, so `0001–0018` hasn't been proved to equal production's real schema. Compare the backup's `schema.sql` and `auth_triggers.sql` with a schema dump of a local stack built from `0001–0018`, and resolve any differences before the schema spec is approved.
+   - **Check the schema contract against production.** V1's migrations were applied to production one at a time through MCP, so `0001–0018` hasn't been proved to equal production's real schema. On Ralph, compare the backup's `schema.sql` and `auth_triggers.sql` (copied over from Lisa; neither holds user data) with a schema dump of a local stack built from `0001–0018`, and resolve any differences before the schema spec is approved.
 2. **Tests.** Playwright and app unit tests are **dropped** (Shawn, 2026-10-19). V1 has no database tests. V1's Deno tests for the edge functions (`ridb-sync`, `nps-sync`) are part of the copied `supabase/functions/` and run as a step check.
 3. **Loop setup: the main goal.** Follow `create-new-project.md`. Copy `ralphloop/` from MyGear, which works as it is today, and make Angular versions of its React-specific parts: worker prompt rule 8, `review.sh`'s dev-server command and port, the worker image (add Deno), and the seed scripts. Skip the parts of `create-new-project.md` that assume Forge's core plan and Tailwind.
 4. **`task.md`,** written from the approved specs. Task 1 (local Supabase stack, migrations, seed) is done by hand. The seed uses the campground data from the production backup and fake users, so the loop never calls the live RIDB, NPS or National Archives APIs. Migration `0007_set_shawnpfarmer_admin.sql` promotes Shawn's real email, so the local dev admin comes from the seed instead.
