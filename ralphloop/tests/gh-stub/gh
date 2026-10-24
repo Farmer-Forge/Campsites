@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# Fake `gh` for the loop's tests — put this directory first on PATH. Supports
+# only the exact calls doloop.sh and chain.sh make, and ignores --json/-q:
+# each call prints what the real call's -q expression would.
+#
+# PRs live in $RALPH_GH_STUB_DIR/prs, one per line: "<number> <head> <state> <title…>".
+# `pr diff N --name-only` lists the files the PR's branch changes vs main.
+# RALPH_GH_STUB_FAIL_ONCE=pr_merge (or pr_list, pr_diff) makes that call fail
+# the first time only, like a transient GitHub error.
+# `pr merge` really squash-merges <head> into main of the bare repo at
+# $RALPH_GH_STUB_ORIGIN (or makes an empty commit if RALPH_GH_STUB_NOOP_MERGE=1).
+# ==============================================================================
+set -euo pipefail
+
+DB="${RALPH_GH_STUB_DIR:?}/prs"
+ORIGIN="${RALPH_GH_STUB_ORIGIN:?}"
+touch "$DB"
+
+SUB="$1 $2"
+shift 2
+if [ "${RALPH_GH_STUB_FAIL_ONCE:-}" = "${SUB// /_}" ] && [ ! -e "${DB}.failed-once" ]; then
+    touch "${DB}.failed-once"
+    echo "gh stub: simulated transient failure of $SUB" >&2
+    exit 1
+fi
+HEAD_REF="" TITLE="" POS=""
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --head)  HEAD_REF="$2"; shift 2 ;;
+        --title) TITLE="$2"; shift 2 ;;
+        --repo|--base|--body|--json|-q|--state|--limit) shift 2 ;;
+        --squash|--name-only) shift ;;
+        *) POS="$1"; shift ;;
+    esac
+done
+
+case "$SUB" in
+    "pr create")
+        N=$(( $(wc -l < "$DB") + 1 ))
+        echo "$N $HEAD_REF open $TITLE" >> "$DB"
+        echo "https://github.com/stub/repo/pull/$N"
+        ;;
+    "pr list")
+        if [ -n "$HEAD_REF" ]; then   # doloop.sh: URL of the open PR for one branch
+            awk -v h="$HEAD_REF" '$2 == h && $3 == "open" { print "https://github.com/stub/repo/pull/" $1; exit }' "$DB"
+        else                          # chain.sh: "<number> <head>" per open ralph-loop PR
+            awk '$3 == "open" && $2 ~ /^ralph-loop\/task-/ { print $1 " " $2 }' "$DB"
+        fi
+        ;;
+    "pr diff")
+        HEAD_REF=$(awk -v n="$POS" '$1 == n { print $2 }' "$DB")
+        TMP=$(mktemp -d)
+        git clone -q "$ORIGIN" "$TMP/c"
+        git -C "$TMP/c" diff --name-only "origin/main...origin/$HEAD_REF"
+        rm -rf "$TMP"
+        ;;
+    "pr merge")
+        LINE=$(awk -v n="$POS" '$1 == n && $3 == "open"' "$DB")
+        [ -n "$LINE" ] || { echo "gh stub: no open PR #$POS" >&2; exit 1; }
+        HEAD_REF=$(cut -d' ' -f2 <<< "$LINE")
+        TITLE=$(cut -d' ' -f4- <<< "$LINE")
+        TMP=$(mktemp -d)
+        git clone -q "$ORIGIN" "$TMP/c"
+        git -C "$TMP/c" config user.name "GitHub Stub"
+        git -C "$TMP/c" config user.email stub@example.com
+        if [ "${RALPH_GH_STUB_NOOP_MERGE:-0}" = "1" ]; then
+            git -C "$TMP/c" commit -q --allow-empty -m "$TITLE (#$POS)"
+        else
+            git -C "$TMP/c" merge -q --squash "origin/$HEAD_REF" >/dev/null
+            git -C "$TMP/c" commit -q -m "$TITLE (#$POS)"
+        fi
+        git -C "$TMP/c" push -q origin main
+        rm -rf "$TMP"
+        sed -i "s|^$POS $HEAD_REF open |$POS $HEAD_REF merged |" "$DB"
+        echo "✓ Squashed and merged pull request #$POS"
+        ;;
+    *)
+        echo "gh stub: unsupported call: $SUB" >&2
+        exit 1
+        ;;
+esac
