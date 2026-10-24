@@ -6,7 +6,7 @@
 -- already exists keeps its password. Nothing is ever duplicated. Run it again
 -- after `supabase db reset`, which deletes every account.
 --
--- The schema is V1's (supabase/migrations/0001-0018), used as it is:
+-- The schema is V1's (supabase/migrations/0001-0019), used as it is:
 --   * the on_auth_user_created trigger (0005) makes the public.users row,
 --     taking display_name from the account's metadata;
 --   * role is 'user', 'moderator' or 'admin' (0004); suspended is from 0008.
