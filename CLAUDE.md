@@ -16,7 +16,7 @@ Campsites is **CampsiteFinder V1.1**: a rebuild of the live CampsiteFinder site 
 
 - **Lisa:** this WSL machine. Interactive Claude sessions, spec writing, V1's code (`~/projects/PrimeNG`) and the production backup. Docker on Lisa is being handled by other agents, outside this project. Campsites doesn't depend on it.
 - **Ralph:** the loop server (`ssh ralph`: `claude@192.168.1.188`). Docker, the loop's worker image, and this project's local Supabase stack. Anything that needs Docker or a database runs here, including the schema comparison. MyGear's stack on Ralph uses ports 54330–54339; Campsites keeps the default 54320–54329.
-- **GitHub:** `Farmer-Forge/Campsites`, **public**, default branch `main`. The loop's repo-scoped token goes in `~/.secrets/campsites-ralph-loop.env` on Ralph (not created yet).
+- **GitHub:** `Farmer-Forge/Campsites`, **public**, default branch `main`. The loop's repo-scoped token goes in `~/.secrets/campsites-ralph-loop.env` on Ralph (installed and checked 2026-10-23: push and PR access to this repo only).
 
 ## Hard rules
 
