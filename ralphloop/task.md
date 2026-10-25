@@ -125,7 +125,7 @@ Read spec 2 in full, including **Changes from V1**, and spec 9's About section.
   - **Then `.gitignore`:** add Angular's entries to the repo's `.gitignore`, keeping every line already in it.
   - **Then the test tooling:** remove any test target, `tsconfig.spec.json` and test dependency the generator added. There are no tests in this project.
   - **Verify:** `git status --short` shows only the files listed above plus `.gitignore`; nothing under `supabase/` or `ralphloop/` changed.
-- [ ] **Step 2: Install the dependencies.**
+- [x] **Step 2: Install the dependencies.**
   - **Runtime:** `npm install primeng@^22.0.0 @primeuix/themes@^3.0.0 primeicons@^8.0.0 @supabase/supabase-js@^2.112.3 leaflet@^1.9.4 leaflet.markercluster@^1.5.3 @bluehalo/ngx-leaflet@^22.0.0 @bluehalo/ngx-leaflet-markercluster@^22.0.0 @angular/animations@^22 @angular/cdk@^22 @angular/cdk-experimental@^22`
   - **Dev:** `npm install -D @types/leaflet@^1.9.22 @types/leaflet.markercluster@^1.5.6 prettier@^3.8.1`
   - **Verify:**
