@@ -78,3 +78,6 @@ TASK 3 COMPLETE
 - Step 5: worktree clean; nothing to commit. Confirmed the account component and UserService files appear in `git log main..HEAD --stat` via checkpoint commits. Step treated as done.
 
 TASK 4 COMPLETE
+
+## Task 5, call 1
+- Step 1: wrote core/models/campground.model.ts, trip.model.ts and CampgroundsService (getNearest pages 1,000 at a time with no result_limit; getByIds, getParkCodes (paged), getParkNames, searchByName escaping \, % and _). getByIds rows have no distance, so distanceMeters is 0. searchByName returns {id, name} only. `ng lint` and `ng build` pass. Note: Steps 6 and 8 were already ticked in task.md before any code existed; Step 6 and 8 work has NOT been done and needs doing.

@@ -1124,7 +1124,7 @@ Read spec 3 in full. This task builds the services and the five shared component
 - **`TripsService`:** the methods in spec 7's TripsService table. `reorderStops` calls `rpc('reorder_trip_stops', { p_trip_id, p_stop_ids })`. `createTrip` deletes the new trip if inserting its stops fails (spec 7, change #9). It registers an `onSignOut` reset that clears `trips`.
 - **Components:** the inputs and outputs in spec 3, **Shared pieces**, with these selectors: `app-campground-map`, `app-campground-table`, `app-campground-detail-panel`, `app-favorite-toggle`, `app-add-to-trip`.
 
-- [ ] **Step 1: Models and `CampgroundsService`** (spec 3, **Data it uses**, and spec 1's RPCs). `searchByName` escapes `%` and `_` before `ilike` (spec 8, change #4).
+- [x] **Step 1: Models and `CampgroundsService`** (spec 3, **Data it uses**, and spec 1's RPCs). `searchByName` escapes `%` and `_` before `ilike` (spec 8, change #4).
 - [ ] **Step 2: `FavoritesService` and `TripsService`,** as in Interfaces. In `app.ts`, the session effect also calls `favorites.loadFavoriteIds()` (spec 3, change #1).
 - [ ] **Step 3: `app-campground-detail-panel`** (spec 3: the expanded detail; the description is rendered with `[innerHTML]`).
   - **Structure:**
