@@ -192,7 +192,7 @@ Worker prompt rule 8 sends UI steps to these files, so they're written with `tas
 
 ## Changes from V1 (Shawn, 2026-10-25)
 
-Shawn reviewed V1's behaviors and asked for them addressed. He handed the details to Claude: these are Claude's suggestions, accepted without discussion. V1.1 does the following, where V1 didn't:
+Shawn reviewed V1's behaviors and asked for them addressed. He handed the details to Claude: these are Claude's suggestions, accepted without discussion. Where this section and the sections above differ (for example, `UserService.updateTheme`), this section wins. V1.1 does the following, where V1 didn't:
 
 1. **Guards wait for the saved session.** `SupabaseService` exposes a `ready` promise, resolved once `auth.getSession()` has returned at startup. `authGuard` and `adminGuard` `await` it before checking. So refreshing a signed-in page stays on that page, where V1 probably sent it to `/login`.
 2. **No dark mode.**
