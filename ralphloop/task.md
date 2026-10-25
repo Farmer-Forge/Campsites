@@ -131,7 +131,7 @@ Read spec 2 in full, including **Changes from V1**, and spec 9's About section.
   - **Verify:**
     - `npx ng build` succeeds;
     - every `@angular/*` package in `package.json` has the same major version (22).
-- [ ] **Step 3: Add lint.**
+- [x] **Step 3: Add lint.**
   - Run `npx ng add angular-eslint --skip-confirmation`.
   - Add a `.prettierrc` with `{ "singleQuote": true, "printWidth": 120 }`.
   - Add npm scripts: `"lint": "ng lint"` and `"build": "ng build"`. Keep `start` / `ng`.
