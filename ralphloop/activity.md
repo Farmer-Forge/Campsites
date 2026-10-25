@@ -44,3 +44,6 @@ TASK 2 COMPLETE
 
 ## Task 3, call 1
 - Step 1: wrote src/app/features/auth/auth.scss verbatim from the step (68 lines). `ng lint` passes.
+
+## Task 3, call 2
+- Step 2: wrote features/auth/login.component.{ts,html} (not routed yet; Step 5 does routes). Sign in per spec 4 with ?reset=done notice, suspension check (read failure → friendly message + signOut via SupabaseService), safe returnUrl. `ng lint` and `ng build` pass; no raw colors.

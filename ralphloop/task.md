@@ -1009,7 +1009,7 @@ Read spec 4 in full, including **Proposed changes from V1** (approved).
   - messages are `rt-notice` / `rt-error`;
   - links are `auth-switch`, with `auth-forgot` for "Forgot password?";
   - help text is `auth-help`.
-- [ ] **Step 2: Sign in.** Spec 4, **Sign in**, plus changes #1 and #5.
+- [x] **Step 2: Sign in.** Spec 4, **Sign in**, plus changes #1 and #5.
   - Every sign-out goes through `SupabaseService.signOut()`.
   - After success, go to `returnUrl` only if it starts with `/` but not `//`; otherwise go to `/`.
 - [ ] **Step 3: Sign up.** Spec 4, **Sign up**, plus changes #3 and #4. The display name is trimmed. If `signUp` returns a session, go to `/`; otherwise show the check-your-email notice.
