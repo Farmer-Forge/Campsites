@@ -1,0 +1,101 @@
+<cdk-virtual-scroll-viewport autosize class="rt-scroll-list">
+  <div class="card-slot" *cdkVirtualFor="let campground of campgrounds(); trackBy: trackById">
+    <div class="campground-card" [class.is-open]="openId() === campground.id">
+      <div
+        class="card-main"
+        tabindex="0"
+        role="button"
+        (click)="toggleCard(campground)"
+        (keydown.enter)="toggleCard(campground)"
+      >
+        @if (planMode()) {
+          <button
+            type="button"
+            class="plan-check"
+            [class.is-checked]="planSelected().has(campground.id)"
+            aria-label="Include in trip"
+            [attr.aria-pressed]="planSelected().has(campground.id)"
+            (click)="togglePlan($event, campground.id)"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
+          </button>
+        }
+        @if (showDistance()) {
+          <div class="distance-badge">
+            <span class="badge-top">{{ badge(campground) }}</span>
+            <span class="badge-sub">MI</span>
+          </div>
+        }
+        <div class="card-text">
+          <div class="campground-name-link">{{ campground.name }}</div>
+          <div class="tags">
+            <span class="rt-tag rt-tag--teal">{{ campground.agency }}</span>
+            @if (campground.parkCode) {
+              <span class="rt-tag rt-tag--outline">{{ campground.parkCode }}</span>
+            }
+          </div>
+        </div>
+        <app-favorite-toggle [campgroundId]="campground.id" />
+        @if (hasSession()) {
+          <button
+            type="button"
+            class="rt-icon-btn add-to-trip-toggle"
+            [class.is-active]="pickerId() === campground.id"
+            title="Add to trip"
+            aria-label="Add to trip"
+            [attr.aria-expanded]="pickerId() === campground.id"
+            (click)="togglePicker($event, campground.id)"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M5 12h14" />
+              <path d="M12 5v14" />
+            </svg>
+          </button>
+        }
+      </div>
+      @if (hasSession() && pickerId() === campground.id) {
+        <app-add-to-trip [campgroundId]="campground.id" (done)="pickerId.set(null)" />
+      }
+      @if (showNotes()) {
+        <div class="note-row">
+          <input
+            type="text"
+            class="note-input"
+            placeholder="Add a note"
+            aria-label="Add a note"
+            [value]="noteValue(campground.id)"
+            (input)="setDraft(campground.id, $any($event.target).value)"
+            (blur)="commitNote(campground.id)"
+          />
+        </div>
+      }
+      @if (openId() === campground.id) {
+        <div class="detail" [class.indented]="showDistance()">
+          <app-campground-detail-panel [campground]="campground" />
+        </div>
+      }
+    </div>
+  </div>
+</cdk-virtual-scroll-viewport>

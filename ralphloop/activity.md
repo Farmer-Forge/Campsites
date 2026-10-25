@@ -78,3 +78,35 @@ TASK 3 COMPLETE
 - Step 5: worktree clean; nothing to commit. Confirmed the account component and UserService files appear in `git log main..HEAD --stat` via checkpoint commits. Step treated as done.
 
 TASK 4 COMPLETE
+
+## Task 5, call 1
+- Step 1: wrote core/models/campground.model.ts, trip.model.ts and CampgroundsService (getNearest pages 1,000 at a time with no result_limit; getByIds, getParkCodes (paged), getParkNames, searchByName escaping \, % and _). getByIds rows have no distance, so distanceMeters is 0. searchByName returns {id, name} only. `ng lint` and `ng build` pass. Note: Steps 6 and 8 were already ticked in task.md before any code existed; Step 6 and 8 work has NOT been done and needs doing.
+
+## Task 5, call 2
+- Step 2: wrote FavoritesService (signals, load/toggle/updateNote, onSignOut reset) and TripsService (spec 7 table; reorderStops via reorder_trip_stops RPC; createTrip deletes the new trip if stops insert fails; onSignOut clears trips). app.ts session effect also calls loadFavoriteIds (errors swallowed). `ng lint` and `ng build` pass.
+
+## Task 5, call 3
+- Step 3: wrote shared/ui/campground-detail-panel/campground-detail-panel.component.ts (inline template and verbatim styles; `campground` input; description via `[innerHTML]`; Reserve only when reservationUrl is non-empty; Directions falls back to the Google Maps URL). Used `@if`, no raw colors. `ng lint` and `ng build` pass (budget warning pre-existing). Steps 6 and 8 are still ticked without work done, as noted in call 1.
+
+## Task 5, call 4
+- Step 4: wrote shared/ui/favorite-toggle/favorite-toggle.component.ts (input `campgroundId`; renders only with a session; heart reads only `favoriteIds`, no load on appear per change #1; title "Remove favorite"/"Favorite", aria-pressed, stopPropagation; verbatim style). `ng lint` and `ng build` pass. Steps 6 and 8 are still ticked without work done (see call 1).
+
+## Task 5, call 5
+- Step 5: wrote shared/ui/add-to-trip/add-to-trip.component.ts (input `campgroundId`, output `done`). On init it loads trips and the trip ids holding this campground; trip buttons disabled with " (added)"; "Create & Add" or Enter creates a trip with this stop (blank does nothing); the three spec error texts. Verbatim styles, shared rt-* classes. `ng lint` and `ng build` pass. Steps 6 and 8 are still ticked without work done (see call 1); Step 7 (map) is still open.
+
+## Task 5, call 6
+- Step 7: wrote shared/ui/campground-map/campground-map.component.{ts,html,scss} (inputs campgrounds, selectedId, ordered, searchLocation, allowLocationPick; outputs viewDetails, addToTrip, locationPick). Cluster uses chunkedLoading; popup is plain DOM with "View details ▸" and, when signed in, "Add to trip…"; ordered mode numbers markers, joins them with a polyline and fits bounds (32px); ResizeObserver calls invalidateSize. `ng lint` and `ng build` pass.
+- The table's `openPickerFor` input (asked for in Step 7) could NOT be added: `app-campground-table` was never written. Steps 6 and 8 were ticked without work, so I un-ticked them; the next call should do Step 6 (including `openPickerFor: string | null`), then Step 8.
+
+## Task 5, call 6 — ended without completing a step (no step was checked off) at 2026-10-25 23:45 UTC
+
+## Task 5, call 7
+- Step 6: wrote shared/ui/campground-table/campground-table.component.{ts,html}. Virtual-scrolled (`cdk-virtual-scroll-viewport autosize.rt-scroll-list`, `*cdkVirtualFor` trackBy id). Inputs as spec plus `openPickerFor`; `selected` from outside expands the card and `scrollToIndex(i,'smooth')`; one add-to-trip panel at a time; notes seeded from `notes` with drafts never overwritten, emitted on blur; badge miles 1 decimal under 100, rounded above. Verbatim styles, plus additions under the styles block: `.card-slot` (10px bottom padding, since the viewport isn't a flex gap container), `.rt-scroll-list {display:block}`, and under 900px a `height:60vh` (global `overflow:visible` would break the viewport). `card-main` got tabindex/role/keydown.enter for lint. `ng lint` and `ng build` pass. Not yet rendered in a page (nothing uses it until Task 6). Step 8 (Verify) is still unticked: it was ticked prematurely earlier and has not been done.
+
+## Task 5, call 8
+- Step 8: `ng lint` passes; `ng build` succeeds (initial bundle 744.68 kB, a budget warning only, under the 1 MB error). The paging curl with `Range: 0-999` against the local RPC returned 1000 ids. Spot-checked changes #1–#4: favorites load in app.ts and the heart only reads the signal; the table uses cdk-virtual-scroll with `openPickerFor`; no `result_limit` is sent; the description uses `[innerHTML]`. Step 9 (Commit) is next.
+
+## Task 5, call 9
+- Step 9: worktree clean, nothing to commit. Confirmed the services and all shared components appear in `git log main..HEAD --stat` via checkpoint commits. Step treated as done.
+
+TASK 5 COMPLETE
