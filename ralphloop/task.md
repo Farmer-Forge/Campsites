@@ -697,7 +697,7 @@ select.rt-input {
     1. `await supabase.ready`. No session → `/login`.
     2. If `userService.profile()` is null, `await userService.loadProfile()`.
     3. `role === 'admin'` → allow; otherwise → `/`.
-- [ ] **Step 10: Write `app.config.ts` and `main.ts`.**
+- [x] **Step 10: Write `app.config.ts` and `main.ts`.**
   - **Providers:** `provideZoneChangeDetection({ eventCoalescing: true })`, `provideRouter(routes)`, `provideAnimationsAsync()`, and `providePrimeNG({ theme: { preset: Aura }, license: 'eyJpZCI6ImVhYWFjMzJhLWZkMDMtNDg3ZC04ZDc2LTk5NjEyMWE0YTZhZCIsInByb2R1Y3QiOiJwcmltZXVpIiwidGllciI6ImNvbW11bml0eSIsInR5cGUiOiJkZXYiLCJpYXQiOjE3ODY5MTgxMDIsImV4cCI6MTgxODQ1NDEwMn0.88HB7YEVupCudlmHZqsUboqAM8zFUvmTATmlLJcK3s637mD0fYpaSrgqXaTjzWzyLXz0gptt4nZbqi2l9FF8Bg' })`. Aura comes from `@primeuix/themes/aura`; the license string is V1's PrimeUI community license, committed by Shawn's decision (spec 2, **Decided**).
   - **`main.ts`:** `bootstrapApplication(App, appConfig)`. Keep the default `zone.js` polyfill.
 - [ ] **Step 11: Write the root component and the nav** (spec 2, **Nav bar**). Use these class names; `app.scss` styles them.

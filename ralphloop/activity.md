@@ -24,3 +24,6 @@
 
 ## Task 2, call 9
 - Step 9: wrote src/app/core/guards/auth.guard.ts and admin.guard.ts (both await supabase.ready; admin loads the profile if null, non-admin goes to /). `ng lint` and `ng build` pass.
+
+## Task 2, call 10
+- Step 10: wrote app.config.ts (zone change detection, router, async animations, PrimeNG Aura + license); main.ts already matched. The Angular 22 scaffold is zoneless and had no zone.js, so "keep the default zone.js polyfill" had nothing to keep: installed zone.js and added `"polyfills": ["zone.js"]` to the build options in angular.json. `ng lint` and `ng build` pass.
