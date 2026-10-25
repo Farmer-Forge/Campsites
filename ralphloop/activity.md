@@ -141,3 +141,12 @@ TASK 6 COMPLETE
 - Step 6: `ng lint` passes and `ng build` succeeds. Pat password login returns an access_token (count 1); Sam `users.suspended` is `t`. Re-read spec 4 and grepped every exact text (headings, buttons, notices, reset states, errors): all present. Gaps: none.
 
 TASK 3 COMPLETE
+
+## Task 7, call 1
+- Steps 1–4 were ticked in task.md but nothing existed (no features/favorites, no `fitToCampgrounds`, route still a placeholder). I un-ticked 2–4 and did Step 1 for real.
+- Step 1: wrote features/favorites/favorites.component.{ts,html} (inline verbatim styles). Loads favorites then `getByIds`; cards derive from `favoriteIds()` so unfavoriting removes the card (#1); exact texts for empty (#2), load error + "Try again" (#3), note error, save error; plan mode keeps tick order via Set insertion order; Save enabled on trimmed name + ≥1 tick; navigates to `/trips/{id}`; note blur → `updateNote` (blank → null). Template binds `[fitToCampgrounds]="true"`, which the map doesn't have yet, so `ng build` fails with NG8002 until Step 2. `ng lint` passes.
+
+## Task 7, call 1 — ended without completing a step (no step was checked off) at 2026-10-25 23:52 UTC
+
+## Task 7, call 2
+- Step 2: added `fitToCampgrounds` input to the map; renderMarkers fits bounds (32px padding) when ordered or fit is true; the polyline stays ordered-only. `ng lint` and `ng build` pass (the favorites template now compiles). Steps 3 (route), 4, 5 remain.

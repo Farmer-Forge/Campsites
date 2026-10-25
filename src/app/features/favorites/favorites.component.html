@@ -1,0 +1,68 @@
+<div class="rt-map-layout">
+  <div class="rt-map-frame">
+    <app-campground-map
+      [campgrounds]="campgrounds()"
+      [selectedId]="selected()?.id ?? null"
+      [fitToCampgrounds]="true"
+    />
+  </div>
+  <div class="rt-side">
+    <div class="favorites-header">
+      <h1 class="rt-list-title">Favorites</h1>
+      @if (campgrounds().length > 0) {
+        <button
+          type="button"
+          class="rt-btn rt-btn--shadow plan-button"
+          [class.rt-btn--mustard]="!planning()"
+          (click)="togglePlanning()"
+        >
+          {{ planning() ? 'Cancel' : 'Plan a trip' }}
+        </button>
+      }
+    </div>
+    @if (planning()) {
+      <div class="rt-dashed-panel trip-planner">
+        <div class="planner-hint">Tick the stops below, name the trip, and save.</div>
+        <div class="planner-row">
+          <input
+            type="text"
+            class="rt-input"
+            placeholder="Trip name"
+            aria-label="Trip name"
+            [ngModel]="tripName()"
+            (ngModelChange)="tripName.set($event)"
+          />
+          <button type="button" class="rt-btn rt-btn--cherry" [disabled]="!canSave()" (click)="saveTrip()">
+            Save Trip
+          </button>
+        </div>
+        @if (saveError()) {
+          <p class="rt-error">Couldn't save this trip — try again.</p>
+        }
+      </div>
+    }
+    @if (loadFailed()) {
+      <p class="rt-error empty">Couldn't load your favorites — try again.</p>
+      <div>
+        <button type="button" class="rt-btn rt-btn--sm" (click)="load()">Try again</button>
+      </div>
+    } @else if (isLoaded() && campgrounds().length === 0) {
+      <p class="empty">No favorites yet. Tap the heart on a campground in the Finder to save it here.</p>
+    }
+    @if (noteError()) {
+      <p class="rt-error">Couldn't save that note — try again.</p>
+    }
+    <app-campground-table
+      [campgrounds]="campgrounds()"
+      [selected]="selected()"
+      [showDistance]="false"
+      [showNotes]="true"
+      [notes]="notes()"
+      [planMode]="planning()"
+      [planSelected]="planSelected()"
+      (selectedChange)="selected.set($event)"
+      (noteChange)="onNoteChange($event)"
+      (planToggle)="togglePlanStop($event)"
+    />
+  </div>
+</div>
