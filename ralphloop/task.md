@@ -1024,7 +1024,7 @@ Read spec 4 in full, including **Proposed changes from V1** (approved).
      - `curl -s "$SUPABASE_URL/auth/v1/token?grant_type=password" -H "apikey: $SUPABASE_ANON_KEY" -H 'Content-Type: application/json' -d '{"email":"pat@campsites.test","password":"campsites-pat"}' | grep -c access_token` prints `1`;
      - Sam's `users.suspended` is `t`: `psql "$DATABASE_URL" -Atc "select suspended from public.users join auth.users using (id) where email='sam@campsites.test'"`.
   3. Re-read spec 4 and list any gap in `activity.md`.
-- [ ] **Step 7: Commit.** `git commit -m "Task 3: sign in, sign up, forgot and reset password"`
+- [x] **Step 7: Commit.** `git commit -m "Task 3: sign in, sign up, forgot and reset password"`
 
 **QC (for Shawn, in the browser):**
 - Sign in as Pat. Favorites still says "Coming soon", but you're signed in: Account appears in the nav and Sign out works.

@@ -56,3 +56,8 @@ TASK 2 COMPLETE
 
 ## Task 3, call 5
 - Step 5: authGuard/adminGuard now redirect to /login?returnUrl=<state.url>; added guestGuard (awaits ready, signed in → /); login/signup routes use real components with guestGuard, forgot/reset routes use real components. `ng lint` and `ng build` pass.
+
+## Task 3, call 6
+- Step 7: worktree clean; nothing to commit. Confirmed the auth files, guards and app.routes.ts appear in `git log main..HEAD --stat` via checkpoint commits. Step treated as done.
+
+TASK 3 COMPLETE
