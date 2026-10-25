@@ -128,3 +128,6 @@ TASK 5 COMPLETE
 
 ## Task 6, call 5
 - Step 5: routed `''` to FinderComponent (lazy) in app.routes.ts. Lint and build pass.
+
+## Task 6, call 6
+- Step 6: `ng lint` passes (all files); `ng build` succeeds. Re-read spec 3 and grepped every exact text (the four location messages, blocked help, "Finding campgrounds near you...", "Unable to load nearby campgrounds.", manual-panel labels/button/help text, "Park filter shows NPS campgrounds only", "Updating…", "nearest first", "Change location", "Use my device location", "Search from here", "Tip:", MILES FROM ME, AGENCY): all present. Gaps: none. "All regions"/Region multiselect is intentionally absent, since change #7 replaces it with the single "Where" picker. The manual-panel help text is split across lines in the template, so a one-line grep misses it, but the text matches.
