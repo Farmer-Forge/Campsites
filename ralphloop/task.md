@@ -1625,7 +1625,7 @@ Read the Trips list and Trip detail sections and Proposed changes #3 and #5–#1
 - Create: `src/app/features/trips/trips-list.component.ts`, `.html`; `trip-detail.component.ts`, `.html`
 - Modify: `src/app/core/services/trips.service.ts` (`loadAllStops(tripIds): Promise<Map<string, TripStop[]>>` in two requests, change #5), `src/app/app.routes.ts`
 
-- [ ] **Step 1: `TripsService.loadAllStops`.** One `trip_stops` select for all the given trip ids (`order by position`), then one `getByIds` for every campground. Returns the stops per trip.
+- [x] **Step 1: `TripsService.loadAllStops`.** One `trip_stops` select for all the given trip ids (`order by position`), then one `getByIds` for every campground. Returns the stops per trip.
 - [x] **Step 2: The Trips list** (spec 7, plus changes #3, #6 and #7).
   - **Structure:**
     - `div.rt-content` with `h1.rt-title` "Trips", then `p.empty`;
@@ -1705,7 +1705,7 @@ Read the Trips list and Trip detail sections and Proposed changes #3 and #5–#1
   margin-left: auto;
 }
     ```
-- [ ] **Step 3: Trip detail** (spec 7, plus changes #3, #6, #8 and #10).
+- [x] **Step 3: Trip detail** (spec 7, plus changes #3, #6, #8 and #10).
   - **Structure:**
     - not found: `div.rt-content` with `a.back-link` "‹ All trips";
     - otherwise `div.rt-map-layout` > the map (ordered) + `div.rt-side`, holding:
@@ -1856,8 +1856,8 @@ Read the Trips list and Trip detail sections and Proposed changes #3 and #5–#1
   }
 }
     ```
-- [ ] **Step 4: Routes.** `trips` and `trips/:id` → the real components (`authGuard`).
-- [ ] **Step 5: Verify.**
+- [x] **Step 4: Routes.** `trips` and `trips/:id` → the real components (`authGuard`).
+- [x] **Step 5: Verify.**
   - Lint and build.
   - Re-read spec 7.
   - `grep -rn "window.confirm\|confirm(" src/app` finds nothing.

@@ -161,3 +161,26 @@ TASK 3 COMPLETE
 - Step 5: worktree clean; favorites component, map change and route appear in `git log main..HEAD --stat` via checkpoint commits. Commit step treated as done.
 
 TASK 7 COMPLETE
+
+## Task 8, call 1
+- Steps 2 and 6 were ticked in task.md but features/trips does not exist; un-ticked them.
+- Step 1: added `TripsService.loadAllStops` (one trip_stops select with `in` + order by position, one getByIds for all campgrounds; every requested trip id gets an entry). Lint and build pass.
+
+## Task 8, call 1 — ended without completing a step (no step was checked off) at 2026-10-25 23:54 UTC
+
+## Task 8, call 2
+- Step 2: wrote features/trips/trips-list.component.{ts,html} (inline verbatim styles). Loads trips, then `loadAllStops` (failure → no summary); load error "Couldn't load your trips — try again." + Try again; empty text with Favorites link; inline delete confirmation (Cancel / "Yes, delete this trip"); delete failure message. Not routed yet (route is a later step). `ng lint` and `ng build` pass.
+
+## Task 8, call 3
+- Step 3: wrote features/trips/trip-detail.component.{ts,html} (inline verbatim styles). Not-found / load-failed (with Try again) states; ordered map; rename with Save/Cancel (blank doesn't save); inline delete confirmation → `/trips`; stop cards with move up/down (optimistic swap, `reorderStops`, re-read on failure), Remove, expandable detail panel; add-stop select of favorites not in the trip. Texts for each error as in spec 7. Not routed yet (Step 4). `ng lint` and `ng build` pass.
+
+## Task 8, call 4
+- Step 4: routed `trips` and `trips/:id` to TripsListComponent and TripDetailComponent (lazy, authGuard) in app.routes.ts.
+
+## Task 8, call 5
+- Step 5: `ng lint` passes and `ng build` succeeds. `grep -rn "window.confirm\|confirm(" src/app` finds nothing. Re-read spec 7 (Trips list, Trip detail, changes #3, #6–#8, #10) against both templates and the component error texts: all present. Gaps: none.
+
+## Task 8, call 6
+- Step 6: worktree clean; trips list, trip detail, service change and routes appear in `git log main..HEAD --stat` via checkpoint commits. Commit step treated as done.
+
+TASK 8 COMPLETE
