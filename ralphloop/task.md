@@ -901,7 +901,7 @@ select.rt-input {
   4. Stop the server.
   5. `grep -rn "supabase.co\|eyJhbGci" src/environments/environment.ts` finds nothing.
   6. Re-read spec 2: every item under **Routes and guards**, **Session**, **Nav bar** and **Changes from V1** #1, #3, #4 and #5 is done. List any gap in `activity.md`.
-- [ ] **Step 14: Commit.**
+- [x] **Step 14: Commit.**
   ```bash
   git add package.json package-lock.json angular.json tsconfig.json tsconfig.app.json .editorconfig eslint.config.js .prettierrc .gitignore public src
   git commit -m "Task 2: Angular scaffold and app shell (nav, routes, guards, session), About and 404 pages"

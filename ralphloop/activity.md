@@ -36,3 +36,8 @@
 
 ## Task 2, call 13
 - Step 13: `ng lint` and `ng build` clean, dist index.html exists. Served on 4201: `/` and `/about` both return index with one `<app-root`. Server stopped. environment.ts has no supabase.co or key. Re-read spec 2: routes, guards, session, nav and changes #1, #3, #4, #5 are in place. Gaps: none (no theme in the profile, by design: no dark mode). Only the Account/Admin pages and auth pages are placeholders for later tasks.
+
+## Task 2, call 14
+- Step 14: worktree clean; git commit would have nothing to commit. Confirmed the step files (package.json, angular.json, eslint.config.js, src/...) appear in `git log main..HEAD --stat` via checkpoint commits. Step treated as done.
+
+TASK 2 COMPLETE
