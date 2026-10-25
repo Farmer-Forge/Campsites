@@ -892,7 +892,7 @@ select.rt-input {
   }
 }
       ```
-- [ ] **Step 13: Verify.**
+- [x] **Step 13: Verify.**
   1. `npx ng lint` and `npx ng build` are clean; `test -f dist/campsite-finder/browser/index.html`.
   2. Write `environment.local.ts`.
   3. Run `npx ng serve --port 4201` in the background, wait for "Application bundle generation complete", then check:
