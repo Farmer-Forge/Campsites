@@ -156,3 +156,8 @@ TASK 3 COMPLETE
 
 ## Task 7, call 4
 - Step 4: `ng lint` passes (all files); `ng build` succeeds. Re-read spec 6 (Favorites section, changes #1–#4) against the template: header, Plan a trip/Cancel, planner hint, Trip name, Save Trip, errors, empty text, load error with Try again, note error all present. Gaps: none.
+
+## Task 7, call 5
+- Step 5: worktree clean; favorites component, map change and route appear in `git log main..HEAD --stat` via checkpoint commits. Commit step treated as done.
+
+TASK 7 COMPLETE
