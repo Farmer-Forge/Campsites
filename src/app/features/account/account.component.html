@@ -1,0 +1,92 @@
+<div class="rt-content">
+  <h1 class="rt-title">Account</h1>
+
+  <form class="rt-page-card" (ngSubmit)="saveName()">
+    <h2 class="rt-heading">Display name</h2>
+    <input
+      class="rt-input"
+      type="text"
+      name="displayName"
+      placeholder="Display name"
+      required
+      [(ngModel)]="displayName"
+    />
+    @if (nameMessage()) {
+      <p class="rt-notice">{{ nameMessage() }}</p>
+    }
+    @if (nameError()) {
+      <p class="rt-error">{{ nameError() }}</p>
+    }
+    <button
+      class="rt-btn rt-btn--cherry rt-btn--shadow card-action"
+      type="submit"
+      [disabled]="savingName() || !displayName.trim()"
+    >
+      Save Name
+    </button>
+  </form>
+
+  <form class="rt-page-card" (ngSubmit)="savePassword()">
+    <h2 class="rt-heading">Password</h2>
+    <div class="password-row">
+      <input
+        class="rt-input"
+        type="password"
+        name="newPassword"
+        placeholder="New password"
+        autocomplete="new-password"
+        [(ngModel)]="newPassword"
+      />
+      <input
+        class="rt-input"
+        type="password"
+        name="confirmPassword"
+        placeholder="Confirm password"
+        autocomplete="new-password"
+        [(ngModel)]="confirmPassword"
+      />
+    </div>
+    @if (passwordMessage()) {
+      <p class="rt-notice">{{ passwordMessage() }}</p>
+    }
+    @if (passwordError()) {
+      <p class="rt-error">{{ passwordError() }}</p>
+    }
+    <button
+      class="rt-btn rt-btn--cherry rt-btn--shadow card-action"
+      type="submit"
+      [disabled]="savingPassword() || !newPassword"
+    >
+      Update Password
+    </button>
+  </form>
+
+  <div class="rt-page-card danger-zone">
+    <h2 class="rt-heading">Delete Account</h2>
+    @if (confirming()) {
+      <p class="confirm-text">Delete your account? This cannot be undone.</p>
+      <div class="confirm-actions">
+        <button class="rt-btn" type="button" (click)="confirming.set(false)">Cancel</button>
+        <button
+          class="rt-btn rt-btn--cherry"
+          type="button"
+          [disabled]="deleting()"
+          (click)="deleteAccount()"
+        >
+          Yes, delete my account
+        </button>
+      </div>
+    } @else {
+      <button
+        class="rt-btn rt-btn--danger-outline card-action"
+        type="button"
+        (click)="confirming.set(true)"
+      >
+        Delete Account
+      </button>
+    }
+    @if (deleteError()) {
+      <p class="rt-error">{{ deleteError() }}</p>
+    }
+  </div>
+</div>

@@ -64,3 +64,6 @@ TASK 3 COMPLETE
 
 ## Task 4, call 1
 - Step 1: added updateDisplayName (users row, auth metadata, then profile signal), updatePassword and deleteAccount (delete-account function, then SupabaseService.signOut) to UserService. All throw on error so the page can show messages. `ng lint` and `ng build` pass.
+
+## Task 4, call 2
+- Step 2: wrote features/account/account.component.{ts,html} (not routed yet; Step 3). Display name, password and delete cards with spec texts, inline styles verbatim minus theme rules, last-admin hint appended on failed delete when role is admin, no theme. Success lines use rt-notice, errors rt-error. No raw colors; `ng lint` and `ng build` pass.
