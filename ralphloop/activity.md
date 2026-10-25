@@ -12,3 +12,6 @@
 
 ## Task 2, call 5
 - Step 5: wrote src/environments/environment.ts exactly as given and environment.local.ts from the worker's SUPABASE_URL/SUPABASE_ANON_KEY. Verified `git status --short -uall` lists only environment.ts (not the local file) and `git check-ignore` prints the local path. `ng lint` and `ng build` pass.
+
+## Task 2, call 6
+- Step 6: rewrote src/index.html (title "Campsite Finder", Google Fonts preconnects and stylesheet, rest as the generator had it). `ng lint` and `ng build` pass.

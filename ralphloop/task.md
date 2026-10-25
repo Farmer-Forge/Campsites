@@ -152,7 +152,7 @@ Read spec 2 in full, including **Changes from V1**, and spec 9's About section.
   - **Verify:**
     - `git status --short` doesn't list `environment.local.ts`;
     - `git check-ignore src/environments/environment.local.ts` prints the path.
-- [ ] **Step 6: Write `src/index.html`.**
+- [x] **Step 6: Write `src/index.html`.**
   - `lang="en"`, `<meta charset="utf-8">`, `<title>Campsite Finder</title>`, `<base href="/">`, the viewport meta, and `<link rel="icon" type="image/x-icon" href="favicon.ico">`;
   - preconnects to `https://fonts.googleapis.com` and `https://fonts.gstatic.com` (crossorigin);
   - the stylesheet `https://fonts.googleapis.com/css2?family=Yellowtail&family=Alfa+Slab+One&family=Work+Sans:wght@400;500;600;700&display=swap`;
@@ -1018,7 +1018,7 @@ Read spec 4 in full, including **Proposed changes from V1** (approved).
   - **`authGuard` and `adminGuard`:** send signed-out users to `router.createUrlTree(['/login'], { queryParams: { returnUrl: state.url } })`.
   - **`guestGuard`** on `login` and `signup`.
   - **Routes:** point the four auth routes at the real components.
-- [ ] **Step 6: Verify.**
+- [x] **Step 6: Verify.**
   1. Lint and build.
   2. Check the dev logins against the local Auth API:
      - `curl -s "$SUPABASE_URL/auth/v1/token?grant_type=password" -H "apikey: $SUPABASE_ANON_KEY" -H 'Content-Type: application/json' -d '{"email":"pat@campsites.test","password":"campsites-pat"}' | grep -c access_token` prints `1`;
@@ -1209,7 +1209,7 @@ Read spec 3 in full. This task builds the services and the five shared component
   background: var(--rt-card);
 }
     ```
-- [ ] **Step 6: `app-campground-table`,** virtual-scrolled (spec 3, **Campground card list**, plus change #2).
+- [x] **Step 6: `app-campground-table`,** virtual-scrolled (spec 3, **Campground card list**, plus change #2).
   - **The viewport:** `<cdk-virtual-scroll-viewport autosize class="rt-scroll-list">`, using `ScrollingModule` from `@angular/cdk/scrolling` and `CdkAutoSizeVirtualScroll` from `@angular/cdk-experimental/scrolling`, with `*cdkVirtualFor` over the campgrounds (`trackBy` id). The viewport must fill the side column (flex: 1; min-height: 0).
   - **A selection from outside** expands that card and calls `viewport.scrollToIndex(index, 'smooth')`.
   - **Card structure:**
@@ -1533,7 +1533,7 @@ Read spec 3 in full: the page, the filter bar, how a search runs, the location m
   ```
   V1 had two multiselects (region + state) in a `filter-group`; the single Where picker uses the same group. The "Updating…" text uses `span.nearest`'s style. The park note is `rt-notice`.
 - [ ] **Step 5: Route.** `''` → `FinderComponent`.
-- [ ] **Step 6: Verify.**
+- [x] **Step 6: Verify.**
   - Lint and build.
   - Re-read spec 3 end to end. Check every exact text: the location messages, blocked help, manual panel help, labels, "Finding campgrounds near you...", and "Unable to load nearby campgrounds.". List any gap in `activity.md`.
 - [ ] **Step 7: Commit.** `git commit -m "Task 6: the Finder page (filters, map and list, location, saved search)"`
@@ -1861,7 +1861,7 @@ Read the Trips list and Trip detail sections and Proposed changes #3 and #5–#1
   - Lint and build.
   - Re-read spec 7.
   - `grep -rn "window.confirm\|confirm(" src/app` finds nothing.
-- [ ] **Step 6: Commit.** `git commit -m "Task 8: trips list (postcards) and trip detail (route map, reorder, add and remove stops)"`
+- [x] **Step 6: Commit.** `git commit -m "Task 8: trips list (postcards) and trip detail (route map, reorder, add and remove stops)"`
 
 **QC (for Shawn, in the browser):**
 - As Pat: the "Sample road trip" postcard with "2 stops" and the route.
