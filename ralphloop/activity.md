@@ -84,3 +84,6 @@ TASK 4 COMPLETE
 
 ## Task 5, call 2
 - Step 2: wrote FavoritesService (signals, load/toggle/updateNote, onSignOut reset) and TripsService (spec 7 table; reorderStops via reorder_trip_stops RPC; createTrip deletes the new trip if stops insert fails; onSignOut clears trips). app.ts session effect also calls loadFavoriteIds (errors swallowed). `ng lint` and `ng build` pass.
+
+## Task 5, call 3
+- Step 3: wrote shared/ui/campground-detail-panel/campground-detail-panel.component.ts (inline template and verbatim styles; `campground` input; description via `[innerHTML]`; Reserve only when reservationUrl is non-empty; Directions falls back to the Google Maps URL). Used `@if`, no raw colors. `ng lint` and `ng build` pass (budget warning pre-existing). Steps 6 and 8 are still ticked without work done, as noted in call 1.
