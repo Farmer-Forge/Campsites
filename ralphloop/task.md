@@ -1857,7 +1857,7 @@ Read the Trips list and Trip detail sections and Proposed changes #3 and #5–#1
 }
     ```
 - [x] **Step 4: Routes.** `trips` and `trips/:id` → the real components (`authGuard`).
-- [ ] **Step 5: Verify.**
+- [x] **Step 5: Verify.**
   - Lint and build.
   - Re-read spec 7.
   - `grep -rn "window.confirm\|confirm(" src/app` finds nothing.

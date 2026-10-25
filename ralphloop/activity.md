@@ -176,3 +176,6 @@ TASK 7 COMPLETE
 
 ## Task 8, call 4
 - Step 4: routed `trips` and `trips/:id` to TripsListComponent and TripDetailComponent (lazy, authGuard) in app.routes.ts.
+
+## Task 8, call 5
+- Step 5: `ng lint` passes and `ng build` succeeds. `grep -rn "window.confirm\|confirm(" src/app` finds nothing. Re-read spec 7 (Trips list, Trip detail, changes #3, #6–#8, #10) against both templates and the component error texts: all present. Gaps: none.
