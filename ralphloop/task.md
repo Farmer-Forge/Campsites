@@ -929,7 +929,7 @@ Read spec 4 in full, including **Proposed changes from V1** (approved).
 - `guestGuard`: awaits `ready`; signed in → `/`.
 - Login reads the `returnUrl` and `reset` query parameters.
 
-- [ ] **Step 1: Write `auth.scss`, verbatim.** Every auth page uses it with `styleUrl: './auth.scss'`.
+- [x] **Step 1: Write `auth.scss`, verbatim.** Every auth page uses it with `styleUrl: './auth.scss'`.
   ```scss
 .auth-page {
   display: flex;
@@ -1009,12 +1009,12 @@ Read spec 4 in full, including **Proposed changes from V1** (approved).
   - messages are `rt-notice` / `rt-error`;
   - links are `auth-switch`, with `auth-forgot` for "Forgot password?";
   - help text is `auth-help`.
-- [ ] **Step 2: Sign in.** Spec 4, **Sign in**, plus changes #1 and #5.
+- [x] **Step 2: Sign in.** Spec 4, **Sign in**, plus changes #1 and #5.
   - Every sign-out goes through `SupabaseService.signOut()`.
   - After success, go to `returnUrl` only if it starts with `/` but not `//`; otherwise go to `/`.
-- [ ] **Step 3: Sign up.** Spec 4, **Sign up**, plus changes #3 and #4. The display name is trimmed. If `signUp` returns a session, go to `/`; otherwise show the check-your-email notice.
-- [ ] **Step 4: Forgot password and reset password,** exactly as spec 4 describes them, with the exact texts. Reset's sign-outs go through `SupabaseService.signOut()`.
-- [ ] **Step 5: Guards and routes** (change #1 and #2).
+- [x] **Step 3: Sign up.** Spec 4, **Sign up**, plus changes #3 and #4. The display name is trimmed. If `signUp` returns a session, go to `/`; otherwise show the check-your-email notice.
+- [x] **Step 4: Forgot password and reset password,** exactly as spec 4 describes them, with the exact texts. Reset's sign-outs go through `SupabaseService.signOut()`.
+- [x] **Step 5: Guards and routes** (change #1 and #2).
   - **`authGuard` and `adminGuard`:** send signed-out users to `router.createUrlTree(['/login'], { queryParams: { returnUrl: state.url } })`.
   - **`guestGuard`** on `login` and `signup`.
   - **Routes:** point the four auth routes at the real components.
@@ -1024,7 +1024,7 @@ Read spec 4 in full, including **Proposed changes from V1** (approved).
      - `curl -s "$SUPABASE_URL/auth/v1/token?grant_type=password" -H "apikey: $SUPABASE_ANON_KEY" -H 'Content-Type: application/json' -d '{"email":"pat@campsites.test","password":"campsites-pat"}' | grep -c access_token` prints `1`;
      - Sam's `users.suspended` is `t`: `psql "$DATABASE_URL" -Atc "select suspended from public.users join auth.users using (id) where email='sam@campsites.test'"`.
   3. Re-read spec 4 and list any gap in `activity.md`.
-- [ ] **Step 7: Commit.** `git commit -m "Task 3: sign in, sign up, forgot and reset password"`
+- [x] **Step 7: Commit.** `git commit -m "Task 3: sign in, sign up, forgot and reset password"`
 
 **QC (for Shawn, in the browser):**
 - Sign in as Pat. Favorites still says "Coming soon", but you're signed in: Account appears in the nav and Sign out works.

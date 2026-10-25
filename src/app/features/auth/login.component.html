@@ -1,0 +1,32 @@
+<div class="auth-page">
+  <form class="auth-card" (ngSubmit)="submit()">
+    <div class="auth-header"><h1>Sign In</h1></div>
+    <div class="auth-body">
+      @if (resetDone) {
+        <p class="rt-notice">Password updated. Sign in with your new password.</p>
+      }
+      <input
+        class="rt-input"
+        type="email"
+        name="email"
+        placeholder="Email"
+        autocomplete="email"
+        [(ngModel)]="email"
+      />
+      <input
+        class="rt-input"
+        type="password"
+        name="password"
+        placeholder="Password"
+        autocomplete="current-password"
+        [(ngModel)]="password"
+      />
+      <a class="auth-forgot" routerLink="/forgot-password">Forgot password?</a>
+      @if (error()) {
+        <p class="rt-error">{{ error() }}</p>
+      }
+      <button class="rt-btn rt-btn--cherry auth-submit" type="submit" [disabled]="submitting()">Sign In</button>
+      <a class="auth-switch" routerLink="/signup">Need an account? Sign up</a>
+    </div>
+  </form>
+</div>

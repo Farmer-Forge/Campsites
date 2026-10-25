@@ -41,3 +41,23 @@
 - Step 14: worktree clean; git commit would have nothing to commit. Confirmed the step files (package.json, angular.json, eslint.config.js, src/...) appear in `git log main..HEAD --stat` via checkpoint commits. Step treated as done.
 
 TASK 2 COMPLETE
+
+## Task 3, call 1
+- Step 1: wrote src/app/features/auth/auth.scss verbatim from the step (68 lines). `ng lint` passes.
+
+## Task 3, call 2
+- Step 2: wrote features/auth/login.component.{ts,html} (not routed yet; Step 5 does routes). Sign in per spec 4 with ?reset=done notice, suspension check (read failure → friendly message + signOut via SupabaseService), safe returnUrl. `ng lint` and `ng build` pass; no raw colors.
+
+## Task 3, call 3
+- Step 3: wrote signup.component.{ts,html} (not routed yet). Display name trimmed; button disabled while submitting or any field empty/blank name; session returned → `/`, else "Check your email to verify your account." replaces the form. `ng lint` and `ng build` pass.
+
+## Task 3, call 4
+- Step 4: wrote forgot-password.component.{ts,html} and reset-password.component.{ts,html} (not routed yet) with the spec's exact texts. Forgot shows the same notice on any success and only a request error otherwise. Reset awaits `ready`, then has checking/invalid/suspended/ready states; suspended or failed read signs out via `SupabaseService.signOut()`; save checks the passwords match, calls `updateUser`, signs out via the service, and goes to `/login?reset=done`. `ng lint` and `ng build` pass.
+
+## Task 3, call 5
+- Step 5: authGuard/adminGuard now redirect to /login?returnUrl=<state.url>; added guestGuard (awaits ready, signed in → /); login/signup routes use real components with guestGuard, forgot/reset routes use real components. `ng lint` and `ng build` pass.
+
+## Task 3, call 6
+- Step 7: worktree clean; nothing to commit. Confirmed the auth files, guards and app.routes.ts appear in `git log main..HEAD --stat` via checkpoint commits. Step treated as done.
+
+TASK 3 COMPLETE
