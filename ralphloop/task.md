@@ -1018,7 +1018,7 @@ Read spec 4 in full, including **Proposed changes from V1** (approved).
   - **`authGuard` and `adminGuard`:** send signed-out users to `router.createUrlTree(['/login'], { queryParams: { returnUrl: state.url } })`.
   - **`guestGuard`** on `login` and `signup`.
   - **Routes:** point the four auth routes at the real components.
-- [x] **Step 6: Verify.**
+- [ ] **Step 6: Verify.**
   1. Lint and build.
   2. Check the dev logins against the local Auth API:
      - `curl -s "$SUPABASE_URL/auth/v1/token?grant_type=password" -H "apikey: $SUPABASE_ANON_KEY" -H 'Content-Type: application/json' -d '{"email":"pat@campsites.test","password":"campsites-pat"}' | grep -c access_token` prints `1`;
@@ -1375,12 +1375,12 @@ Read spec 3 in full: the page, the filter bar, how a search runs, the location m
 - **`FinderStateService`:** `snapshot(): FinderSnapshot | null` and `save(snapshot)`, with key `campsite-finder.finder` in `sessionStorage` and the validation in spec 3.
   - `FinderSnapshot` is `{ location: Coordinates; agencies: string[]; states: string[]; regions: string[]; parks: string[] | null; nearMeEnabled: boolean; radiusMiles: number }`.
 
-- [ ] **Step 1: `GeolocationService` and `FinderStateService`,** exactly as spec 3 describes, including every message text and validation rule.
+- [x] **Step 1: `GeolocationService` and `FinderStateService`,** exactly as spec 3 describes, including every message text and validation rule.
 - [x] **Step 2: The Finder's logic** (spec 3, **How a search runs** and **Saved state**).
   - **Constants:** 1609.34 m per mile; "Show all" is 20,038,000 m; the five agencies; radius choices `[null, 25, 50, 100, 250]`; the region→state table.
   - **Change #5:** a `loading` state for the first load only, and an `updating` signal for reloads.
   - **Change #7:** the single **Where** picker.
-- [ ] **Step 3: The Finder's template.** Class structure:
+- [x] **Step 3: The Finder's template.** Class structure:
   - **Filter bar:** `div.filter-bar` holds `div.filter-group` blocks:
     - the agency group: `span.rt-label` "AGENCY", then `button.chip` (`is-on`, `aria-pressed`) per agency;
     - the PrimeNG multiselect group: **Where**, grouped by region, with filter and labels as in change #7; then **Park**, shown when there are park codes, with the change #6 note `rt-notice` "Park filter shows NPS campgrounds only" when not all parks are selected;
@@ -1394,7 +1394,7 @@ Read spec 3 in full: the page, the filter bar, how a search runs, the location m
       - `<app-campground-table>`.
     - `div.status-area` for the first load and the error state.
   - **The map's `addToTrip` output** sets the selection and the table's `openPickerFor` (spec 3, change #4).
-- [ ] **Step 4: `finder.component.scss`, verbatim from V1:**
+- [x] **Step 4: `finder.component.scss`, verbatim from V1:**
   ```scss
 :host {
   flex: 1;
@@ -1532,11 +1532,11 @@ Read spec 3 in full: the page, the filter bar, how a search runs, the location m
 }
   ```
   V1 had two multiselects (region + state) in a `filter-group`; the single Where picker uses the same group. The "Updating…" text uses `span.nearest`'s style. The park note is `rt-notice`.
-- [ ] **Step 5: Route.** `''` → `FinderComponent`.
+- [x] **Step 5: Route.** `''` → `FinderComponent`.
 - [x] **Step 6: Verify.**
   - Lint and build.
   - Re-read spec 3 end to end. Check every exact text: the location messages, blocked help, manual panel help, labels, "Finding campgrounds near you...", and "Unable to load nearby campgrounds.". List any gap in `activity.md`.
-- [ ] **Step 7: Commit.** `git commit -m "Task 6: the Finder page (filters, map and list, location, saved search)"`
+- [x] **Step 7: Commit.** `git commit -m "Task 6: the Finder page (filters, map and list, location, saved search)"`
 
 **QC (for Shawn, in the browser):** use the Finder at http://192.168.1.188:4200. The browser will ask for your location; Ralph's campgrounds are the full production set.
 - Allow location: the map centers on you at about a 100-mile view, and the list shows "{n} campgrounds · nearest first" with mustard distance badges.
