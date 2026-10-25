@@ -70,3 +70,6 @@ TASK 3 COMPLETE
 
 ## Task 4, call 3
 - Step 3: account route now lazy-loads AccountComponent with authGuard. `ng lint` and `ng build` pass.
+
+## Task 4, call 4
+- Step 4: `ng lint` and `ng build` pass (budget warning pre-existing). grep for "theme" in account and user.service finds nothing. Re-read spec 5: all three cards, exact texts, last-admin hint, no Theme card match.
