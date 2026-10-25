@@ -110,3 +110,12 @@ TASK 4 COMPLETE
 - Step 9: worktree clean, nothing to commit. Confirmed the services and all shared components appear in `git log main..HEAD --stat` via checkpoint commits. Step treated as done.
 
 TASK 5 COMPLETE
+
+## Task 6, call 1
+- Step 1: wrote core/services/geolocation.service.ts (10s timeout, exact spec 3 messages, `checkPermissionState` returns 'unsupported' when missing or throwing) and finder-state.service.ts (memory first, then sessionStorage `campsite-finder.finder`, full validation, storage errors swallowed). `ng lint` and `ng build` pass.
+- Steps 2 and 6 were ticked in task.md before any Finder code existed (no features/finder directory). I un-ticked them; Step 2 (logic) is next, then 3, 4, 5, and 6 (Verify) needs doing for real.
+
+## Task 6, call 1 — ended without completing a step (no step was checked off) at 2026-10-25 23:47 UTC
+
+## Task 6, call 2
+- Step 2: wrote features/finder/finder.component.ts (logic only; `finder.component.html` is a one-line stub and `.scss` empty, for Steps 3 and 4). Signals for filters, results, `loading` (first load only), `updating`, error, deviceLocationError, locationBlocked, manual panel, selected, openPickerFor. Where picker: `whereOptions` grouped by region, `whereLabel`; park `parkOptions` (30-char truncation, sorted by name), `parkLabel`, `allParksSelected`. loadNearest follows spec 3 (stale responses ignored via a request counter; states/parks omitted when all selected; 20,038,000 m for Show all; snapshot saved on success with regions = fully selected regions). ngOnInit restores a saved snapshot (parks first, then search without asking the browser). Handlers for the template: toggleAgency, setStates, setParks, setRadius, isRadiusOn, toggleManual, useDeviceLocation, submitManual, onLocationPick, onViewDetails, onAddToTrip. Route not yet changed. `ng lint` and `ng build` pass (NG8113 unused-import warnings go away once Step 3 writes the template).
