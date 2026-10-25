@@ -18,3 +18,6 @@
 
 ## Task 2, call 7
 - Step 7: wrote src/styles.scss verbatim from the step (524 lines, no code fences). `ng lint` and `ng build` pass.
+
+## Task 2, call 8
+- Step 8: wrote user.model.ts, supabase.service.ts (client, readonly session signal, ready, isAuthenticated, onSignOut, signOut, resets also run on SIGNED_OUT) and user.service.ts (profile signal, loadProfile reads own users row, resets on sign-out). `ng lint` and `ng build` pass.

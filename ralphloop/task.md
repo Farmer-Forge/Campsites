@@ -684,7 +684,7 @@ select.rt-input {
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.4);
 }
   ```
-- [ ] **Step 8: Write the core services and model** (Interfaces above; spec 2, **Session and the signed-in user** and **Changes from V1**, #1 and #4).
+- [x] **Step 8: Write the core services and model** (Interfaces above; spec 2, **Session and the signed-in user** and **Changes from V1**, #1 and #4).
   - **`SupabaseService`:**
     - `createClient(environment.supabaseUrl, environment.supabaseAnonKey)`;
     - in the constructor, start `client.auth.getSession()`, set `session`, then resolve `ready`;
@@ -1351,7 +1351,7 @@ Read spec 3 in full. This task builds the services and the five shared component
   width: 100%;
 }
     ```
-- [ ] **Step 8: Verify.**
+- [x] **Step 8: Verify.**
   - Lint and build. The production build stays under the 1 MB initial-budget error; it may warn.
   - Paging check against the local RPC: `curl -s -X POST "$SUPABASE_URL/rest/v1/rpc/nearest_campgrounds" -H "apikey: $SUPABASE_ANON_KEY" -H "Authorization: Bearer $SUPABASE_ANON_KEY" -H 'Content-Type: application/json' -H 'Range: 0-999' -d '{"user_lat":39.8,"user_lng":-98.6,"max_distance_m":20038000}' | grep -o '"id"' | wc -l` prints `1000`. That proves the 1,000-row cap that paging handles.
   - Re-read spec 3's **Shared pieces** and Changes #1–#4.
