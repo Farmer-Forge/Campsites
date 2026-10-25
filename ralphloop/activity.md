@@ -53,3 +53,6 @@ TASK 2 COMPLETE
 
 ## Task 3, call 4
 - Step 4: wrote forgot-password.component.{ts,html} and reset-password.component.{ts,html} (not routed yet) with the spec's exact texts. Forgot shows the same notice on any success and only a request error otherwise. Reset awaits `ready`, then has checking/invalid/suspended/ready states; suspended or failed read signs out via `SupabaseService.signOut()`; save checks the passwords match, calls `updateUser`, signs out via the service, and goes to `/login?reset=done`. `ng lint` and `ng build` pass.
+
+## Task 3, call 5
+- Step 5: authGuard/adminGuard now redirect to /login?returnUrl=<state.url>; added guestGuard (awaits ready, signed in → /); login/signup routes use real components with guestGuard, forgot/reset routes use real components. `ng lint` and `ng build` pass.
