@@ -10,7 +10,11 @@ export const routes: Routes = [
   { path: 'favorites', loadComponent: placeholder, canActivate: [authGuard] },
   { path: 'trips', loadComponent: placeholder, canActivate: [authGuard] },
   { path: 'trips/:id', loadComponent: placeholder, canActivate: [authGuard] },
-  { path: 'account', loadComponent: placeholder, canActivate: [authGuard] },
+  {
+    path: 'account',
+    loadComponent: () => import('./features/account/account.component').then((m) => m.AccountComponent),
+    canActivate: [authGuard],
+  },
   { path: 'admin', loadComponent: placeholder, canActivate: [adminGuard] },
   {
     path: 'login',

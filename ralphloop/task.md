@@ -1048,8 +1048,8 @@ Read spec 5.
 - `updatePassword(password: string): Promise<void>`;
 - `deleteAccount(): Promise<void>`: the `delete-account` edge function, then `SupabaseService.signOut()`.
 
-- [ ] **Step 1: `UserService` account methods,** as in Interfaces (spec 2, **Session**). No theme methods.
-- [ ] **Step 2: The Account page.** Spec 5: the display name card, the password card and the delete card with its confirm step, with the exact texts, plus change #1 (the last-admin hint). There is **no** Theme card.
+- [x] **Step 1: `UserService` account methods,** as in Interfaces (spec 2, **Session**). No theme methods.
+- [x] **Step 2: The Account page.** Spec 5: the display name card, the password card and the delete card with its confirm step, with the exact texts, plus change #1 (the last-admin hint). There is **no** Theme card.
   - **Structure:**
     - `<div class="rt-content">` with `<h1 class="rt-title">Account</h1>`;
     - each card is `rt-page-card` with an `rt-heading`;
@@ -1085,12 +1085,12 @@ Read spec 5.
   gap: 8px;
 }
     ```
-- [ ] **Step 3: Route.** Point `account` at `AccountComponent` (`authGuard`).
-- [ ] **Step 4: Verify.**
+- [x] **Step 3: Route.** Point `account` at `AccountComponent` (`authGuard`).
+- [x] **Step 4: Verify.**
   - Lint and build.
   - `grep -n "theme" src/app/features/account src/app/core/services/user.service.ts -r` finds nothing.
   - Re-read spec 5.
-- [ ] **Step 5: Commit.** `git commit -m "Task 4: account page (display name, password, delete account)"`
+- [x] **Step 5: Commit.** `git commit -m "Task 4: account page (display name, password, delete account)"`
 
 **QC (for Shawn, in the browser):**
 - As Pat, change the display name: "Display name updated." It survives a refresh.
@@ -1605,8 +1605,8 @@ Read the Favorites section and Proposed changes #1–#4 in `2026-10-25-favorites
 }
     ```
 - [ ] **Step 2: Map `fitToCampgrounds`.** When it's true and the campgrounds change, `fitBounds` them with 32px padding, the same as ordered mode.
-- [ ] **Step 3: Route.** `favorites` → `FavoritesComponent` (`authGuard`).
-- [ ] **Step 4: Verify.** Lint and build. Re-read spec 6.
+- [x] **Step 3: Route.** `favorites` → `FavoritesComponent` (`authGuard`).
+- [x] **Step 4: Verify.** Lint and build. Re-read spec 6.
 - [ ] **Step 5: Commit.** `git commit -m "Task 7: favorites page (notes, plan a trip)"`
 
 **QC (for Shawn, in the browser):**
@@ -2007,8 +2007,8 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
   width: 100%;
 }
     ```
-- [ ] **Step 3: Route.** `admin` → `AdminComponent` (`adminGuard`).
-- [ ] **Step 4: Verify.**
+- [x] **Step 3: Route.** `admin` → `AdminComponent` (`adminGuard`).
+- [x] **Step 4: Verify.**
   - Lint and build.
   - `grep -rn "PlaceholderComponent" src/app/app.routes.ts` finds nothing. Every page is now real, so delete `src/app/features/placeholder/`.
   - Re-read spec 8.
