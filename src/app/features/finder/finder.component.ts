@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MultiSelect } from 'primeng/multiselect';
@@ -52,7 +53,7 @@ const truncate = (name: string): string => (name.length > 30 ? `${name.slice(0, 
 
 @Component({
   selector: 'app-finder',
-  imports: [FormsModule, MultiSelect, CampgroundMapComponent, CampgroundTableComponent],
+  imports: [NgTemplateOutlet, FormsModule, MultiSelect, CampgroundMapComponent, CampgroundTableComponent],
   templateUrl: './finder.component.html',
   styleUrl: './finder.component.scss',
 })
