@@ -27,3 +27,6 @@
 
 ## Task 2, call 10
 - Step 10: wrote app.config.ts (zone change detection, router, async animations, PrimeNG Aura + license); main.ts already matched. The Angular 22 scaffold is zoneless and had no zone.js, so "keep the default zone.js polyfill" had nothing to keep: installed zone.js and added `"polyfills": ["zone.js"]` to the build options in angular.json. `ng lint` and `ng build` pass.
+
+## Task 2, call 11
+- Step 11: wrote app.ts (injects SupabaseService/UserService; effect loads the profile when session() is non-null), app.html (nav per step; Account/Admin/Sign out when signed in, Sign in otherwise) and app.scss verbatim. Links: /favorites, /trips, /about, /account, /admin, /login. `ng lint` and `ng build` pass (bundle budget warning only, pre-existing). No raw colors in app.html/app.ts; button uses rt-btn classes that exist in styles.scss.
