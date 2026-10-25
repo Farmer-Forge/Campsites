@@ -50,3 +50,6 @@ TASK 2 COMPLETE
 
 ## Task 3, call 3
 - Step 3: wrote signup.component.{ts,html} (not routed yet). Display name trimmed; button disabled while submitting or any field empty/blank name; session returned → `/`, else "Check your email to verify your account." replaces the form. `ng lint` and `ng build` pass.
+
+## Task 3, call 4
+- Step 4: wrote forgot-password.component.{ts,html} and reset-password.component.{ts,html} (not routed yet) with the spec's exact texts. Forgot shows the same notice on any success and only a request error otherwise. Reset awaits `ready`, then has checking/invalid/suspended/ready states; suspended or failed read signs out via `SupabaseService.signOut()`; save checks the passwords match, calls `updateUser`, signs out via the service, and goes to `/login?reset=done`. `ng lint` and `ng build` pass.
