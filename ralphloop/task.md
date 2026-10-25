@@ -1018,7 +1018,7 @@ Read spec 4 in full, including **Proposed changes from V1** (approved).
   - **`authGuard` and `adminGuard`:** send signed-out users to `router.createUrlTree(['/login'], { queryParams: { returnUrl: state.url } })`.
   - **`guestGuard`** on `login` and `signup`.
   - **Routes:** point the four auth routes at the real components.
-- [ ] **Step 6: Verify.**
+- [x] **Step 6: Verify.**
   1. Lint and build.
   2. Check the dev logins against the local Auth API:
      - `curl -s "$SUPABASE_URL/auth/v1/token?grant_type=password" -H "apikey: $SUPABASE_ANON_KEY" -H 'Content-Type: application/json' -d '{"email":"pat@campsites.test","password":"campsites-pat"}' | grep -c access_token` prints `1`;
