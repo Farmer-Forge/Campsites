@@ -1355,7 +1355,7 @@ Read spec 3 in full. This task builds the services and the five shared component
   - Lint and build. The production build stays under the 1 MB initial-budget error; it may warn.
   - Paging check against the local RPC: `curl -s -X POST "$SUPABASE_URL/rest/v1/rpc/nearest_campgrounds" -H "apikey: $SUPABASE_ANON_KEY" -H "Authorization: Bearer $SUPABASE_ANON_KEY" -H 'Content-Type: application/json' -H 'Range: 0-999' -d '{"user_lat":39.8,"user_lng":-98.6,"max_distance_m":20038000}' | grep -o '"id"' | wc -l` prints `1000`. That proves the 1,000-row cap that paging handles.
   - Re-read spec 3's **Shared pieces** and Changes #1–#4.
-- [ ] **Step 9: Commit.** `git commit -m "Task 5: campground, favorites and trips services; shared map, card list, detail panel, heart and add-to-trip"`
+- [x] **Step 9: Commit.** `git commit -m "Task 5: campground, favorites and trips services; shared map, card list, detail panel, heart and add-to-trip"`
 
 **QC (for Shawn, in the browser):** nothing new to see yet. These pieces first appear on the Finder (Task 6).
 

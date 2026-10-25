@@ -105,3 +105,8 @@ TASK 4 COMPLETE
 
 ## Task 5, call 8
 - Step 8: `ng lint` passes; `ng build` succeeds (initial bundle 744.68 kB, a budget warning only, under the 1 MB error). The paging curl with `Range: 0-999` against the local RPC returned 1000 ids. Spot-checked changes #1–#4: favorites load in app.ts and the heart only reads the signal; the table uses cdk-virtual-scroll with `openPickerFor`; no `result_limit` is sent; the description uses `[innerHTML]`. Step 9 (Commit) is next.
+
+## Task 5, call 9
+- Step 9: worktree clean, nothing to commit. Confirmed the services and all shared components appear in `git log main..HEAD --stat` via checkpoint commits. Step treated as done.
+
+TASK 5 COMPLETE
