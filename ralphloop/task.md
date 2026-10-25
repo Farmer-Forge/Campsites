@@ -929,7 +929,7 @@ Read spec 4 in full, including **Proposed changes from V1** (approved).
 - `guestGuard`: awaits `ready`; signed in → `/`.
 - Login reads the `returnUrl` and `reset` query parameters.
 
-- [ ] **Step 1: Write `auth.scss`, verbatim.** Every auth page uses it with `styleUrl: './auth.scss'`.
+- [x] **Step 1: Write `auth.scss`, verbatim.** Every auth page uses it with `styleUrl: './auth.scss'`.
   ```scss
 .auth-page {
   display: flex;

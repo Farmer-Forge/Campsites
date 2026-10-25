@@ -41,3 +41,6 @@
 - Step 14: worktree clean; git commit would have nothing to commit. Confirmed the step files (package.json, angular.json, eslint.config.js, src/...) appear in `git log main..HEAD --stat` via checkpoint commits. Step treated as done.
 
 TASK 2 COMPLETE
+
+## Task 3, call 1
+- Step 1: wrote src/app/features/auth/auth.scss verbatim from the step (68 lines). `ng lint` passes.
