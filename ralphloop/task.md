@@ -1861,7 +1861,7 @@ Read the Trips list and Trip detail sections and Proposed changes #3 and #5–#1
   - Lint and build.
   - Re-read spec 7.
   - `grep -rn "window.confirm\|confirm(" src/app` finds nothing.
-- [ ] **Step 6: Commit.** `git commit -m "Task 8: trips list (postcards) and trip detail (route map, reorder, add and remove stops)"`
+- [x] **Step 6: Commit.** `git commit -m "Task 8: trips list (postcards) and trip detail (route map, reorder, add and remove stops)"`
 
 **QC (for Shawn, in the browser):**
 - As Pat: the "Sample road trip" postcard with "2 stops" and the route.

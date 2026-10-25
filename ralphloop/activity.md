@@ -179,3 +179,8 @@ TASK 7 COMPLETE
 
 ## Task 8, call 5
 - Step 5: `ng lint` passes and `ng build` succeeds. `grep -rn "window.confirm\|confirm(" src/app` finds nothing. Re-read spec 7 (Trips list, Trip detail, changes #3, #6–#8, #10) against both templates and the component error texts: all present. Gaps: none.
+
+## Task 8, call 6
+- Step 6: worktree clean; trips list, trip detail, service change and routes appear in `git log main..HEAD --stat` via checkpoint commits. Commit step treated as done.
+
+TASK 8 COMPLETE
