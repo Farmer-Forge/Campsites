@@ -822,7 +822,7 @@ select.rt-input {
   }
 }
     ```
-- [ ] **Step 12: Write the routes, the 404 page, the placeholder and the About page.**
+- [x] **Step 12: Write the routes, the 404 page, the placeholder and the About page.**
   - **`app.routes.ts`:** the table in spec 2, **Routes and guards**, every route lazy (`loadComponent`).
     - The Finder, favorites, trips, trips/:id, account, admin, login, signup, forgot-password and reset-password routes point at `PlaceholderComponent` for now, with their guards already in place.
     - `about` → `AboutComponent`.

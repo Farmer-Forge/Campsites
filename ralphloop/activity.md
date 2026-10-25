@@ -30,3 +30,6 @@
 
 ## Task 2, call 11
 - Step 11: wrote app.ts (injects SupabaseService/UserService; effect loads the profile when session() is non-null), app.html (nav per step; Account/Admin/Sign out when signed in, Sign in otherwise) and app.scss verbatim. Links: /favorites, /trips, /about, /account, /admin, /login. `ng lint` and `ng build` pass (bundle budget warning only, pre-existing). No raw colors in app.html/app.ts; button uses rt-btn classes that exist in styles.scss.
+
+## Task 2, call 12
+- Step 12: wrote app.routes.ts (all lazy; guards on favorites/trips/trips/:id/account/admin; placeholders for Finder and auth routes; about; `**` → 404), features/placeholder ("Coming soon"), features/not-found, features/about (html/ts/scss verbatim). `ng lint` and `ng build` pass (bundle budget warning pre-existing).
