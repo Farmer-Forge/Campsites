@@ -90,3 +90,6 @@ TASK 4 COMPLETE
 
 ## Task 5, call 4
 - Step 4: wrote shared/ui/favorite-toggle/favorite-toggle.component.ts (input `campgroundId`; renders only with a session; heart reads only `favoriteIds`, no load on appear per change #1; title "Remove favorite"/"Favorite", aria-pressed, stopPropagation; verbatim style). `ng lint` and `ng build` pass. Steps 6 and 8 are still ticked without work done (see call 1).
+
+## Task 5, call 5
+- Step 5: wrote shared/ui/add-to-trip/add-to-trip.component.ts (input `campgroundId`, output `done`). On init it loads trips and the trip ids holding this campground; trip buttons disabled with " (added)"; "Create & Add" or Enter creates a trip with this stop (blank does nothing); the three spec error texts. Verbatim styles, shared rt-* classes. `ng lint` and `ng build` pass. Steps 6 and 8 are still ticked without work done (see call 1); Step 7 (map) is still open.
