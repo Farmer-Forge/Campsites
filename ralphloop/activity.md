@@ -67,3 +67,6 @@ TASK 3 COMPLETE
 
 ## Task 4, call 2
 - Step 2: wrote features/account/account.component.{ts,html} (not routed yet; Step 3). Display name, password and delete cards with spec texts, inline styles verbatim minus theme rules, last-admin hint appended on failed delete when role is admin, no theme. Success lines use rt-notice, errors rt-error. No raw colors; `ng lint` and `ng build` pass.
+
+## Task 4, call 3
+- Step 3: account route now lazy-loads AccountComponent with authGuard. `ng lint` and `ng build` pass.

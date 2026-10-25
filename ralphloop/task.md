@@ -1085,7 +1085,7 @@ Read spec 5.
   gap: 8px;
 }
     ```
-- [ ] **Step 3: Route.** Point `account` at `AccountComponent` (`authGuard`).
+- [x] **Step 3: Route.** Point `account` at `AccountComponent` (`authGuard`).
 - [ ] **Step 4: Verify.**
   - Lint and build.
   - `grep -n "theme" src/app/features/account src/app/core/services/user.service.ts -r` finds nothing.
@@ -1605,7 +1605,7 @@ Read the Favorites section and Proposed changes #1–#4 in `2026-10-25-favorites
 }
     ```
 - [ ] **Step 2: Map `fitToCampgrounds`.** When it's true and the campgrounds change, `fitBounds` them with 32px padding, the same as ordered mode.
-- [ ] **Step 3: Route.** `favorites` → `FavoritesComponent` (`authGuard`).
+- [x] **Step 3: Route.** `favorites` → `FavoritesComponent` (`authGuard`).
 - [ ] **Step 4: Verify.** Lint and build. Re-read spec 6.
 - [ ] **Step 5: Commit.** `git commit -m "Task 7: favorites page (notes, plan a trip)"`
 
@@ -2007,7 +2007,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
   width: 100%;
 }
     ```
-- [ ] **Step 3: Route.** `admin` → `AdminComponent` (`adminGuard`).
+- [x] **Step 3: Route.** `admin` → `AdminComponent` (`adminGuard`).
 - [ ] **Step 4: Verify.**
   - Lint and build.
   - `grep -rn "PlaceholderComponent" src/app/app.routes.ts` finds nothing. Every page is now real, so delete `src/app/features/placeholder/`.
