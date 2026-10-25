@@ -691,7 +691,7 @@ select.rt-input {
     - subscribe to `onAuthStateChange`, keeping `session` in step. On a `SIGNED_OUT` event, run the resets.
   - **`UserService`,** as in Interfaces.
   - **Verify:** lint and build.
-- [ ] **Step 9: Write the guards** (spec 2, **Routes and guards**, and **Changes from V1**, #1).
+- [x] **Step 9: Write the guards** (spec 2, **Routes and guards**, and **Changes from V1**, #1).
   - **`authGuard`:** `await supabase.ready`. If there's a session, allow; otherwise return `router.parseUrl('/login')`. (Task 3 adds `returnUrl`.)
   - **`adminGuard`:**
     1. `await supabase.ready`. No session → `/login`.

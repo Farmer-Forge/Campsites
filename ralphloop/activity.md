@@ -21,3 +21,6 @@
 
 ## Task 2, call 8
 - Step 8: wrote user.model.ts, supabase.service.ts (client, readonly session signal, ready, isAuthenticated, onSignOut, signOut, resets also run on SIGNED_OUT) and user.service.ts (profile signal, loadProfile reads own users row, resets on sign-out). `ng lint` and `ng build` pass.
+
+## Task 2, call 9
+- Step 9: wrote src/app/core/guards/auth.guard.ts and admin.guard.ts (both await supabase.ready; admin loads the profile if null, non-admin goes to /). `ng lint` and `ng build` pass.
