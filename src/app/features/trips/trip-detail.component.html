@@ -1,0 +1,159 @@
+@if (notFound() || loadFailed()) {
+  <div class="rt-content">
+    <a class="back-link" routerLink="/trips">‹ All trips</a>
+    @if (loadFailed()) {
+      <p class="rt-error">Couldn't load this trip — try again.</p>
+      <div>
+        <button type="button" class="rt-btn rt-btn--sm" (click)="load()">Try again</button>
+      </div>
+    } @else {
+      <p>Trip not found.</p>
+    }
+  </div>
+} @else if (loaded() && trip(); as t) {
+  <div class="rt-map-layout">
+    <div class="rt-map-frame">
+      <app-campground-map [campgrounds]="campgrounds()" [ordered]="true" [selectedId]="openId()" />
+    </div>
+    <div class="rt-side">
+      <div class="trip-header">
+        <a class="back-link" routerLink="/trips">‹ All trips</a>
+        @if (renaming()) {
+          <div class="rename-row">
+            <input
+              type="text"
+              class="rt-input"
+              aria-label="Trip name"
+              [ngModel]="nameDraft()"
+              (ngModelChange)="nameDraft.set($event)"
+              (keydown.enter)="saveRename()"
+            />
+            <button type="button" class="rt-btn rt-btn--cherry" (click)="saveRename()">Save</button>
+            <button type="button" class="rt-btn" (click)="renaming.set(false)">Cancel</button>
+          </div>
+        } @else {
+          <h1 class="rt-list-title">{{ t.name }}</h1>
+        }
+        <div class="meta-row">
+          <span class="meta">
+            {{ stops().length }} {{ stops().length === 1 ? 'stop' : 'stops' }} · created {{ t.createdAt | date }}
+          </span>
+          @if (confirmingDelete()) {
+            <span>Delete this trip? This cannot be undone.</span>
+            <button type="button" class="rt-btn rt-btn--sm" (click)="confirmingDelete.set(false)">Cancel</button>
+            <button type="button" class="rt-btn rt-btn--sm rt-btn--cherry" (click)="deleteTrip()">
+              Yes, delete this trip
+            </button>
+          } @else {
+            @if (!renaming()) {
+              <button type="button" class="rt-btn rt-btn--sm rename" (click)="startRename()">Rename</button>
+            }
+            <button type="button" class="rt-btn rt-btn--sm rt-btn--danger-outline" (click)="confirmingDelete.set(true)">
+              Delete trip
+            </button>
+          }
+        </div>
+      </div>
+      @if (error()) {
+        <p class="rt-error">{{ error() }}</p>
+      }
+      <div class="rt-scroll-list">
+        @for (stop of stops(); track stop.stopId; let i = $index; let first = $first; let last = $last) {
+          <div class="stop-card" [class.is-open]="openId() === stop.campground.id">
+            <div
+              class="card-main"
+              tabindex="0"
+              role="button"
+              (click)="toggleOpen(stop.campground.id)"
+              (keydown.enter)="toggleOpen(stop.campground.id)"
+            >
+              <div class="stop-badge">
+                <span class="badge-top">{{ i + 1 }}</span>
+                <span class="badge-sub">STOP</span>
+              </div>
+              <div class="card-text">
+                <div class="campground-name-link">{{ stop.campground.name }}</div>
+                <div class="tags">
+                  <span class="rt-tag rt-tag--teal">{{ stop.campground.agency }}</span>
+                  @if (stop.campground.parkCode) {
+                    <span class="rt-tag rt-tag--outline">{{ stop.campground.parkCode }}</span>
+                  }
+                </div>
+              </div>
+              <div class="reorder">
+                <button
+                  type="button"
+                  title="Move up"
+                  aria-label="Move up"
+                  [disabled]="first"
+                  (click)="$event.stopPropagation(); move(i, -1)"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="3"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="m18 15-6-6-6 6" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  title="Move down"
+                  aria-label="Move down"
+                  [disabled]="last"
+                  (click)="$event.stopPropagation(); move(i, 1)"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="3"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                </button>
+              </div>
+              <button
+                type="button"
+                class="rt-btn rt-btn--sm rt-btn--danger-outline"
+                (click)="$event.stopPropagation(); removeStop(stop.stopId)"
+              >
+                Remove
+              </button>
+            </div>
+            @if (openId() === stop.campground.id) {
+              <div class="detail">
+                <app-campground-detail-panel [campground]="stop.campground" />
+              </div>
+            }
+          </div>
+        }
+      </div>
+      <div class="add-stop">
+        <select
+          class="rt-input"
+          aria-label="Choose a favorite to add"
+          [ngModel]="addId()"
+          (ngModelChange)="addId.set($event)"
+        >
+          <option value="">Choose a favorite to add...</option>
+          @for (c of available(); track c.id) {
+            <option [value]="c.id">{{ c.name }}</option>
+          }
+        </select>
+        <button type="button" class="rt-btn rt-btn--mustard" [disabled]="!addId()" (click)="addStop()">Add</button>
+      </div>
+    </div>
+  </div>
+}

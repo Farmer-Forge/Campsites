@@ -170,3 +170,6 @@ TASK 7 COMPLETE
 
 ## Task 8, call 2
 - Step 2: wrote features/trips/trips-list.component.{ts,html} (inline verbatim styles). Loads trips, then `loadAllStops` (failure → no summary); load error "Couldn't load your trips — try again." + Try again; empty text with Favorites link; inline delete confirmation (Cancel / "Yes, delete this trip"); delete failure message. Not routed yet (route is a later step). `ng lint` and `ng build` pass.
+
+## Task 8, call 3
+- Step 3: wrote features/trips/trip-detail.component.{ts,html} (inline verbatim styles). Not-found / load-failed (with Try again) states; ordered map; rename with Save/Cancel (blank doesn't save); inline delete confirmation → `/trips`; stop cards with move up/down (optimistic swap, `reorderStops`, re-read on failure), Remove, expandable detail panel; add-stop select of favorites not in the trip. Texts for each error as in spec 7. Not routed yet (Step 4). `ng lint` and `ng build` pass.

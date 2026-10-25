@@ -1705,7 +1705,7 @@ Read the Trips list and Trip detail sections and Proposed changes #3 and #5–#1
   margin-left: auto;
 }
     ```
-- [ ] **Step 3: Trip detail** (spec 7, plus changes #3, #6, #8 and #10).
+- [x] **Step 3: Trip detail** (spec 7, plus changes #3, #6, #8 and #10).
   - **Structure:**
     - not found: `div.rt-content` with `a.back-link` "‹ All trips";
     - otherwise `div.rt-map-layout` > the map (ordered) + `div.rt-side`, holding:
