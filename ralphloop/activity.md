@@ -47,3 +47,6 @@ TASK 2 COMPLETE
 
 ## Task 3, call 2
 - Step 2: wrote features/auth/login.component.{ts,html} (not routed yet; Step 5 does routes). Sign in per spec 4 with ?reset=done notice, suspension check (read failure → friendly message + signOut via SupabaseService), safe returnUrl. `ng lint` and `ng build` pass; no raw colors.
+
+## Task 3, call 3
+- Step 3: wrote signup.component.{ts,html} (not routed yet). Display name trimmed; button disabled while submitting or any field empty/blank name; session returned → `/`, else "Check your email to verify your account." replaces the form. `ng lint` and `ng build` pass.

@@ -1,0 +1,42 @@
+<div class="auth-page">
+  <form class="auth-card" (ngSubmit)="submit()">
+    <div class="auth-header"><h1>Sign Up</h1></div>
+    <div class="auth-body">
+      @if (checkEmail()) {
+        <p class="rt-notice">Check your email to verify your account.</p>
+      } @else {
+        <input
+          class="rt-input"
+          type="text"
+          name="displayName"
+          placeholder="Display name"
+          autocomplete="name"
+          [(ngModel)]="displayName"
+        />
+        <input
+          class="rt-input"
+          type="email"
+          name="email"
+          placeholder="Email"
+          autocomplete="email"
+          [(ngModel)]="email"
+        />
+        <input
+          class="rt-input"
+          type="password"
+          name="password"
+          placeholder="Password"
+          autocomplete="new-password"
+          [(ngModel)]="password"
+        />
+        @if (error()) {
+          <p class="rt-error">{{ error() }}</p>
+        }
+        <button class="rt-btn rt-btn--cherry auth-submit" type="submit" [disabled]="submitting() || !canSubmit">
+          Sign Up
+        </button>
+        <a class="auth-switch" routerLink="/login">Already have an account? Sign in</a>
+      }
+    </div>
+  </form>
+</div>

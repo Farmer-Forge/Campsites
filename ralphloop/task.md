@@ -1012,7 +1012,7 @@ Read spec 4 in full, including **Proposed changes from V1** (approved).
 - [x] **Step 2: Sign in.** Spec 4, **Sign in**, plus changes #1 and #5.
   - Every sign-out goes through `SupabaseService.signOut()`.
   - After success, go to `returnUrl` only if it starts with `/` but not `//`; otherwise go to `/`.
-- [ ] **Step 3: Sign up.** Spec 4, **Sign up**, plus changes #3 and #4. The display name is trimmed. If `signUp` returns a session, go to `/`; otherwise show the check-your-email notice.
+- [x] **Step 3: Sign up.** Spec 4, **Sign up**, plus changes #3 and #4. The display name is trimmed. If `signUp` returns a session, go to `/`; otherwise show the check-your-email notice.
 - [ ] **Step 4: Forgot password and reset password,** exactly as spec 4 describes them, with the exact texts. Reset's sign-outs go through `SupabaseService.signOut()`.
 - [ ] **Step 5: Guards and routes** (change #1 and #2).
   - **`authGuard` and `adminGuard`:** send signed-out users to `router.createUrlTree(['/login'], { queryParams: { returnUrl: state.url } })`.
