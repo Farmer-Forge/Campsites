@@ -9,3 +9,6 @@
 
 ## Task 2, call 4
 - Step 4: configured angular.json (leaflet png assets, leaflet/markercluster/styles.scss styles in order, development fileReplacements to environment.local.ts, optimization off, sourceMap on). Project name, prefix, SCSS, budgets and defaults were already right. `ng build` (production) and `ng lint` pass. The development build needs environment.ts/environment.local.ts (Step 5; local is gitignored, so dev builds only work where it exists).
+
+## Task 2, call 5
+- Step 5: wrote src/environments/environment.ts exactly as given and environment.local.ts from the worker's SUPABASE_URL/SUPABASE_ANON_KEY. Verified `git status --short -uall` lists only environment.ts (not the local file) and `git check-ignore` prints the local path. `ng lint` and `ng build` pass.

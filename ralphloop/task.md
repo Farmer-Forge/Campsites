@@ -143,7 +143,7 @@ Read spec 2 in full, including **Changes from V1**, and spec 9's About section.
   - production budgets: `initial` 500kB warning / 1MB error; `anyComponentStyle` 4kB warning / 8kB error;
   - `development`: `fileReplacements` `src/environments/environment.ts` → `src/environments/environment.local.ts`; `optimization: false`; `sourceMap: true`;
   - `build` defaults to `production`, `serve` to `development`.
-- [ ] **Step 5: Write the environments.**
+- [x] **Step 5: Write the environments.**
   - `src/environments/environment.ts`, exactly:
     ```ts
     export const environment = { production: true, supabaseUrl: '', supabaseAnonKey: '' };
