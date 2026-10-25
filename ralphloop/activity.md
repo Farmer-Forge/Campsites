@@ -136,3 +136,8 @@ TASK 5 COMPLETE
 - Step 7: worktree clean; Finder files (features/finder, geolocation and finder-state services) appear in `git log main..HEAD --stat` via checkpoint commits. Commit step treated as done.
 
 TASK 6 COMPLETE
+
+## Task 3, call 7
+- Step 6: `ng lint` passes and `ng build` succeeds. Pat password login returns an access_token (count 1); Sam `users.suspended` is `t`. Re-read spec 4 and grepped every exact text (headings, buttons, notices, reset states, errors): all present. Gaps: none.
+
+TASK 3 COMPLETE
