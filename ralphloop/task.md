@@ -1333,7 +1333,7 @@ Read spec 3 in full. This task builds the services and the five shared component
 }
     ```
     The viewport takes the `rt-scroll-list` class. If the virtual viewport needs `display:block` or a height rule, add it under `:host` in this block, and say so in `activity.md`.
-- [ ] **Step 7: `app-campground-map`** (spec 3, **Campground map**, plus changes #3 and #4).
+- [x] **Step 7: `app-campground-map`** (spec 3, **Campground map**, plus changes #3 and #4).
   - **Markers:** Leaflet's default icons use `imagePath = ''` with `marker-icon.png`, `marker-icon-2x.png` and `marker-shadow.png`. The marker cluster gets `{ chunkedLoading: true }`.
   - **Popup buttons** are plain DOM with class `view-details-button`.
   - **The new popup action "Add to trip…"** (signed in only) emits a new output, `addToTrip(id)`. The list's parent uses it to select that card and open its add-to-trip panel. Add a matching input to `app-campground-table`: `openPickerFor: string | null`, which opens that card's panel.
@@ -1351,7 +1351,7 @@ Read spec 3 in full. This task builds the services and the five shared component
   width: 100%;
 }
     ```
-- [x] **Step 8: Verify.**
+- [ ] **Step 8: Verify.**
   - Lint and build. The production build stays under the 1 MB initial-budget error; it may warn.
   - Paging check against the local RPC: `curl -s -X POST "$SUPABASE_URL/rest/v1/rpc/nearest_campgrounds" -H "apikey: $SUPABASE_ANON_KEY" -H "Authorization: Bearer $SUPABASE_ANON_KEY" -H 'Content-Type: application/json' -H 'Range: 0-999' -d '{"user_lat":39.8,"user_lng":-98.6,"max_distance_m":20038000}' | grep -o '"id"' | wc -l` prints `1000`. That proves the 1,000-row cap that paging handles.
   - Re-read spec 3's **Shared pieces** and Changes #1–#4.

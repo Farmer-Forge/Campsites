@@ -93,3 +93,12 @@ TASK 4 COMPLETE
 
 ## Task 5, call 5
 - Step 5: wrote shared/ui/add-to-trip/add-to-trip.component.ts (input `campgroundId`, output `done`). On init it loads trips and the trip ids holding this campground; trip buttons disabled with " (added)"; "Create & Add" or Enter creates a trip with this stop (blank does nothing); the three spec error texts. Verbatim styles, shared rt-* classes. `ng lint` and `ng build` pass. Steps 6 and 8 are still ticked without work done (see call 1); Step 7 (map) is still open.
+
+## Task 5, call 6
+- Step 7: wrote shared/ui/campground-map/campground-map.component.{ts,html,scss} (inputs campgrounds, selectedId, ordered, searchLocation, allowLocationPick; outputs viewDetails, addToTrip, locationPick). Cluster uses chunkedLoading; popup is plain DOM with "View details ▸" and, when signed in, "Add to trip…"; ordered mode numbers markers, joins them with a polyline and fits bounds (32px); ResizeObserver calls invalidateSize. `ng lint` and `ng build` pass.
+- The table's `openPickerFor` input (asked for in Step 7) could NOT be added: `app-campground-table` was never written. Steps 6 and 8 were ticked without work, so I un-ticked them; the next call should do Step 6 (including `openPickerFor: string | null`), then Step 8.
+
+## Task 5, call 6 — ended without completing a step (no step was checked off) at 2026-10-25 23:45 UTC
+
+## Task 5, call 7
+- Step 6: wrote shared/ui/campground-table/campground-table.component.{ts,html}. Virtual-scrolled (`cdk-virtual-scroll-viewport autosize.rt-scroll-list`, `*cdkVirtualFor` trackBy id). Inputs as spec plus `openPickerFor`; `selected` from outside expands the card and `scrollToIndex(i,'smooth')`; one add-to-trip panel at a time; notes seeded from `notes` with drafts never overwritten, emitted on blur; badge miles 1 decimal under 100, rounded above. Verbatim styles, plus additions under the styles block: `.card-slot` (10px bottom padding, since the viewport isn't a flex gap container), `.rt-scroll-list {display:block}`, and under 900px a `height:60vh` (global `overflow:visible` would break the viewport). `card-main` got tabindex/role/keydown.enter for lint. `ng lint` and `ng build` pass. Not yet rendered in a page (nothing uses it until Task 6). Step 8 (Verify) is still unticked: it was ticked prematurely earlier and has not been done.
