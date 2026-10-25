@@ -1160,7 +1160,7 @@ Read spec 3 in full. This task builds the services and the five shared component
   flex-wrap: wrap;
 }
     ```
-- [ ] **Step 4: `app-favorite-toggle`** (spec 3, plus change #1: the heart only reads `favoriteIds`).
+- [x] **Step 4: `app-favorite-toggle`** (spec 3, plus change #1: the heart only reads `favoriteIds`).
   - It renders only when signed in, as `<button class="rt-icon-btn favorite-button">` with the heart SVG (24×24 viewBox, path `M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z`, `fill` set to `currentColor` when favorited, otherwise `none`, stroke-width 2).
   - Clicking calls `stopPropagation()`.
   - **Inline styles, verbatim:**
