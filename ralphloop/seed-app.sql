@@ -4,8 +4,8 @@
 -- Production's campgrounds and parks, copied as they are from Shawn's backup
 -- of 2026-10-18 (~/backups/campsitefinder/2026-10-18/data.sql, the COPY blocks
 -- for public.campgrounds and public.parks only). That includes what older sync
--- functions left behind, e.g. NPS rows with no state (CLAUDE.md, "Production
--- backup"). campground_attributes was empty in production, so it has no seed.
+-- functions left behind, e.g. 463 campgrounds with no state (CLAUDE.md,
+-- "Production backup"). campground_attributes was empty in production, so it has no seed.
 --
 -- The data lives in ralphloop/seed-data/*.copy.gz (COPY text format, gzipped).
 -- Rows that already exist are left alone, so a second run changes nothing; after

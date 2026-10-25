@@ -1,6 +1,6 @@
 # Auth pages (sign in, sign up, forgot and reset password) — Design
 
-Status: **draft for Shawn's review** (2026-10-25). Spec 4 of the roadmap.
+Status: **approved by Shawn 2026-10-25**, including its proposed changes from V1. Spec 4 of the roadmap.
 
 Last updated: 2026-10-25
 
@@ -66,7 +66,7 @@ The emailed link lands here. supabase-js reads the one-time token from the URL a
 - **Email confirmations are off locally** (`config.toml`), so a local sign-up is signed in at once.
 - **`site_url` and `additional_redirect_urls` in `supabase/config.toml` point at `127.0.0.1:3000`,** from V1, so local reset links won't return to the review app. Task 1 sets them to the review app's address (`http://192.168.1.188:4200`). That's local configuration, not the schema contract.
 
-## Proposed changes from V1 (Claude's suggestions, pending Shawn's OK)
+## Proposed changes from V1 (Claude's suggestions, approved by Shawn 2026-10-25)
 
 1. **Come back where you were.**
    - When `authGuard` or `adminGuard` sends someone to `/login`, it adds `?returnUrl=<the page>`.

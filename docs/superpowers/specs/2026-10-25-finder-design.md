@@ -1,6 +1,6 @@
 # Finder — Design
 
-Status: **draft for Shawn's review** (2026-10-25, with **Changes from V1**). Spec 3 of the roadmap (`2026-10-20-v1.1-roadmap-design.md`).
+Status: **approved by Shawn 2026-10-25**, including its proposed changes from V1. Spec 3 of the roadmap (`2026-10-20-v1.1-roadmap-design.md`).
 
 Last updated: 2026-10-25
 

@@ -1,6 +1,6 @@
 # App shell and design system — Design
 
-Status: **draft for Shawn's review** (2026-10-24; changes from V1 added 2026-10-25). Spec 2 of the roadmap (`2026-10-20-v1.1-roadmap-design.md`).
+Status: **approved by Shawn 2026-10-25**, including its proposed changes from V1. Spec 2 of the roadmap (`2026-10-20-v1.1-roadmap-design.md`).
 
 Last updated: 2026-10-24
 

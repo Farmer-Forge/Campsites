@@ -52,7 +52,7 @@ Campsites is **CampsiteFinder V1.1**: a rebuild of the live CampsiteFinder site 
 - `roles.sql`: custom roles, with no passwords;
 - `data.sql` and `full.dump`: all data.
 
-**`data.sql` and `full.dump` hold real users' password hashes and session tokens.** They never come into this repo, never go into a seed, and are never read whole. The seed takes only the campground reference data from them: `campgrounds`, `parks`, and `campground_attributes`, if it has rows (the manifest gives no count for it). That data is copied as it is, including what older sync functions left behind (for example, NPS rows with no `state`), because that's what V1 users see. The backup doesn't include production's project settings, API keys or deployed edge-function versions.
+**`data.sql` and `full.dump` hold real users' password hashes and session tokens.** They never come into this repo, never go into a seed, and are never read whole. The seed takes only the campground reference data from them: `campgrounds`, `parks`, and `campground_attributes`, if it has rows (the manifest gives no count for it). That data is copied as it is, including what older sync functions left behind (for example, the 463 campgrounds with no `state`), because that's what V1 users see. The backup doesn't include production's project settings, API keys or deployed edge-function versions.
 
 ## What's here so far
 

@@ -1,6 +1,6 @@
 # Favorites, Trips and Trip detail — Design
 
-Status: **draft for Shawn's review** (2026-10-25). Specs 6 and 7 of the roadmap, together, because they share `TripsService` and the plan-a-trip flow.
+Status: **approved by Shawn 2026-10-25**, including its proposed changes from V1. Specs 6 and 7 of the roadmap, together, because they share `TripsService` and the plan-a-trip flow.
 
 Last updated: 2026-10-25
 
@@ -86,7 +86,7 @@ The map-and-list layout:
     - Failure: "Couldn't add that stop — try again."
 - **On open:** load the trip and its stops in parallel, then the favorites (for the add select). A favorites failure just leaves the select empty.
 
-## Proposed changes from V1 (Claude's suggestions, pending Shawn's OK)
+## Proposed changes from V1 (Claude's suggestions, approved by Shawn 2026-10-25)
 
 1. **Unfavoriting on the Favorites page removes the card right away,** with its note. In V1 the card stayed until a reload, and editing its note then failed with an error.
 2. **The empty message matches the heart icon:** "No favorites yet. Tap the heart on a campground in the Finder to save it here." V1 said "Star".

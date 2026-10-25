@@ -1,6 +1,6 @@
 # Account page — Design
 
-Status: **draft for Shawn's review** (2026-10-25). Spec 5 of the roadmap.
+Status: **approved by Shawn 2026-10-25**, including its proposed changes from V1. Spec 5 of the roadmap.
 
 Last updated: 2026-10-25
 
@@ -47,7 +47,7 @@ Last updated: 2026-10-25
 
 - **The Theme card** ("Dark mode" switch). See spec 2.
 
-## Proposed changes from V1 (Claude's suggestions, pending Shawn's OK)
+## Proposed changes from V1 (Claude's suggestions, approved by Shawn 2026-10-25)
 
 1. **Tell the last admin why deleting failed.** V1.1's database refuses to delete the last active admin (spec 1, **Fixes** #4). The edge function then fails, and the user would only see "Could not delete account." So for a user whose `role` is `admin`, a failed delete adds: "If you're the only admin, make another user an admin first." It's a hint, not a check: the app can't count admins, because users read only their own row. Nothing changes in the edge function.
 
