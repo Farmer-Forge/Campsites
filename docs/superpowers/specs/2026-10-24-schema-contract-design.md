@@ -68,7 +68,7 @@ All seven tables have RLS on. Supabase's default grants give `anon` and `authent
 | `reservation_url`, `directions_url` | text | can be `''` (see the reserve/directions plan in V1) |
 | `agency` | text, not null, default `'NPS'` | btree index; e.g. `NPS`, `USFS`, `BLM`, `USACE` |
 | `source` | text, not null, default `'nps'` | `nps` or `ridb` |
-| `state` | text, nullable | two-letter state; btree index. **Null means unknown, and state filters always include it.** In production every NPS row's `state` is null, because `nps-sync` wasn't redeployed after state parsing was added. |
+| `state` | text, nullable | two-letter state; btree index. **Null means unknown, and state filters always include it.** In production, 463 of the 4,900 rows have no `state`: 163 NPS, 243 USFS, 43 BLM and 8 USACE (counted from the seed, 2026-10-25). *(An earlier draft said every NPS row lacked a state; the data says otherwise.)* |
 | `updated_at` | timestamptz, not null, default `now()` | |
 
 - **Policy:** "anyone can read campgrounds" (select, everyone).
@@ -202,7 +202,7 @@ All six use `SUPABASE_URL`, plus `SUPABASE_SERVICE_ROLE_KEY` for privileged work
 
 ## Fixes (Shawn, 2026-10-24)
 
-Shawn reviewed the behaviors below and asked for them fixed in V1.1, except `moderator` (it gets powers later) and NPS rows' missing `state` (dealt with later). **V1's production database doesn't have these fixes; V1 is frozen.** The Tables, Functions and Edge functions sections above describe V1 as it was through `0019`. These fixes apply on top of them, and where the two differ, this section wins.
+Shawn reviewed the behaviors below and asked for them fixed in V1.1, except `moderator` (it gets powers later) and the rows with no `state` (dealt with later). **V1's production database doesn't have these fixes; V1 is frozen.** The Tables, Functions and Edge functions sections above describe V1 as it was through `0019`. These fixes apply on top of them, and where the two differ, this section wins.
 
 | # | Problem in V1 | Fix in V1.1 | Where |
 |---|---|---|---|
@@ -227,7 +227,7 @@ Shawn's answers: 1–4, 7 and 8 are fixed (see **Fixes**); 5 stays as it is; 6 w
 3. **`nps-sync` and `ridb-sync` don't check who calls them.** Supabase's JWT check is on by default, and `config.toml` doesn't turn it off. The public anon key is itself a valid JWT, so anyone with it should be able to trigger a full sync against the NPS and RIDB APIs. Not tested: the functions aren't served locally.
 4. **No last-admin guard** (see Functions). *Fixed as #3 and #4; see the correction under Fixes.*
 5. **`moderator` is a role with no powers.** *Stays: moderators get powers later.*
-6. **NPS rows have no `state` in production,** so the state filter never hides them (see `campgrounds.state`). *Later.* No new code is needed: `nps-sync` already parses state, so running it once against V1.1's own cloud project, when that exists, fills it in.
+6. **Some campgrounds have no `state` in production,** so the state filter never hides them (see `campgrounds.state`): 463 of the 4,900 rows have no `state`: 163 NPS, 243 USFS, 43 BLM and 8 USACE (counted from the seed, 2026-10-25). *Later.* A future sync from NPS and RIDB, whose code already parses state, could fill in some of them; rows whose source address has no state stay unknown.
 7. **`trip_stops.position` isn't unique per trip.**
 8. **The `users` constraint names still say `profiles_…`** (cosmetic; from the 0004 rename).
 

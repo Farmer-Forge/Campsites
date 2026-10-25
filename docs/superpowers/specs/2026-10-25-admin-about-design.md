@@ -1,6 +1,6 @@
 # Admin page and About page — Design
 
-Status: **draft for Shawn's review** (2026-10-25). Specs 8 and 9 of the roadmap.
+Status: **approved by Shawn 2026-10-25**, including its proposed changes from V1. Specs 8 and 9 of the roadmap.
 
 Last updated: 2026-10-25
 
@@ -61,7 +61,7 @@ Free-form notes that admins keep on a campground (type, name, value). **Nothing 
 - **Contact:** "Questions, bugs, or ideas? Reach the admin at shawnpfarmer@gmail.com." The address is a `mailto:` link.
 - The page has its own SCSS (`about.component.scss`, 58 lines), carried over verbatim.
 
-## Proposed changes from V1 (Claude's suggestions, pending Shawn's OK)
+## Proposed changes from V1 (Claude's suggestions, approved by Shawn 2026-10-25)
 
 1. **Your own row says "You".** On the signed-in admin's own row, the role select, Suspend and Delete are replaced by "You" (`rt-notice`). The database refuses those changes anyway, so V1 showed raw errors such as "cannot modify your own role". Edit stays.
 2. **Plain-English errors** for the database's known refusals:
@@ -72,6 +72,8 @@ Free-form notes that admins keep on a campground (type, name, value). **Nothing 
 4. **Campground search treats `%` and `_` literally.** They're escaped before the `ilike`, so searching "50%" doesn't match everything.
 
 ## Questions for Shawn (not proposals)
+
+*Approved 2026-10-25 without changes to these, so V1.1 keeps V1's behavior on both: attributes stay admin-only, and the About page keeps the address.*
 
 - **Campground attributes are only ever visible to admins.** That's V1 as built, so V1.1 keeps it. Showing them in the Finder's detail panel would be a new feature for the V1.2 list, if you want it there.
 - **The About page shows your real email** (`shawnpfarmer@gmail.com`) on a public page, as V1 does. V1.1 keeps it unless you'd rather use another address.
