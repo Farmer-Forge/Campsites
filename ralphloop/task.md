@@ -115,7 +115,7 @@ Read spec 2 in full, including **Changes from V1**, and spec 9's About section.
 - `authGuard`, `adminGuard`: functional `CanActivateFn`s. Both `await inject(SupabaseService).ready` first.
 - `PlaceholderComponent` (`app-placeholder`): shows "Coming soon" in `rt-content`. It's only for routes whose pages aren't built yet.
 
-- [ ] **Step 1: Generate the workspace and bring it into the repo.**
+- [x] **Step 1: Generate the workspace and bring it into the repo.**
   ```bash
   cd /tmp && rm -rf scaffold && mkdir scaffold && cd scaffold
   npx --yes @angular/cli@22 new campsite-finder --skip-git --skip-tests --style=scss --ssr=false --routing --defaults --interactive=false
