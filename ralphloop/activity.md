@@ -61,3 +61,6 @@ TASK 2 COMPLETE
 - Step 7: worktree clean; nothing to commit. Confirmed the auth files, guards and app.routes.ts appear in `git log main..HEAD --stat` via checkpoint commits. Step treated as done.
 
 TASK 3 COMPLETE
+
+## Task 4, call 1
+- Step 1: added updateDisplayName (users row, auth metadata, then profile signal), updatePassword and deleteAccount (delete-account function, then SupabaseService.signOut) to UserService. All throw on error so the page can show messages. `ng lint` and `ng build` pass.

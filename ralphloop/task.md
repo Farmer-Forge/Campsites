@@ -1048,7 +1048,7 @@ Read spec 5.
 - `updatePassword(password: string): Promise<void>`;
 - `deleteAccount(): Promise<void>`: the `delete-account` edge function, then `SupabaseService.signOut()`.
 
-- [ ] **Step 1: `UserService` account methods,** as in Interfaces (spec 2, **Session**). No theme methods.
+- [x] **Step 1: `UserService` account methods,** as in Interfaces (spec 2, **Session**). No theme methods.
 - [ ] **Step 2: The Account page.** Spec 5: the display name card, the password card and the delete card with its confirm step, with the exact texts, plus change #1 (the last-admin hint). There is **no** Theme card.
   - **Structure:**
     - `<div class="rt-content">` with `<h1 class="rt-title">Account</h1>`;
