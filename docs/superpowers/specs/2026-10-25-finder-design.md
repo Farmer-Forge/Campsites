@@ -1,6 +1,6 @@
 # Finder — Design
 
-Status: **draft for Shawn's review** (2026-10-25). Spec 3 of the roadmap (`2026-10-20-v1.1-roadmap-design.md`).
+Status: **draft for Shawn's review** (2026-10-25, with **Changes from V1**). Spec 3 of the roadmap (`2026-10-20-v1.1-roadmap-design.md`).
 
 Last updated: 2026-10-25
 
@@ -239,16 +239,38 @@ An inline dashed cream panel under a card.
   - "Couldn't add to that trip — try again.";
   - "Couldn't create that trip — try again."
 
-## Behaviors to mark: intended or accidental
+## Changes from V1 (Shawn, 2026-10-25)
 
-1. **"Show all" loads every matching campground,** about 4,900 rows in pages of 1,000. They're all rendered as cards at once (no paging) and all as clustered markers.
-2. **For a signed-in user with no favorites, every card's heart triggers its own favorites load,** because each heart reloads while the set is empty. With "Show all" that's thousands of identical requests.
-3. **Favorites aren't cleared on sign-out,** so the next account in the same tab could see the previous user's hearts until a reload. The heart only reloads when the set is empty.
-4. **The map's "Add to Trip" always goes to the most recent trip, and doesn't say which one.** It also appears only after the trips list has been loaded somewhere else (Trips page, or an add-to-trip panel).
-5. **Every filter change hides the map and list** behind "Finding campgrounds near you...". The map rebuilds and returns to the search-location view.
-6. **A partial park selection hides every USFS, BLM, USACE and FWS campground** (they have no park code), even with those agencies on.
-7. **Picking regions overwrites any states you picked by hand.**
-8. **The `limit` of 50 is never used.** Every search sends a radius, so the RPC's no-limit branch always runs.
+Shawn reviewed V1's behaviors and asked for them addressed. He handed the details to Claude: these are Claude's suggestions, accepted without discussion. Where this section and the sections above differ, this section wins.
+
+1. **Favorites load once, centrally.**
+   - `FavoritesService.loadFavoriteIds()` runs once when a session starts, next to the profile load.
+   - The sign-out routine (spec 2, **Changes from V1**, #4) clears favorites.
+   - The heart never loads anything itself; it only reads `favoriteIds`.
+
+   That removes V1's one-request-per-card storm, and the previous user's hearts showing after a sign-out.
+2. **The card list is virtual-scrolled.** It uses the Angular CDK's `cdk-virtual-scroll-viewport` (`@angular/cdk`, same major version as Angular). Only the cards on screen are drawn, so "Show all" still lists every result.
+   - **Variable heights:** expanded cards, open add-to-trip panels and note rows change a card's height, so the list uses autosize (`@angular/cdk-experimental/scrolling`) or an equivalent that handles them.
+   - **Scrolling to a selection:** a card selected from the map scrolls into view through the viewport (`scrollToIndex`).
+   - **Everything else is unchanged:** the card's look, the clicks, plan mode and notes. Favorites and Trips use the same list.
+3. **The map loads markers in chunks.** The marker cluster uses `chunkedLoading: true`, so adding thousands of markers doesn't freeze the page. Clustering and the map's look are unchanged.
+4. **"Add to trip…" in the map popup.**
+   - It replaces V1's one-click "Add to Trip".
+   - It's shown whenever the user is signed in, whether or not trips have loaded.
+   - Clicking it closes the popup, selects that campground (the list expands and scrolls to it, as with "View details ▸"), and opens that card's add-to-trip panel. The user then picks a trip there.
+   - "View details ▸" is unchanged.
+5. **Filter changes don't blank the page.**
+   - Only the **first** load shows "Finding campgrounds near you..." in place of the map and list.
+   - After that, the map and list stay up while results reload. The list header shows "Updating…" next to the count until they arrive.
+   - The map keeps its view. It recentres only when the **search location** changes, as before.
+6. **The park filter explains itself.** The behavior is kept: a partial park selection still shows only those parks' campgrounds, which are all NPS. When fewer than all parks are selected, the filter bar shows the note "Park filter shows NPS campgrounds only" (`rt-notice`).
+7. **One "Where" picker** replaces the separate Region and State multiselects.
+   - It's a PrimeNG multiselect with options **grouped by region** (Northeast, Midwest, South, West; states as in the table above), with a filter box.
+   - Ticking a region's group header ticks all its states, so there's nothing left to overwrite.
+   - Labels: "All states" when all are selected, "{n} states", "No states".
+   - The saved state keeps `regions` for compatibility, computed as the regions whose states are all selected.
+   - The query is as before: states are omitted when all are selected.
+8. **No unused limit.** The client stops sending `result_limit`; the RPC's default doesn't apply when a radius is sent anyway. No visible change.
 
 ## Out of scope
 

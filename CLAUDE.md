@@ -8,7 +8,7 @@ Campsites is **CampsiteFinder V1.1**: a rebuild of the live CampsiteFinder site 
 
 - **V1** is `~/projects/PrimeNG`. Its code is on GitHub (`Farmer-Forge/CampsiteFinder`), its database on Supabase cloud, and the site on Vercel. **Shawn isn't changing V1's app or database until the loop can rebuild it.**
 - **V1.1** is this repo (GitHub `Farmer-Forge/Campsites`). It gets its own Supabase cloud project and Vercel site when it's ready. Those cloud steps are done by hand, never by the loop.
-- **V1.1 matches V1's behavior and look exactly, plus the security fixes Shawn asked for on 2026-10-24** (spec 1, **Fixes**: users can read only their own row, suspension is enforced in the database, the last-admin guard, unique trip-stop positions with a reorder RPC, and the sync functions' caller check). No new features. New ideas wait for V1.2.
+- **V1.1 matches V1's behavior and look exactly, plus the security fixes Shawn asked for on 2026-10-24** (spec 1, **Fixes**: users can read only their own row, suspension is enforced in the database, the last-admin guard, unique trip-stop positions with a reorder RPC, and the sync functions' caller check), **and the behavior changes in specs 2 and 3's "Changes from V1" sections** (Shawn, 2026-10-25: favorites load once, a virtual-scrolled list, guards that wait for the session, no dark mode, a 404 page, and others). No other new features. New ideas wait for V1.2.
 - **Stack:** Angular + PrimeNG + Supabase, the same as V1.
 - **Strategy:** the loop rebuilds the app from specs. V1's code isn't copied in, except the schema (below).
 

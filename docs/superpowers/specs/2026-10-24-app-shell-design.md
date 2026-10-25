@@ -1,6 +1,6 @@
 # App shell and design system — Design
 
-Status: **draft for Shawn's review** (2026-10-24). Spec 2 of the roadmap (`2026-10-20-v1.1-roadmap-design.md`).
+Status: **draft for Shawn's review** (2026-10-24; changes from V1 added 2026-10-25). Spec 2 of the roadmap (`2026-10-20-v1.1-roadmap-design.md`).
 
 Last updated: 2026-10-24
 
@@ -42,7 +42,7 @@ The first real task in `task.md`, the scaffold, is built from this spec. Each fe
   - production budgets: initial 500 kB warning / 1 MB error; any component style 4 kB / 8 kB;
   - `build` defaults to `production`, `serve` to `development`.
 - **`src/index.html`:**
-  - `<title>CampsiteFinder</title>`, `lang="en"`, `<base href="/">`, viewport meta, `favicon.ico`;
+  - `<title>Campsite Finder</title>` (V1 had "CampsiteFinder"; see **Changes from V1**, #5), `lang="en"`, `<base href="/">`, viewport meta, `favicon.ico`;
   - Google Fonts preconnects;
   - a stylesheet link for `Yellowtail`, `Alfa Slab One` and `Work Sans:wght@400;500;600;700`, with `display=swap`.
 - **Folders** (as V1, with one change):
@@ -87,9 +87,9 @@ Every route lazy-loads its component (`loadComponent`).
 | `login`, `signup`, `forgot-password`, `reset-password` | auth pages | none |
 | `about` | About | none |
 
-There's no wildcard route (see **Behaviors to mark**, #3).
+Plus a wildcard `**` route to the "page not found" page (**Changes from V1**, #3).
 
-- **`authGuard`:** allows the route if a session exists; otherwise it redirects to `/login`. It checks the session synchronously (see #1).
+- **`authGuard`:** allows the route if a session exists; otherwise it redirects to `/login`. It first waits for the saved session to load (**Changes from V1**, #1).
 - **`adminGuard`:**
   1. No session → `/login`.
   2. Load the profile if it isn't loaded yet.
@@ -188,17 +188,27 @@ Worker prompt rule 8 sends UI steps to these files, so they're written with `tas
   - no raw colors outside the tokens, and no new one-off styles;
   - a genuinely new pattern goes into `styles.scss` **and** `Design.md` in the same step;
   - the Leaflet map's own look (tiles, default markers, clusters, popups) never changes.
-- **Dark theme:** V1 stores `light` or `dark` and sets `data-theme`, but defines no dark colors (see #2).
+- **No dark theme** in V1.1 (see **Changes from V1**, #2).
 
-## Behaviors to mark: intended or accidental
+## Changes from V1 (Shawn, 2026-10-25)
 
-Shawn, please mark each one. Accidental ones can be fixed in V1.1 (as with the schema), or kept and listed for V1.2.
+Shawn reviewed V1's behaviors and asked for them addressed. He handed the details to Claude: these are Claude's suggestions, accepted without discussion. V1.1 does the following, where V1 didn't:
 
-1. **Refreshing a signed-in page probably lands you on `/login`.** `authGuard` checks the session synchronously, but the session is read asynchronously (`getSession()`) when `SupabaseService` first starts. On a fresh load of `/favorites`, `/trips` or `/account`, the guard probably runs before the session arrives. The same goes for `/admin`. Not tried on the live site; a quick check is to sign in, open Favorites and press refresh.
-2. **The dark theme does nothing visible.** The Account toggle saves it, but no dark colors exist. V1's redesign plan listed a dark palette as out of scope.
-3. **No "page not found".** An unknown URL shows the nav and an empty page.
-4. **Signing out leaves the theme attribute and the loaded profile in memory** until the next sign-in or a reload. Nothing visible today, since the dark theme does nothing.
-5. **The tab title says "CampsiteFinder"; the wordmark says "Campsite Finder".** The nav link reads "About Us", while the route is `/about`.
+1. **Guards wait for the saved session.** `SupabaseService` exposes a `ready` promise, resolved once `auth.getSession()` has returned at startup. `authGuard` and `adminGuard` `await` it before checking. So refreshing a signed-in page stays on that page, where V1 probably sent it to `/login`.
+2. **No dark mode.**
+   - The Account page has no theme toggle.
+   - `UserService` doesn't read or write `theme`, and nothing sets `data-theme`.
+   - The `users.theme` column stays (it's in the schema contract) but is unused.
+3. **A "page not found" page.**
+   - A wildcard route (`**`) shows a road-trip-styled page in `rt-content` with an `rt-page-card`.
+   - The title is "Page not found" (`rt-title`), followed by "That page isn't on the map." and an `rt-btn rt-btn--cherry` link "Back to the Finder" → `/`.
+4. **One sign-out routine.** Signing out, whether from the nav, after a suspension check or after deleting the account, goes through one method. It calls `auth.signOut()` and then clears every per-user signal:
+   - the profile;
+   - favorites (ids and notes);
+   - trips and their stops.
+
+   The Finder's saved search stays, since it belongs to the tab, not the user.
+5. **"Campsite Finder" everywhere.** The browser tab title becomes "Campsite Finder", matching the wordmark. The nav link keeps the label "About Us".
 
 ## Decided
 
