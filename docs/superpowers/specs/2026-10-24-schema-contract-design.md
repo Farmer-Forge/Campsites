@@ -1,17 +1,19 @@
 # Schema contract ("do not change") — Design
 
-Status: **draft for Shawn's review** (2026-10-24). Spec 1 of the roadmap (`2026-10-20-v1.1-roadmap-design.md`).
+Status: **draft for Shawn's review** (2026-10-24). Spec 1 of the roadmap (`2026-10-20-v1.1-roadmap-design.md`). Updated the same day with the fixes Shawn asked for (see **Fixes**); those are in PR `schema-fixes`.
 
 Last updated: 2026-10-24
 
 ## What this is
 
-The database and edge functions V1.1 builds on, described as they are. **V1.1 changes none of it.** Every task in `task.md` that reads or writes data points here for names, types and rules.
+The database and edge functions V1.1 builds on. Every task in `task.md` that reads or writes data points here for names, types and rules. **The loop changes none of it.**
 
-The contract is these files, copied from V1's `v1.0` tag plus one addition:
-- `supabase/migrations/0001–0018`, unchanged from V1;
+The contract is these files:
+- `supabase/migrations/0001–0018`, unchanged from V1's `v1.0` tag;
 - `supabase/migrations/0019_function_search_path.sql`, which adds the one thing production had that `0001–0018` lacked (below);
-- `supabase/functions/` (six edge functions, with their Deno tests), unchanged from V1;
+- `supabase/migrations/0020_security_fixes.sql`, the fixes Shawn asked for on 2026-10-24 (see **Fixes**). This is where V1.1's database **differs from V1's**;
+- `supabase/functions/`: V1's six edge functions, plus a caller check added to `nps-sync` and `ridb-sync` (`_shared/service-role.ts`, see **Fixes**);
+- `supabase/tests/security_fixes_test.sql`: pgTAP tests for `0020` (`supabase test db`, on Ralph);
 - `deno.lock`, unchanged from V1.
 
 Rules (CLAUDE.md hard rule 3, worker prompt rule 4):
@@ -167,7 +169,7 @@ All are owned by `postgres` and pin `search_path`. "Admin-guarded" means the fun
 
 **Trigger:** `on_auth_user_created`: `after insert on auth.users for each row execute function public.handle_new_user()`.
 
-**Missing on purpose: a last-admin guard.** V1 has no check that stops removing the last admin, so an admin can demote or suspend every *other* admin. Only "not yourself" is enforced.
+**Last admin:** V1 only stops admins changing their own role or suspension. V1.1 adds a trigger that keeps at least one active admin (see **Fixes** #4).
 
 ## Auth (Supabase Auth, as V1 uses it)
 
@@ -198,16 +200,34 @@ All six use `SUPABASE_URL`, plus `SUPABASE_SERVICE_ROLE_KEY` for privileged work
 - **Tests:** `deno test supabase/functions`, 34 tests, covering only the pure parts: `ridb-sync/transform.ts`, `ridb-sync/agency.ts` and `nps-sync/transform.ts`. They don't touch the network or a database. Each step that touches these files would run them. No step should touch them, since they're in the contract.
 - **The loop never calls NPS or RIDB,** and never deploys a function. Locally, campground data comes from the seed (Phase 3), copied from production as it is.
 
-## Behaviors to mark: intended or accidental
+## Fixes (Shawn, 2026-10-24)
 
-V1.1 keeps all of these as they are, either way. Accidental ones go on the V1.2 list. Shawn, please mark each one.
+Shawn reviewed the behaviors below and asked for them fixed in V1.1, except `moderator` (it gets powers later) and NPS rows' missing `state` (dealt with later). **V1's production database doesn't have these fixes; V1 is frozen.** The Tables, Functions and Edge functions sections above describe V1 as it was through `0019`. These fixes apply on top of them, and where the two differ, this section wins.
+
+| # | Problem in V1 | Fix in V1.1 | Where |
+|---|---|---|---|
+| 1 | Anyone could read every user's name, role and suspension | `users` select policy is "users can read own row" (authenticated, `auth.uid() = id`), and `anon` has no privileges on `users`. Admins list users through `get_users_for_admin()` (security definer), as before. | `0020` §1 |
+| 2 | Suspension enforced only by the app | New `is_active_user(uid)` (security definer: true if the row exists and isn't suspended). The `favorites`, `trips` and `trip_stops` policies, and the `users` update policy, also require `is_active_user(auth.uid())`. A suspended user still reads their own `users` row, which the app uses to sign them out. | `0020` §2 |
+| 3 | A suspended admin kept admin powers | `is_admin(uid)` also requires `not suspended`. | `0020` §3 |
+| 4 | The last admin could delete their own account | Trigger `users_guard_last_admin` (before update of `role`/`suspended`, or delete, on `users`) raises `cannot remove the last admin` when the change would leave no active admin. Deleting an `auth.users` row cascades to `users`, so the whole delete fails. | `0020` §4 |
+| 5 | Trip stop positions could repeat within a trip | Unique `(trip_id, position)`, deferrable initially immediate. New `reorder_trip_stops(p_trip_id, p_stop_ids uuid[])` sets every position in one statement (position = index in the array, from 0); it runs as the caller, so RLS applies. **V1.1's app reorders with this RPC**, not V1's one-update-per-stop, which a unique position would break part-way. | `0020` §5 |
+| 6 | Sync functions ran for any caller | `nps-sync` and `ridb-sync` return 403 unless `Authorization: Bearer <service role key>`, checked before anything else. Confirmed live on Ralph: the anon key now gets 403, where before the platform's JWT check let it through. | `_shared/service-role.ts` (+4 Deno tests) |
+| 7 | Constraint names said `profiles_…` | Renamed to `users_pkey`, `users_id_fkey`. | `0020` §6 |
+
+**Correction to the first draft.** It said an admin could demote or suspend every other admin, leaving none. That can't happen: admins can't change their own role or suspension, so the caller always stays an admin. The real gaps were #3 (a suspended admin kept its powers) and #4 (self-deletion).
+
+**Tests:** `supabase/tests/security_fixes_test.sql`, 22 pgTAP tests. Each fix has tests, and so do the V1 behaviors that must keep working (an active user adds favorites, trips and stops, and changes their theme; an admin lists users). It was run red before `0020` (16 failing, 6 passing), then green after `0020`, and green again after a full `supabase db reset` and the dev seed.
+
+## Behaviors reviewed (2026-10-24)
+
+Shawn's answers: 1–4, 7 and 8 are fixed (see **Fixes**); 5 stays as it is; 6 waits.
 
 1. **Anyone, signed in or not, can read every user's `display_name`, `role` and `suspended`** ("anyone can read profiles"; table grants include `anon`). Confirmed locally: an anon REST call to `/rest/v1/users` lists them. Nothing in V1's UI shows other users' names, so this looks left over from the MVP.
 2. **Suspension isn't enforced by the database.** A suspended user's session token still passes RLS, so they could reach their own data through the API directly. Only the app signs them out.
 3. **`nps-sync` and `ridb-sync` don't check who calls them.** Supabase's JWT check is on by default, and `config.toml` doesn't turn it off. The public anon key is itself a valid JWT, so anyone with it should be able to trigger a full sync against the NPS and RIDB APIs. Not tested: the functions aren't served locally.
-4. **No last-admin guard** (see Functions).
-5. **`moderator` is a role with no powers.**
-6. **NPS rows have no `state` in production,** so the state filter never hides them (see `campgrounds.state`).
+4. **No last-admin guard** (see Functions). *Fixed as #3 and #4; see the correction under Fixes.*
+5. **`moderator` is a role with no powers.** *Stays: moderators get powers later.*
+6. **NPS rows have no `state` in production,** so the state filter never hides them (see `campgrounds.state`). *Later.* No new code is needed: `nps-sync` already parses state, so running it once against V1.1's own cloud project, when that exists, fills it in.
 7. **`trip_stops.position` isn't unique per trip.**
 8. **The `users` constraint names still say `profiles_…`** (cosmetic; from the 0004 rename).
 
