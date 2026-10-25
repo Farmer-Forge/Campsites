@@ -153,3 +153,6 @@ TASK 3 COMPLETE
 
 ## Task 7, call 3
 - Step 3: routed `favorites` to FavoritesComponent (lazy, authGuard) in app.routes.ts.
+
+## Task 7, call 4
+- Step 4: `ng lint` passes (all files); `ng build` succeeds. Re-read spec 6 (Favorites section, changes #1–#4) against the template: header, Plan a trip/Cancel, planner hint, Trip name, Save Trip, errors, empty text, load error with Try again, note error all present. Gaps: none.
