@@ -1605,7 +1605,7 @@ Read the Favorites section and Proposed changes #1–#4 in `2026-10-25-favorites
 }
     ```
 - [x] **Step 2: Map `fitToCampgrounds`.** When it's true and the campgrounds change, `fitBounds` them with 32px padding, the same as ordered mode.
-- [ ] **Step 3: Route.** `favorites` → `FavoritesComponent` (`authGuard`).
+- [x] **Step 3: Route.** `favorites` → `FavoritesComponent` (`authGuard`).
 - [ ] **Step 4: Verify.** Lint and build. Re-read spec 6.
 - [ ] **Step 5: Commit.** `git commit -m "Task 7: favorites page (notes, plan a trip)"`
 

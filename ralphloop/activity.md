@@ -150,3 +150,6 @@ TASK 3 COMPLETE
 
 ## Task 7, call 2
 - Step 2: added `fitToCampgrounds` input to the map; renderMarkers fits bounds (32px padding) when ordered or fit is true; the polyline stays ordered-only. `ng lint` and `ng build` pass (the favorites template now compiles). Steps 3 (route), 4, 5 remain.
+
+## Task 7, call 3
+- Step 3: routed `favorites` to FavoritesComponent (lazy, authGuard) in app.routes.ts.
