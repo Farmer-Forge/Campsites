@@ -161,3 +161,12 @@ TASK 3 COMPLETE
 - Step 5: worktree clean; favorites component, map change and route appear in `git log main..HEAD --stat` via checkpoint commits. Commit step treated as done.
 
 TASK 7 COMPLETE
+
+## Task 8, call 1
+- Steps 2 and 6 were ticked in task.md but features/trips does not exist; un-ticked them.
+- Step 1: added `TripsService.loadAllStops` (one trip_stops select with `in` + order by position, one getByIds for all campgrounds; every requested trip id gets an entry). Lint and build pass.
+
+## Task 8, call 1 — ended without completing a step (no step was checked off) at 2026-10-25 23:54 UTC
+
+## Task 8, call 2
+- Step 2: wrote features/trips/trips-list.component.{ts,html} (inline verbatim styles). Loads trips, then `loadAllStops` (failure → no summary); load error "Couldn't load your trips — try again." + Try again; empty text with Favorites link; inline delete confirmation (Cancel / "Yes, delete this trip"); delete failure message. Not routed yet (route is a later step). `ng lint` and `ng build` pass.

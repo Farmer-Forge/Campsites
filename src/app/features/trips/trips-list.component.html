@@ -1,0 +1,52 @@
+<div class="rt-content">
+  <h1 class="rt-title">Trips</h1>
+  @if (loadFailed()) {
+    <p class="rt-error empty">Couldn't load your trips — try again.</p>
+    <button type="button" class="rt-btn rt-btn--sm" (click)="load()">Try again</button>
+  } @else if (loaded() && trips().length === 0) {
+    <p class="empty">
+      No trips yet. Select some favorites on the <a routerLink="/favorites">Favorites</a> page and choose "Plan a trip"
+      to create one.
+    </p>
+  }
+  @if (deleteError()) {
+    <p class="rt-error">Couldn't delete this trip — try again.</p>
+  }
+  <div class="postcards">
+    @for (trip of trips(); track trip.id) {
+      <article class="postcard">
+        <a class="postcard-header" [routerLink]="['/trips', trip.id]">
+          <span class="greetings">Greetings from</span>
+          <span class="trip-name">{{ trip.name }}</span>
+        </a>
+        <div class="postcard-body">
+          @if (stopsByTrip().get(trip.id); as stops) {
+            <div class="stop-count">{{ stops.length }} {{ stops.length === 1 ? 'stop' : 'stops' }}</div>
+            @if (stops.length > 0) {
+              <div class="route">{{ route(stops) }}</div>
+            }
+          }
+        </div>
+        <div class="postcard-footer">
+          @if (confirmingId() === trip.id) {
+            <span>Delete this trip? This cannot be undone.</span>
+            <button type="button" class="rt-btn rt-btn--sm" (click)="confirmingId.set(null)">Cancel</button>
+            <button type="button" class="rt-btn rt-btn--sm rt-btn--cherry" (click)="remove(trip.id)">
+              Yes, delete this trip
+            </button>
+          } @else {
+            <span>Created {{ trip.createdAt | date }}</span>
+            <a class="rt-btn rt-btn--sm rt-btn--mustard open" [routerLink]="['/trips', trip.id]">Open</a>
+            <button
+              type="button"
+              class="rt-btn rt-btn--sm rt-btn--danger-outline"
+              (click)="confirmingId.set(trip.id)"
+            >
+              Delete
+            </button>
+          }
+        </div>
+      </article>
+    }
+  </div>
+</div>
