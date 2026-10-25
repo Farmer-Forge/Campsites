@@ -1090,7 +1090,7 @@ Read spec 5.
   - Lint and build.
   - `grep -n "theme" src/app/features/account src/app/core/services/user.service.ts -r` finds nothing.
   - Re-read spec 5.
-- [ ] **Step 5: Commit.** `git commit -m "Task 4: account page (display name, password, delete account)"`
+- [x] **Step 5: Commit.** `git commit -m "Task 4: account page (display name, password, delete account)"`
 
 **QC (for Shawn, in the browser):**
 - As Pat, change the display name: "Display name updated." It survives a refresh.

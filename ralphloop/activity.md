@@ -73,3 +73,8 @@ TASK 3 COMPLETE
 
 ## Task 4, call 4
 - Step 4: `ng lint` and `ng build` pass (budget warning pre-existing). grep for "theme" in account and user.service finds nothing. Re-read spec 5: all three cards, exact texts, last-admin hint, no Theme card match.
+
+## Task 4, call 5
+- Step 5: worktree clean; nothing to commit. Confirmed the account component and UserService files appear in `git log main..HEAD --stat` via checkpoint commits. Step treated as done.
+
+TASK 4 COMPLETE
