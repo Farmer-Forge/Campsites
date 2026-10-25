@@ -1,0 +1,23 @@
+<nav class="app-nav">
+  <a class="wordmark" routerLink="/">Campsite Finder</a>
+  <div class="nav-main">
+    <a class="nav-link" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Finder</a>
+    <a class="nav-link" routerLink="/favorites" routerLinkActive="active">Favorites</a>
+    <a class="nav-link" routerLink="/trips" routerLinkActive="active">Trips</a>
+    <a class="nav-link" routerLink="/about" routerLinkActive="active">About Us</a>
+  </div>
+  <div class="nav-user">
+    @if (supabase.session()) {
+      <a class="nav-pill" routerLink="/account" routerLinkActive="active">Account</a>
+      @if (userService.profile()?.role === 'admin') {
+        <a class="nav-pill" routerLink="/admin" routerLinkActive="active">Admin</a>
+      }
+      <button type="button" class="rt-btn rt-btn--mustard rt-btn--shadow sign-out-button" (click)="supabase.signOut()">
+        Sign out
+      </button>
+    } @else {
+      <a class="nav-pill" routerLink="/login">Sign in</a>
+    }
+  </div>
+</nav>
+<main class="app-main"><router-outlet /></main>

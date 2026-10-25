@@ -115,7 +115,7 @@ Read spec 2 in full, including **Changes from V1**, and spec 9's About section.
 - `authGuard`, `adminGuard`: functional `CanActivateFn`s. Both `await inject(SupabaseService).ready` first.
 - `PlaceholderComponent` (`app-placeholder`): shows "Coming soon" in `rt-content`. It's only for routes whose pages aren't built yet.
 
-- [ ] **Step 1: Generate the workspace and bring it into the repo.**
+- [x] **Step 1: Generate the workspace and bring it into the repo.**
   ```bash
   cd /tmp && rm -rf scaffold && mkdir scaffold && cd scaffold
   npx --yes @angular/cli@22 new campsite-finder --skip-git --skip-tests --style=scss --ssr=false --routing --defaults --interactive=false
@@ -125,25 +125,25 @@ Read spec 2 in full, including **Changes from V1**, and spec 9's About section.
   - **Then `.gitignore`:** add Angular's entries to the repo's `.gitignore`, keeping every line already in it.
   - **Then the test tooling:** remove any test target, `tsconfig.spec.json` and test dependency the generator added. There are no tests in this project.
   - **Verify:** `git status --short` shows only the files listed above plus `.gitignore`; nothing under `supabase/` or `ralphloop/` changed.
-- [ ] **Step 2: Install the dependencies.**
+- [x] **Step 2: Install the dependencies.**
   - **Runtime:** `npm install primeng@^22.0.0 @primeuix/themes@^3.0.0 primeicons@^8.0.0 @supabase/supabase-js@^2.112.3 leaflet@^1.9.4 leaflet.markercluster@^1.5.3 @bluehalo/ngx-leaflet@^22.0.0 @bluehalo/ngx-leaflet-markercluster@^22.0.0 @angular/animations@^22 @angular/cdk@^22 @angular/cdk-experimental@^22`
   - **Dev:** `npm install -D @types/leaflet@^1.9.22 @types/leaflet.markercluster@^1.5.6 prettier@^3.8.1`
   - **Verify:**
     - `npx ng build` succeeds;
     - every `@angular/*` package in `package.json` has the same major version (22).
-- [ ] **Step 3: Add lint.**
+- [x] **Step 3: Add lint.**
   - Run `npx ng add angular-eslint --skip-confirmation`.
   - Add a `.prettierrc` with `{ "singleQuote": true, "printWidth": 120 }`.
   - Add npm scripts: `"lint": "ng lint"` and `"build": "ng build"`. Keep `start` / `ng`.
   - **Verify:** `npx ng lint` reports no errors.
-- [ ] **Step 4: Configure `angular.json`** (spec 2, **Project setup**):
+- [x] **Step 4: Configure `angular.json`** (spec 2, **Project setup**):
   - project name `campsite-finder`, prefix `app`, SCSS;
   - `assets`: `{ "glob": "**/*", "input": "public" }` and `{ "glob": "*.png", "input": "node_modules/leaflet/dist/images", "output": "/" }`;
   - `styles`, in this order: `node_modules/leaflet/dist/leaflet.css`, `node_modules/leaflet.markercluster/dist/MarkerCluster.css`, `node_modules/leaflet.markercluster/dist/MarkerCluster.Default.css`, `src/styles.scss`;
   - production budgets: `initial` 500kB warning / 1MB error; `anyComponentStyle` 4kB warning / 8kB error;
   - `development`: `fileReplacements` `src/environments/environment.ts` → `src/environments/environment.local.ts`; `optimization: false`; `sourceMap: true`;
   - `build` defaults to `production`, `serve` to `development`.
-- [ ] **Step 5: Write the environments.**
+- [x] **Step 5: Write the environments.**
   - `src/environments/environment.ts`, exactly:
     ```ts
     export const environment = { production: true, supabaseUrl: '', supabaseAnonKey: '' };
@@ -152,12 +152,12 @@ Read spec 2 in full, including **Changes from V1**, and spec 9's About section.
   - **Verify:**
     - `git status --short` doesn't list `environment.local.ts`;
     - `git check-ignore src/environments/environment.local.ts` prints the path.
-- [ ] **Step 6: Write `src/index.html`.**
+- [x] **Step 6: Write `src/index.html`.**
   - `lang="en"`, `<meta charset="utf-8">`, `<title>Campsite Finder</title>`, `<base href="/">`, the viewport meta, and `<link rel="icon" type="image/x-icon" href="favicon.ico">`;
   - preconnects to `https://fonts.googleapis.com` and `https://fonts.gstatic.com` (crossorigin);
   - the stylesheet `https://fonts.googleapis.com/css2?family=Yellowtail&family=Alfa+Slab+One&family=Work+Sans:wght@400;500;600;700&display=swap`;
   - `<body><app-root></app-root></body>`.
-- [ ] **Step 7: Write `src/styles.scss`, verbatim** (V1's global stylesheet; it imports `primeicons`):
+- [x] **Step 7: Write `src/styles.scss`, verbatim** (V1's global stylesheet; it imports `primeicons`):
   ```scss
 @import "primeicons/primeicons.css";
 
@@ -684,23 +684,23 @@ select.rt-input {
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.4);
 }
   ```
-- [ ] **Step 8: Write the core services and model** (Interfaces above; spec 2, **Session and the signed-in user** and **Changes from V1**, #1 and #4).
+- [x] **Step 8: Write the core services and model** (Interfaces above; spec 2, **Session and the signed-in user** and **Changes from V1**, #1 and #4).
   - **`SupabaseService`:**
     - `createClient(environment.supabaseUrl, environment.supabaseAnonKey)`;
     - in the constructor, start `client.auth.getSession()`, set `session`, then resolve `ready`;
     - subscribe to `onAuthStateChange`, keeping `session` in step. On a `SIGNED_OUT` event, run the resets.
   - **`UserService`,** as in Interfaces.
   - **Verify:** lint and build.
-- [ ] **Step 9: Write the guards** (spec 2, **Routes and guards**, and **Changes from V1**, #1).
+- [x] **Step 9: Write the guards** (spec 2, **Routes and guards**, and **Changes from V1**, #1).
   - **`authGuard`:** `await supabase.ready`. If there's a session, allow; otherwise return `router.parseUrl('/login')`. (Task 3 adds `returnUrl`.)
   - **`adminGuard`:**
     1. `await supabase.ready`. No session → `/login`.
     2. If `userService.profile()` is null, `await userService.loadProfile()`.
     3. `role === 'admin'` → allow; otherwise → `/`.
-- [ ] **Step 10: Write `app.config.ts` and `main.ts`.**
+- [x] **Step 10: Write `app.config.ts` and `main.ts`.**
   - **Providers:** `provideZoneChangeDetection({ eventCoalescing: true })`, `provideRouter(routes)`, `provideAnimationsAsync()`, and `providePrimeNG({ theme: { preset: Aura }, license: 'eyJpZCI6ImVhYWFjMzJhLWZkMDMtNDg3ZC04ZDc2LTk5NjEyMWE0YTZhZCIsInByb2R1Y3QiOiJwcmltZXVpIiwidGllciI6ImNvbW11bml0eSIsInR5cGUiOiJkZXYiLCJpYXQiOjE3ODY5MTgxMDIsImV4cCI6MTgxODQ1NDEwMn0.88HB7YEVupCudlmHZqsUboqAM8zFUvmTATmlLJcK3s637mD0fYpaSrgqXaTjzWzyLXz0gptt4nZbqi2l9FF8Bg' })`. Aura comes from `@primeuix/themes/aura`; the license string is V1's PrimeUI community license, committed by Shawn's decision (spec 2, **Decided**).
   - **`main.ts`:** `bootstrapApplication(App, appConfig)`. Keep the default `zone.js` polyfill.
-- [ ] **Step 11: Write the root component and the nav** (spec 2, **Nav bar**). Use these class names; `app.scss` styles them.
+- [x] **Step 11: Write the root component and the nav** (spec 2, **Nav bar**). Use these class names; `app.scss` styles them.
   - **Template:**
     - `<nav class="app-nav">`, containing:
       - `<a class="wordmark" routerLink="/">Campsite Finder</a>`;
@@ -822,7 +822,7 @@ select.rt-input {
   }
 }
     ```
-- [ ] **Step 12: Write the routes, the 404 page, the placeholder and the About page.**
+- [x] **Step 12: Write the routes, the 404 page, the placeholder and the About page.**
   - **`app.routes.ts`:** the table in spec 2, **Routes and guards**, every route lazy (`loadComponent`).
     - The Finder, favorites, trips, trips/:id, account, admin, login, signup, forgot-password and reset-password routes point at `PlaceholderComponent` for now, with their guards already in place.
     - `about` → `AboutComponent`.
@@ -892,7 +892,7 @@ select.rt-input {
   }
 }
       ```
-- [ ] **Step 13: Verify.**
+- [x] **Step 13: Verify.**
   1. `npx ng lint` and `npx ng build` are clean; `test -f dist/campsite-finder/browser/index.html`.
   2. Write `environment.local.ts`.
   3. Run `npx ng serve --port 4201` in the background, wait for "Application bundle generation complete", then check:
@@ -901,7 +901,7 @@ select.rt-input {
   4. Stop the server.
   5. `grep -rn "supabase.co\|eyJhbGci" src/environments/environment.ts` finds nothing.
   6. Re-read spec 2: every item under **Routes and guards**, **Session**, **Nav bar** and **Changes from V1** #1, #3, #4 and #5 is done. List any gap in `activity.md`.
-- [ ] **Step 14: Commit.**
+- [x] **Step 14: Commit.**
   ```bash
   git add package.json package-lock.json angular.json tsconfig.json tsconfig.app.json .editorconfig eslint.config.js .prettierrc .gitignore public src
   git commit -m "Task 2: Angular scaffold and app shell (nav, routes, guards, session), About and 404 pages"
@@ -1018,7 +1018,7 @@ Read spec 4 in full, including **Proposed changes from V1** (approved).
   - **`authGuard` and `adminGuard`:** send signed-out users to `router.createUrlTree(['/login'], { queryParams: { returnUrl: state.url } })`.
   - **`guestGuard`** on `login` and `signup`.
   - **Routes:** point the four auth routes at the real components.
-- [ ] **Step 6: Verify.**
+- [x] **Step 6: Verify.**
   1. Lint and build.
   2. Check the dev logins against the local Auth API:
      - `curl -s "$SUPABASE_URL/auth/v1/token?grant_type=password" -H "apikey: $SUPABASE_ANON_KEY" -H 'Content-Type: application/json' -d '{"email":"pat@campsites.test","password":"campsites-pat"}' | grep -c access_token` prints `1`;
@@ -1209,7 +1209,7 @@ Read spec 3 in full. This task builds the services and the five shared component
   background: var(--rt-card);
 }
     ```
-- [ ] **Step 6: `app-campground-table`,** virtual-scrolled (spec 3, **Campground card list**, plus change #2).
+- [x] **Step 6: `app-campground-table`,** virtual-scrolled (spec 3, **Campground card list**, plus change #2).
   - **The viewport:** `<cdk-virtual-scroll-viewport autosize class="rt-scroll-list">`, using `ScrollingModule` from `@angular/cdk/scrolling` and `CdkAutoSizeVirtualScroll` from `@angular/cdk-experimental/scrolling`, with `*cdkVirtualFor` over the campgrounds (`trackBy` id). The viewport must fill the side column (flex: 1; min-height: 0).
   - **A selection from outside** expands that card and calls `viewport.scrollToIndex(index, 'smooth')`.
   - **Card structure:**
@@ -1351,7 +1351,7 @@ Read spec 3 in full. This task builds the services and the five shared component
   width: 100%;
 }
     ```
-- [ ] **Step 8: Verify.**
+- [x] **Step 8: Verify.**
   - Lint and build. The production build stays under the 1 MB initial-budget error; it may warn.
   - Paging check against the local RPC: `curl -s -X POST "$SUPABASE_URL/rest/v1/rpc/nearest_campgrounds" -H "apikey: $SUPABASE_ANON_KEY" -H "Authorization: Bearer $SUPABASE_ANON_KEY" -H 'Content-Type: application/json' -H 'Range: 0-999' -d '{"user_lat":39.8,"user_lng":-98.6,"max_distance_m":20038000}' | grep -o '"id"' | wc -l` prints `1000`. That proves the 1,000-row cap that paging handles.
   - Re-read spec 3's **Shared pieces** and Changes #1–#4.
@@ -1533,7 +1533,7 @@ Read spec 3 in full: the page, the filter bar, how a search runs, the location m
   ```
   V1 had two multiselects (region + state) in a `filter-group`; the single Where picker uses the same group. The "Updating…" text uses `span.nearest`'s style. The park note is `rt-notice`.
 - [ ] **Step 5: Route.** `''` → `FinderComponent`.
-- [ ] **Step 6: Verify.**
+- [x] **Step 6: Verify.**
   - Lint and build.
   - Re-read spec 3 end to end. Check every exact text: the location messages, blocked help, manual panel help, labels, "Finding campgrounds near you...", and "Unable to load nearby campgrounds.". List any gap in `activity.md`.
 - [ ] **Step 7: Commit.** `git commit -m "Task 6: the Finder page (filters, map and list, location, saved search)"`
@@ -1861,7 +1861,7 @@ Read the Trips list and Trip detail sections and Proposed changes #3 and #5–#1
   - Lint and build.
   - Re-read spec 7.
   - `grep -rn "window.confirm\|confirm(" src/app` finds nothing.
-- [ ] **Step 6: Commit.** `git commit -m "Task 8: trips list (postcards) and trip detail (route map, reorder, add and remove stops)"`
+- [x] **Step 6: Commit.** `git commit -m "Task 8: trips list (postcards) and trip detail (route map, reorder, add and remove stops)"`
 
 **QC (for Shawn, in the browser):**
 - As Pat: the "Sample road trip" postcard with "2 stops" and the route.
