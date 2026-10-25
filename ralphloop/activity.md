@@ -173,3 +173,6 @@ TASK 7 COMPLETE
 
 ## Task 8, call 3
 - Step 3: wrote features/trips/trip-detail.component.{ts,html} (inline verbatim styles). Not-found / load-failed (with Try again) states; ordered map; rename with Save/Cancel (blank doesn't save); inline delete confirmation → `/trips`; stop cards with move up/down (optimistic swap, `reorderStops`, re-read on failure), Remove, expandable detail panel; add-stop select of favorites not in the trip. Texts for each error as in spec 7. Not routed yet (Step 4). `ng lint` and `ng build` pass.
+
+## Task 8, call 4
+- Step 4: routed `trips` and `trips/:id` to TripsListComponent and TripDetailComponent (lazy, authGuard) in app.routes.ts.

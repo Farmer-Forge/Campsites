@@ -1856,7 +1856,7 @@ Read the Trips list and Trip detail sections and Proposed changes #3 and #5–#1
   }
 }
     ```
-- [ ] **Step 4: Routes.** `trips` and `trips/:id` → the real components (`authGuard`).
+- [x] **Step 4: Routes.** `trips` and `trips/:id` → the real components (`authGuard`).
 - [ ] **Step 5: Verify.**
   - Lint and build.
   - Re-read spec 7.

@@ -15,8 +15,16 @@ export const routes: Routes = [
     loadComponent: () => import('./features/favorites/favorites.component').then((m) => m.FavoritesComponent),
     canActivate: [authGuard],
   },
-  { path: 'trips', loadComponent: placeholder, canActivate: [authGuard] },
-  { path: 'trips/:id', loadComponent: placeholder, canActivate: [authGuard] },
+  {
+    path: 'trips',
+    loadComponent: () => import('./features/trips/trips-list.component').then((m) => m.TripsListComponent),
+    canActivate: [authGuard],
+  },
+  {
+    path: 'trips/:id',
+    loadComponent: () => import('./features/trips/trip-detail.component').then((m) => m.TripDetailComponent),
+    canActivate: [authGuard],
+  },
   {
     path: 'account',
     loadComponent: () => import('./features/account/account.component').then((m) => m.AccountComponent),
