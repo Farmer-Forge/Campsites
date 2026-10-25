@@ -157,7 +157,7 @@ Read spec 2 in full, including **Changes from V1**, and spec 9's About section.
   - preconnects to `https://fonts.googleapis.com` and `https://fonts.gstatic.com` (crossorigin);
   - the stylesheet `https://fonts.googleapis.com/css2?family=Yellowtail&family=Alfa+Slab+One&family=Work+Sans:wght@400;500;600;700&display=swap`;
   - `<body><app-root></app-root></body>`.
-- [ ] **Step 7: Write `src/styles.scss`, verbatim** (V1's global stylesheet; it imports `primeicons`):
+- [x] **Step 7: Write `src/styles.scss`, verbatim** (V1's global stylesheet; it imports `primeicons`):
   ```scss
 @import "primeicons/primeicons.css";
 

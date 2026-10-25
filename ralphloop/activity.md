@@ -15,3 +15,6 @@
 
 ## Task 2, call 6
 - Step 6: rewrote src/index.html (title "Campsite Finder", Google Fonts preconnects and stylesheet, rest as the generator had it). `ng lint` and `ng build` pass.
+
+## Task 2, call 7
+- Step 7: wrote src/styles.scss verbatim from the step (524 lines, no code fences). `ng lint` and `ng build` pass.
