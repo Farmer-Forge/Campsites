@@ -1125,7 +1125,7 @@ Read spec 3 in full. This task builds the services and the five shared component
 - **Components:** the inputs and outputs in spec 3, **Shared pieces**, with these selectors: `app-campground-map`, `app-campground-table`, `app-campground-detail-panel`, `app-favorite-toggle`, `app-add-to-trip`.
 
 - [x] **Step 1: Models and `CampgroundsService`** (spec 3, **Data it uses**, and spec 1's RPCs). `searchByName` escapes `%` and `_` before `ilike` (spec 8, change #4).
-- [ ] **Step 2: `FavoritesService` and `TripsService`,** as in Interfaces. In `app.ts`, the session effect also calls `favorites.loadFavoriteIds()` (spec 3, change #1).
+- [x] **Step 2: `FavoritesService` and `TripsService`,** as in Interfaces. In `app.ts`, the session effect also calls `favorites.loadFavoriteIds()` (spec 3, change #1).
 - [ ] **Step 3: `app-campground-detail-panel`** (spec 3: the expanded detail; the description is rendered with `[innerHTML]`).
   - **Structure:**
     - `<div class="campground-detail-panel">` with `<div class="description" [innerHTML]>`;
@@ -1376,7 +1376,7 @@ Read spec 3 in full: the page, the filter bar, how a search runs, the location m
   - `FinderSnapshot` is `{ location: Coordinates; agencies: string[]; states: string[]; regions: string[]; parks: string[] | null; nearMeEnabled: boolean; radiusMiles: number }`.
 
 - [ ] **Step 1: `GeolocationService` and `FinderStateService`,** exactly as spec 3 describes, including every message text and validation rule.
-- [ ] **Step 2: The Finder's logic** (spec 3, **How a search runs** and **Saved state**).
+- [x] **Step 2: The Finder's logic** (spec 3, **How a search runs** and **Saved state**).
   - **Constants:** 1609.34 m per mile; "Show all" is 20,038,000 m; the five agencies; radius choices `[null, 25, 50, 100, 250]`; the region→state table.
   - **Change #5:** a `loading` state for the first load only, and an `updating` signal for reloads.
   - **Change #7:** the single **Where** picker.
@@ -1604,7 +1604,7 @@ Read the Favorites section and Proposed changes #1–#4 in `2026-10-25-favorites
   }
 }
     ```
-- [ ] **Step 2: Map `fitToCampgrounds`.** When it's true and the campgrounds change, `fitBounds` them with 32px padding, the same as ordered mode.
+- [x] **Step 2: Map `fitToCampgrounds`.** When it's true and the campgrounds change, `fitBounds` them with 32px padding, the same as ordered mode.
 - [x] **Step 3: Route.** `favorites` → `FavoritesComponent` (`authGuard`).
 - [x] **Step 4: Verify.** Lint and build. Re-read spec 6.
 - [ ] **Step 5: Commit.** `git commit -m "Task 7: favorites page (notes, plan a trip)"`
@@ -1626,7 +1626,7 @@ Read the Trips list and Trip detail sections and Proposed changes #3 and #5–#1
 - Modify: `src/app/core/services/trips.service.ts` (`loadAllStops(tripIds): Promise<Map<string, TripStop[]>>` in two requests, change #5), `src/app/app.routes.ts`
 
 - [ ] **Step 1: `TripsService.loadAllStops`.** One `trip_stops` select for all the given trip ids (`order by position`), then one `getByIds` for every campground. Returns the stops per trip.
-- [ ] **Step 2: The Trips list** (spec 7, plus changes #3, #6 and #7).
+- [x] **Step 2: The Trips list** (spec 7, plus changes #3, #6 and #7).
   - **Structure:**
     - `div.rt-content` with `h1.rt-title` "Trips", then `p.empty`;
     - `div.postcards` of `article.postcard`, each holding:
@@ -1891,7 +1891,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
 - **`CampgroundAttributesService`:** `attributes` signal; `loadForCampground`, `addAttribute`, `updateAttribute`, `deleteAttribute`.
 
 - [ ] **Step 1: The three services and models,** as above (spec 8, spec 1's RPCs and edge functions).
-- [ ] **Step 2: The Admin page** (spec 8, with the exact texts), plus changes #1–#3: "You" on your own row, plain-English errors, and stats refreshing after a delete.
+- [x] **Step 2: The Admin page** (spec 8, with the exact texts), plus changes #1–#3: "You" on your own row, plain-English errors, and stats refreshing after a delete.
   - **Structure:**
     - `div.rt-content.admin` with `h1.rt-title` "Admin";
     - `div.admin-stats` of `div.admin-stat` (`span.admin-stat-value.favorites` / `.trips`, `span.admin-stat-label`);

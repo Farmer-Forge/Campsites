@@ -81,3 +81,6 @@ TASK 4 COMPLETE
 
 ## Task 5, call 1
 - Step 1: wrote core/models/campground.model.ts, trip.model.ts and CampgroundsService (getNearest pages 1,000 at a time with no result_limit; getByIds, getParkCodes (paged), getParkNames, searchByName escaping \, % and _). getByIds rows have no distance, so distanceMeters is 0. searchByName returns {id, name} only. `ng lint` and `ng build` pass. Note: Steps 6 and 8 were already ticked in task.md before any code existed; Step 6 and 8 work has NOT been done and needs doing.
+
+## Task 5, call 2
+- Step 2: wrote FavoritesService (signals, load/toggle/updateNote, onSignOut reset) and TripsService (spec 7 table; reorderStops via reorder_trip_stops RPC; createTrip deletes the new trip if stops insert fails; onSignOut clears trips). app.ts session effect also calls loadFavoriteIds (errors swallowed). `ng lint` and `ng build` pass.
