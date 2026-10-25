@@ -6,7 +6,10 @@ import { guestGuard } from './core/guards/guest.guard';
 const placeholder = () => import('./features/placeholder/placeholder.component').then((m) => m.PlaceholderComponent);
 
 export const routes: Routes = [
-  { path: '', loadComponent: placeholder },
+  {
+    path: '',
+    loadComponent: () => import('./features/finder/finder.component').then((m) => m.FinderComponent),
+  },
   { path: 'favorites', loadComponent: placeholder, canActivate: [authGuard] },
   { path: 'trips', loadComponent: placeholder, canActivate: [authGuard] },
   { path: 'trips/:id', loadComponent: placeholder, canActivate: [authGuard] },

@@ -1532,7 +1532,7 @@ Read spec 3 in full: the page, the filter bar, how a search runs, the location m
 }
   ```
   V1 had two multiselects (region + state) in a `filter-group`; the single Where picker uses the same group. The "Updating…" text uses `span.nearest`'s style. The park note is `rt-notice`.
-- [ ] **Step 5: Route.** `''` → `FinderComponent`.
+- [x] **Step 5: Route.** `''` → `FinderComponent`.
 - [ ] **Step 6: Verify.**
   - Lint and build.
   - Re-read spec 3 end to end. Check every exact text: the location messages, blocked help, manual panel help, labels, "Finding campgrounds near you...", and "Unable to load nearby campgrounds.". List any gap in `activity.md`.

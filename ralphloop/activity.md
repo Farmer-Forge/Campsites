@@ -125,3 +125,6 @@ TASK 5 COMPLETE
 
 ## Task 6, call 4
 - Step 4: wrote finder.component.scss verbatim from task.md (extracted by script). Lint and build pass.
+
+## Task 6, call 5
+- Step 5: routed `''` to FinderComponent (lazy) in app.routes.ts. Lint and build pass.
