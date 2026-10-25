@@ -1558,7 +1558,7 @@ Read the Favorites section and Proposed changes #1–#4 in `2026-10-25-favorites
 - Create: `src/app/features/favorites/favorites.component.ts`, `.html`
 - Modify: `src/app/shared/ui/campground-map/campground-map.component.ts` (add `fitToCampgrounds: boolean` input, change #4), `src/app/app.routes.ts`
 
-- [ ] **Step 1: The Favorites page** (spec 6, with the exact texts and the plan-a-trip flow), plus changes #1–#4.
+- [x] **Step 1: The Favorites page** (spec 6, with the exact texts and the plan-a-trip flow), plus changes #1–#4.
   - **Change #1:** unfavoriting removes the card.
   - **Change #2:** the "Tap the heart" empty text.
   - **Change #3:** the load error with "Try again".
@@ -1607,7 +1607,7 @@ Read the Favorites section and Proposed changes #1–#4 in `2026-10-25-favorites
 - [x] **Step 2: Map `fitToCampgrounds`.** When it's true and the campgrounds change, `fitBounds` them with 32px padding, the same as ordered mode.
 - [x] **Step 3: Route.** `favorites` → `FavoritesComponent` (`authGuard`).
 - [x] **Step 4: Verify.** Lint and build. Re-read spec 6.
-- [ ] **Step 5: Commit.** `git commit -m "Task 7: favorites page (notes, plan a trip)"`
+- [x] **Step 5: Commit.** `git commit -m "Task 7: favorites page (notes, plan a trip)"`
 
 **QC (for Shawn, in the browser):**
 - As Pat: three favorites, one with a note. The map fits them.

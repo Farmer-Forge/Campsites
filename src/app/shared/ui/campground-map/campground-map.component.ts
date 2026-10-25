@@ -31,6 +31,7 @@ export class CampgroundMapComponent implements AfterViewInit, OnDestroy {
   readonly campgrounds = input.required<Campground[]>();
   readonly selectedId = input<string | null>(null);
   readonly ordered = input(false);
+  readonly fitToCampgrounds = input(false);
   readonly searchLocation = input<Coordinates | null>(null);
   readonly allowLocationPick = input(false);
 
@@ -54,7 +55,8 @@ export class CampgroundMapComponent implements AfterViewInit, OnDestroy {
     effect(() => {
       const campgrounds = this.campgrounds();
       const ordered = this.ordered();
-      if (this.ready) this.renderMarkers(campgrounds, ordered);
+      const fit = this.fitToCampgrounds();
+      if (this.ready) this.renderMarkers(campgrounds, ordered, fit);
     });
     effect(() => {
       const id = this.selectedId();
@@ -89,7 +91,7 @@ export class CampgroundMapComponent implements AfterViewInit, OnDestroy {
 
     this.ready = true;
     this.lastSelectedId = this.selectedId();
-    this.renderMarkers(this.campgrounds(), this.ordered());
+    this.renderMarkers(this.campgrounds(), this.ordered(), this.fitToCampgrounds());
     this.renderSearchLocation(this.searchLocation());
   }
 
@@ -98,7 +100,7 @@ export class CampgroundMapComponent implements AfterViewInit, OnDestroy {
     this.map?.remove();
   }
 
-  private renderMarkers(campgrounds: Campground[], ordered: boolean): void {
+  private renderMarkers(campgrounds: Campground[], ordered: boolean, fit: boolean): void {
     const map = this.map!;
     this.cluster!.clearLayers();
     this.markers.clear();
@@ -124,10 +126,10 @@ export class CampgroundMapComponent implements AfterViewInit, OnDestroy {
     });
     this.cluster!.addLayers(markers);
 
-    if (ordered) {
-      const points = campgrounds.map((c) => [c.lat, c.lng] as L.LatLngTuple);
-      if (points.length >= 2) this.line = L.polyline(points).addTo(map);
-      if (points.length > 0) map.fitBounds(L.latLngBounds(points), { padding: [32, 32] });
+    const points = campgrounds.map((c) => [c.lat, c.lng] as L.LatLngTuple);
+    if (ordered && points.length >= 2) this.line = L.polyline(points).addTo(map);
+    if ((ordered || fit) && points.length > 0) {
+      map.fitBounds(L.latLngBounds(points), { padding: [32, 32] });
     }
   }
 
