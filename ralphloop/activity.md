@@ -122,3 +122,6 @@ TASK 5 COMPLETE
 
 ## Task 6, call 3
 - Step 3: wrote finder.component.html (filter bar hidden in the error state; Where multiselect grouped with filter and `selectedItemsLabel`; Park multiselect plus the rt-notice; segmented radius; first-load status area; error state with blocked help, device button and manual panel; map + side column with "Updating…", location controls, device error, manual panel via a shared ng-template with the tip only in the side column, and the table). Added NgTemplateOutlet to the component imports. Styles still empty (Step 4). `ng lint` and `ng build` pass.
+
+## Task 6, call 4
+- Step 4: wrote finder.component.scss verbatim from task.md (extracted by script). Lint and build pass.

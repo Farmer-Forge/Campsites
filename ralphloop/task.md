@@ -1394,7 +1394,7 @@ Read spec 3 in full: the page, the filter bar, how a search runs, the location m
       - `<app-campground-table>`.
     - `div.status-area` for the first load and the error state.
   - **The map's `addToTrip` output** sets the selection and the table's `openPickerFor` (spec 3, change #4).
-- [ ] **Step 4: `finder.component.scss`, verbatim from V1:**
+- [x] **Step 4: `finder.component.scss`, verbatim from V1:**
   ```scss
 :host {
   flex: 1;
