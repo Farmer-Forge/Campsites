@@ -136,7 +136,7 @@ Read spec 2 in full, including **Changes from V1**, and spec 9's About section.
   - Add a `.prettierrc` with `{ "singleQuote": true, "printWidth": 120 }`.
   - Add npm scripts: `"lint": "ng lint"` and `"build": "ng build"`. Keep `start` / `ng`.
   - **Verify:** `npx ng lint` reports no errors.
-- [ ] **Step 4: Configure `angular.json`** (spec 2, **Project setup**):
+- [x] **Step 4: Configure `angular.json`** (spec 2, **Project setup**):
   - project name `campsite-finder`, prefix `app`, SCSS;
   - `assets`: `{ "glob": "**/*", "input": "public" }` and `{ "glob": "*.png", "input": "node_modules/leaflet/dist/images", "output": "/" }`;
   - `styles`, in this order: `node_modules/leaflet/dist/leaflet.css`, `node_modules/leaflet.markercluster/dist/MarkerCluster.css`, `node_modules/leaflet.markercluster/dist/MarkerCluster.Default.css`, `src/styles.scss`;

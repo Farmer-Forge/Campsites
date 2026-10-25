@@ -6,3 +6,6 @@
 
 ## Task 2, call 3
 - Step 3: ran `ng add angular-eslint` (added eslint.config.js, lint target in angular.json, devDeps). Set .prettierrc printWidth to 120 (kept singleQuote and the existing html/angular parser override). Added npm script "lint"; "build" already existed. `npx ng lint` passes with no errors.
+
+## Task 2, call 4
+- Step 4: configured angular.json (leaflet png assets, leaflet/markercluster/styles.scss styles in order, development fileReplacements to environment.local.ts, optimization off, sourceMap on). Project name, prefix, SCSS, budgets and defaults were already right. `ng build` (production) and `ng lint` pass. The development build needs environment.ts/environment.local.ts (Step 5; local is gitignored, so dev builds only work where it exists).
