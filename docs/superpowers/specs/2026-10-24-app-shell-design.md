@@ -200,9 +200,9 @@ Shawn, please mark each one. Accidental ones can be fixed in V1.1 (as with the s
 4. **Signing out leaves the theme attribute and the loaded profile in memory** until the next sign-in or a reload. Nothing visible today, since the dark theme does nothing.
 5. **The tab title says "CampsiteFinder"; the wordmark says "Campsite Finder".** The nav link reads "About Us", while the route is `/about`.
 
-## Questions for Shawn
+## Decided
 
-1. **PrimeNG license key.** V1's `app.config.ts` commits a PrimeUI **community** license key (`providePrimeNG({ license: … })`). It's already public in V1's GitHub repo. Should V1.1 commit the same key in `app.config.ts`, or keep it out of the repo, like the Supabase keys?
+- **PrimeNG license key** (Shawn, 2026-10-25): V1.1 commits the same PrimeUI community license key V1 has in `app.config.ts` (`providePrimeNG({ theme: { preset: Aura }, license: … })`). The session that writes `task.md` copies it from V1's `app.config.ts`.
 
 ## Out of scope
 

@@ -1,6 +1,6 @@
 # Schema contract ("do not change") — Design
 
-Status: **draft for Shawn's review** (2026-10-24). Spec 1 of the roadmap (`2026-10-20-v1.1-roadmap-design.md`). Updated the same day with the fixes Shawn asked for (see **Fixes**); those are in PR `schema-fixes`.
+Status: **approved by Shawn 2026-10-25.** Spec 1 of the roadmap (`2026-10-20-v1.1-roadmap-design.md`). It includes the fixes Shawn asked for on 2026-10-24 (see **Fixes**), merged in PR #3.
 
 Last updated: 2026-10-24
 
