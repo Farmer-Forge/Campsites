@@ -1536,7 +1536,7 @@ Read spec 3 in full: the page, the filter bar, how a search runs, the location m
 - [x] **Step 6: Verify.**
   - Lint and build.
   - Re-read spec 3 end to end. Check every exact text: the location messages, blocked help, manual panel help, labels, "Finding campgrounds near you...", and "Unable to load nearby campgrounds.". List any gap in `activity.md`.
-- [ ] **Step 7: Commit.** `git commit -m "Task 6: the Finder page (filters, map and list, location, saved search)"`
+- [x] **Step 7: Commit.** `git commit -m "Task 6: the Finder page (filters, map and list, location, saved search)"`
 
 **QC (for Shawn, in the browser):** use the Finder at http://192.168.1.188:4200. The browser will ask for your location; Ralph's campgrounds are the full production set.
 - Allow location: the map centers on you at about a 100-mile view, and the list shows "{n} campgrounds · nearest first" with mustard distance badges.
