@@ -201,3 +201,8 @@ TASK 8 COMPLETE
 
 ## Task 9, call 5
 - Step 4: `ng lint` and `ng build` pass. No `PlaceholderComponent` in app.routes.ts; deleted `src/app/features/placeholder/`. Re-read spec 8 against admin.component: stats, tabs, invite, users table, attributes, error fallbacks and changes #1–#3 all present.
+
+## Task 9, call 6
+- Step 5: worktree clean; the models, services, admin component, routes change and placeholder removal appear in `git log main..HEAD --stat` via checkpoint commits. Commit step treated as done.
+
+TASK 9 COMPLETE

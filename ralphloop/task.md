@@ -2012,7 +2012,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
   - Lint and build.
   - `grep -rn "PlaceholderComponent" src/app/app.routes.ts` finds nothing. Every page is now real, so delete `src/app/features/placeholder/`.
   - Re-read spec 8.
-- [ ] **Step 5: Commit.** `git commit -m "Task 9: admin page (stats, users, campground attributes); remove the placeholder"`
+- [x] **Step 5: Commit.** `git commit -m "Task 9: admin page (stats, users, campground attributes); remove the placeholder"`
 
 **QC (for Shawn, in the browser):**
 - As the admin: the stats pills; Users lists admin, Pat and Sam.
