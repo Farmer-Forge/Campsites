@@ -1890,7 +1890,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
 - **`AdminStatsService`:** `stats` signal `{ favoritesCount, tripsCount }`; `loadStats`.
 - **`CampgroundAttributesService`:** `attributes` signal; `loadForCampground`, `addAttribute`, `updateAttribute`, `deleteAttribute`.
 
-- [ ] **Step 1: The three services and models,** as above (spec 8, spec 1's RPCs and edge functions).
+- [x] **Step 1: The three services and models,** as above (spec 8, spec 1's RPCs and edge functions).
 - [x] **Step 2: The Admin page** (spec 8, with the exact texts), plus changes #1–#3: "You" on your own row, plain-English errors, and stats refreshing after a delete.
   - **Structure:**
     - `div.rt-content.admin` with `h1.rt-title` "Admin";
@@ -2012,7 +2012,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
   - Lint and build.
   - `grep -rn "PlaceholderComponent" src/app/app.routes.ts` finds nothing. Every page is now real, so delete `src/app/features/placeholder/`.
   - Re-read spec 8.
-- [ ] **Step 5: Commit.** `git commit -m "Task 9: admin page (stats, users, campground attributes); remove the placeholder"`
+- [x] **Step 5: Commit.** `git commit -m "Task 9: admin page (stats, users, campground attributes); remove the placeholder"`
 
 **QC (for Shawn, in the browser):**
 - As the admin: the stats pills; Users lists admin, Pat and Sam.
