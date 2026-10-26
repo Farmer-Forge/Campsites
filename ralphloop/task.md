@@ -2007,7 +2007,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
   width: 100%;
 }
     ```
-- [ ] **Step 3: Route.** `admin` → `AdminComponent` (`adminGuard`).
+- [x] **Step 3: Route.** `admin` → `AdminComponent` (`adminGuard`).
 - [ ] **Step 4: Verify.**
   - Lint and build.
   - `grep -rn "PlaceholderComponent" src/app/app.routes.ts` finds nothing. Every page is now real, so delete `src/app/features/placeholder/`.

@@ -195,3 +195,6 @@ TASK 8 COMPLETE
 
 ## Task 9, call 3
 - Step 2: wrote features/admin/admin.component.{ts,html} (verbatim inline styles). Stats pills, Users/Attributes tabs (`role=tab`, `aria-selected`), invite form, users table (role p-select pill, Suspend/Unsuspend, Edit/Save/Cancel, inline "Yes, delete"), attributes autocomplete (uses `CampgroundsService.searchByName`, which already escapes `%`/`_`) with edit/add/delete. Changes #1–#3: "You" (`rt-notice`) replaces role/Suspend/Delete on own row (id from `UserService.profile()`), plain-English errors for "cannot remove the last admin" / "not authorized", stats reload after a delete. Not routed yet (Step 3). `ng lint` and `ng build` pass; no raw colors.
+
+## Task 9, call 4
+- Step 3: routed `admin` to AdminComponent (lazy, adminGuard) in app.routes.ts; removed the now-unused `placeholder` const there (the placeholder folder itself is deleted in Step 4).
