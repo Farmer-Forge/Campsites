@@ -198,3 +198,6 @@ TASK 8 COMPLETE
 
 ## Task 9, call 4
 - Step 3: routed `admin` to AdminComponent (lazy, adminGuard) in app.routes.ts; removed the now-unused `placeholder` const there (the placeholder folder itself is deleted in Step 4).
+
+## Task 9, call 5
+- Step 4: `ng lint` and `ng build` pass. No `PlaceholderComponent` in app.routes.ts; deleted `src/app/features/placeholder/`. Re-read spec 8 against admin.component: stats, tabs, invite, users table, attributes, error fallbacks and changes #1–#3 all present.
