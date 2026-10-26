@@ -1890,7 +1890,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
 - **`AdminStatsService`:** `stats` signal `{ favoritesCount, tripsCount }`; `loadStats`.
 - **`CampgroundAttributesService`:** `attributes` signal; `loadForCampground`, `addAttribute`, `updateAttribute`, `deleteAttribute`.
 
-- [ ] **Step 1: The three services and models,** as above (spec 8, spec 1's RPCs and edge functions).
+- [x] **Step 1: The three services and models,** as above (spec 8, spec 1's RPCs and edge functions).
 - [x] **Step 2: The Admin page** (spec 8, with the exact texts), plus changes #1–#3: "You" on your own row, plain-English errors, and stats refreshing after a delete.
   - **Structure:**
     - `div.rt-content.admin` with `h1.rt-title` "Admin";
@@ -2007,8 +2007,8 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
   width: 100%;
 }
     ```
-- [x] **Step 3: Route.** `admin` → `AdminComponent` (`adminGuard`).
-- [x] **Step 4: Verify.**
+- [ ] **Step 3: Route.** `admin` → `AdminComponent` (`adminGuard`).
+- [ ] **Step 4: Verify.**
   - Lint and build.
   - `grep -rn "PlaceholderComponent" src/app/app.routes.ts` finds nothing. Every page is now real, so delete `src/app/features/placeholder/`.
   - Re-read spec 8.

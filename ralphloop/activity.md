@@ -184,3 +184,14 @@ TASK 7 COMPLETE
 - Step 6: worktree clean; trips list, trip detail, service change and routes appear in `git log main..HEAD --stat` via checkpoint commits. Commit step treated as done.
 
 TASK 8 COMPLETE
+
+## Task 9, call 1 — ended without completing a step (usage limit) at 2026-10-25 23:56 UTC
+
+## Task 9, call 2
+- Steps 2, 3 and 4 were ticked in task.md but features/admin doesn't exist; un-ticked them.
+- Step 1: added AdminUser and CampgroundAttribute models and AdminUsersService (RPCs plus one `invoke` helper that turns FunctionsHttpError into Error(response text || message)), AdminStatsService, CampgroundAttributesService. Services patch their signals in place after each change. `ng lint` and `ng build` pass.
+
+## Task 9, call 2 — ended without completing a step (no step was checked off) at 2026-10-26 03:42 UTC
+
+## Task 9, call 3
+- Step 2: wrote features/admin/admin.component.{ts,html} (verbatim inline styles). Stats pills, Users/Attributes tabs (`role=tab`, `aria-selected`), invite form, users table (role p-select pill, Suspend/Unsuspend, Edit/Save/Cancel, inline "Yes, delete"), attributes autocomplete (uses `CampgroundsService.searchByName`, which already escapes `%`/`_`) with edit/add/delete. Changes #1–#3: "You" (`rt-notice`) replaces role/Suspend/Delete on own row (id from `UserService.profile()`), plain-English errors for "cannot remove the last admin" / "not authorized", stats reload after a delete. Not routed yet (Step 3). `ng lint` and `ng build` pass; no raw colors.
