@@ -52,6 +52,9 @@
 # limits are waited out automatically (see the step loop). Spec:
 # docs/superpowers/specs/2026-09-22-loop-resume-and-usage-limit-retry-design.md
 #
+# Model: every worker call uses claude-sonnet-5-5 unless RALPH_MODEL is set,
+# e.g. RALPH_MODEL=claude-opus-5-5 ./ralphloop/doloop.sh
+#
 # Test-only overrides (all default to the real values): RALPH_WORKER_STUB,
 # RALPH_WAIT_SCALE, RALPH_PUSH_URL, RALPH_SKIP_PR, RALPH_MAX_STEPS,
 # RALPH_LIMIT_BUDGET_SECONDS, RALPH_CLAUDE_AUTH_ENV, RALPH_SUPABASE_ENV.
@@ -66,6 +69,9 @@ CANONICAL_ROOT="$(pwd)"
 WORKTREE_ROOT="$(cd .. && pwd)/Campsites-worktrees"
 MAX_STEPS_PER_TASK="${RALPH_MAX_STEPS:-30}"
 CLAUDE_WORKER_IMAGE="campsites-claude-worker:latest"
+# Every worker call runs on Sonnet (Shawn, 2026-10-26). RALPH_MODEL overrides it
+# for a run (an alias such as "opus", or a full id); chain.sh passes it through.
+WORKER_MODEL="${RALPH_MODEL:-claude-sonnet-5-5}"
 CLAUDE_AUTH_ENV="${RALPH_CLAUDE_AUTH_ENV:-$HOME/.secrets/claude-code-auth.env}"
 SUPABASE_ENV="${RALPH_SUPABASE_ENV:-$HOME/.secrets/campsites-supabase.env}"
 # Usage limits and throttling are waited out, up to this much total waiting
@@ -161,6 +167,7 @@ WORKTREE_DIR="${WORKTREE_ROOT}/task-${TASK_NUM}"
 WORKTREE_LOG="${WORKTREE_DIR}/${LOG_FILE}"
 
 echo -e "\033[34m🚀 Starting Ralph Wiggum Loop — Task ${TASK_NUM}: ${TASK_NAME}\033[0m"
+echo "🤖 Worker model: ${WORKER_MODEL}"
 
 if [ "$TASK_NUM" = "1" ]; then
     echo -e "\033[31m🛑 STOPPED: Task 1 (Supabase provisioning) is not run by this script — see the header comment. Check it off by hand in an interactive session first, then re-run.\033[0m"
@@ -296,7 +303,7 @@ fi
 # All output (stream-json, one JSON object per line) goes to <call_log>.
 run_worker() {
     if [ -n "${RALPH_WORKER_STUB:-}" ]; then
-        (cd "$WORKTREE_DIR_ABS" && bash "$RALPH_WORKER_STUB" "$1") > "$2" 2>&1
+        (cd "$WORKTREE_DIR_ABS" && RALPH_WORKER_MODEL="$WORKER_MODEL" bash "$RALPH_WORKER_STUB" "$1") > "$2" 2>&1
         return
     fi
     docker run --rm \
@@ -309,7 +316,7 @@ run_worker() {
         --env-file "$CLAUDE_AUTH_ENV" \
         --env-file "$SUPABASE_ENV" \
         "$CLAUDE_WORKER_IMAGE" \
-        claude -p "$1" --dangerously-skip-permissions --output-format stream-json --verbose \
+        claude -p "$1" --model "$WORKER_MODEL" --dangerously-skip-permissions --output-format stream-json --verbose \
         > "$2" 2>&1
 }
 
@@ -520,7 +527,7 @@ else
             --base "$BASE_BRANCH" \
             --head "$BRANCH_NAME" \
             --title "Task ${TASK_NUM}: ${TASK_NAME}" \
-            --body "Autonomous Ralph Loop run for Task ${TASK_NUM} of \`ralphloop/task.md\`. See \`${LOG_FILE}\` in this branch for the per-step activity log. Merge with **Squash and merge** — the Checkpoint commits are per-step progress, not history for main.")
+            --body "Autonomous Ralph Loop run for Task ${TASK_NUM} of \`ralphloop/task.md\`. Worker model: \`${WORKER_MODEL}\`. See \`${LOG_FILE}\` in this branch for the per-step activity log. Merge with **Squash and merge** — the Checkpoint commits are per-step progress, not history for main.")
     fi
     echo -e "\033[32m✅ PR: ${PR_URL}\033[0m"
     echo "Review it, use Squash and merge, then re-run this script for the next task."

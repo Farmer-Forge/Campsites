@@ -19,6 +19,8 @@
 # Run ON ralph, as the claude account, from the repo root, inside tmux:
 #   set -a; source ~/.secrets/campsites-ralph-loop.env; set +a
 #   ./ralphloop/chain.sh
+# Every worker call runs on Sonnet (doloop.sh's default). To use another model
+# for the whole chain: RALPH_MODEL=claude-opus-5-5 ./ralphloop/chain.sh (passed through).
 # Safe to start while a doloop.sh run is already going in this clone — it
 # waits for that run to finish first. Only one chain runs per clone (a lock
 # file next to the clone). Everything is also appended to ../Campsites-chain.log.
