@@ -28,8 +28,10 @@
 #
 # After every merge it also runs seed-dev.sh (dev admin login + starter data).
 #
-# On a normal finish it also writes ../Campsites-qc-checklist.md: every task's
-# "QC (for Shawn…)" list from task.md, in order.
+# On a normal finish it also writes ../Campsites-qc-checklist.md (every task's
+# "QC (for Shawn…)" list from task.md, in order). If this run merged anything,
+# it also opens a PR adding that file as docs/qc/<date>-qc-checklist.md, so the
+# checklist can be read on GitHub or pulled to Lisa. That PR is never auto-merged.
 #
 # Test-only overrides: RALPH_PUSH_URL, RALPH_POLL_SECONDS, RALPH_RETRY_SECONDS,
 # RALPH_REVIEW_SCRIPT, RALPH_SEED_SCRIPT, RALPH_QC_FILE (plus everything doloop.sh accepts, which passes
@@ -61,6 +63,7 @@ PUSH_URL="${RALPH_PUSH_URL:-https://x-access-token:${RALPH_GH_TOKEN}@github.com/
 POLL_SECONDS="${RALPH_POLL_SECONDS:-30}"
 RETRY_SECONDS="${RALPH_RETRY_SECONDS:-60}"
 MAX_ROUNDS=20
+MERGED_ANY=0   # set once this run merges a task PR; finish() then publishes the QC checklist
 export GIT_TERMINAL_PROMPT=0   # never hang on a credentials prompt inside tmux
 
 exec > >(tee -a "$CHAIN_LOG") 2>&1
@@ -96,10 +99,45 @@ write_qc_checklist() {
     } > "$QC_FILE"
 }
 
+# publish_qc_checklist — commit this run's checklist to docs/qc/ on its own
+# qc/<stamp> branch and open a PR for it, so it can be read on GitHub or pulled
+# to another machine (Shawn, 2026-10-26). It's never auto-merged. Prints the PR's
+# URL; any failure returns non-zero and only earns a warning.
+publish_qc_checklist() {
+    local stamp branch file dir url
+    stamp=$(date -u '+%Y-%m-%d-%H%M')
+    branch="qc/${stamp}"
+    file="docs/qc/${stamp}-qc-checklist.md"
+    dir="$(cd .. && pwd)/Campsites-worktrees/qc-${stamp}"
+    git worktree add -q -b "$branch" "$dir" "$BASE_BRANCH" >/dev/null 2>&1 || return 1
+    mkdir -p "$dir/docs/qc"
+    cp "$QC_FILE" "$dir/$file"
+    git -C "$dir" add "$file"
+    # Output discarded: git could echo the token-bearing URL in an error.
+    if git -C "$dir" -c user.name="Ralph Loop" -c user.email="ralph-loop@users.noreply.github.com" \
+            commit -q -m "QC checklist for the chain run ending ${stamp} UTC" \
+        && git -C "$dir" push -q "$PUSH_URL" "$branch" >/dev/null 2>&1; then
+        url=$(gh_ pr create --repo "$REPO" --base "$BASE_BRANCH" --head "$branch" \
+            --title "QC checklist: chain run ending ${stamp} UTC" \
+            --body "Every merged task's \"QC (for Shawn, in the browser)\" list from this chain run, in \`${file}\`. Check them in the review app; merge this PR to keep the record, or close it." 2>/dev/null || true)
+    fi
+    git worktree remove --force "$dir" >/dev/null 2>&1 || true
+    git branch -q -D "$branch" >/dev/null 2>&1 || true
+    [ -n "${url:-}" ] || return 1
+    echo "$url"
+}
+
 finish() {
     say "$1"
     write_qc_checklist
     say "QC checklist: ${QC_FILE}"
+    if [ "$MERGED_ANY" = "1" ]; then
+        if QC_PR=$(publish_qc_checklist); then
+            say "QC checklist PR: ${QC_PR}"
+        else
+            say "⚠️  Couldn't open the QC checklist PR — the checklist is still at ${QC_FILE}."
+        fi
+    fi
     say "Last step: starting the app for browser QC…"
     bash "$REVIEW" || say "⚠️  The review app didn't start — run ./ralphloop/review.sh by hand to see why."
     exit 0
@@ -213,6 +251,7 @@ ${FORBIDDEN}"
         git push -q "$PUSH_URL" --delete "$PR_BRANCH" >/dev/null 2>&1 \
             || say "⚠️  Couldn't delete ${PR_BRANCH} on GitHub — harmless, delete it by hand later."
         MERGED="PR #${PR_NUM} (${PR_BRANCH})"
+        MERGED_ANY=1
     fi
 
     # 2. Update main, so doloop.sh sees the merged task as done (skipping this

@@ -254,6 +254,29 @@ test_chain_writes_the_qc_checklist_on_finish() {
     assert_contains "says where it is" "$OUT" "QC checklist:"
 }
 
+test_chain_opens_a_qc_pr_on_finish() {
+    sandbox "$QC_PLAN"; run_chain tick tick
+    assert_eq "exits 0" "$RC" 0
+    local pr; pr=$(awk '$2 ~ /^qc\// && $3 == "open"' "$SB/gh/prs")
+    assert_contains "opens a PR from a qc/ branch" "$pr" "QC checklist"
+    local branch; branch=$(cut -d' ' -f2 <<< "$pr")
+    local files; files=$(git -C "$SB/origin.git" ls-tree -r --name-only "refs/heads/${branch:-none}" 2>/dev/null | grep '^docs/qc/')
+    assert_contains "the branch has the checklist under docs/qc/" "$files" "-qc-checklist.md"
+    assert_contains "it's this run's checklist" "$(git -C "$SB/origin.git" show "refs/heads/${branch:-none}:${files:-none}" 2>/dev/null)" "### Task 2: First task"
+    assert_contains "says where the PR is" "$OUT" "QC checklist PR:"
+    assert_eq "never merged into main" "$(git -C "$SB/origin.git" ls-tree -r --name-only main | grep -c '^docs/qc/')" 0
+    assert_eq "no qc worktree left behind" "$(ls "$SB/Campsites-worktrees" 2>/dev/null | grep -c '^qc-')" 0
+}
+
+test_chain_no_qc_pr_when_nothing_merged() {
+    sandbox "$ONE_TASK_PLAN"
+    sed -i 's/^- \[ \]/- [x]/' "$SB/Campsites/ralphloop/task.md"
+    git -C "$SB/Campsites" commit -qam "all done"; git -C "$SB/Campsites" push -q origin main
+    run_chain
+    assert_eq "exits 0" "$RC" 0
+    assert_eq "no QC PR for a run that merged nothing" "$(grep -c ' qc/' "$SB/gh/prs" 2>/dev/null || true)" 0
+}
+
 test_chain_no_qc_checklist_when_stopped() {
     sandbox "$QC_PLAN"; run_chain tick fail
     assert_eq "stops" "$RC" 1
