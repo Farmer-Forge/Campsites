@@ -212,6 +212,8 @@ Shawn reviewed V1's behaviors and asked for them addressed. He handed the detail
 
 ## Decided
 
+- **Browser-tab icon** (Shawn, 2026-10-26): the Farmer-Forge icon, everywhere possible. `public/favicon.svg` is copied from the Farmer-Forge site (`~/ReactProjects/Farmer-Forge/public/favicon.svg`), and `index.html` links it as `<link rel="icon" type="image/svg+xml" href="favicon.svg">`. It replaces V1's `favicon.ico`, which was Angular's default logo. Browsers without SVG favicons (old Safari) show no icon.
+
 - **PrimeNG license key** (Shawn, 2026-10-25): V1.1 commits the same PrimeUI community license key V1 has in `app.config.ts` (`providePrimeNG({ theme: { preset: Aura }, license: … })`). The session that writes `task.md` copies it from V1's `app.config.ts`.
 
 ## Out of scope

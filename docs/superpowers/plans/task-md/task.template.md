@@ -153,7 +153,7 @@ Read spec 2 in full, including **Changes from V1**, and spec 9's About section.
     - `git status --short` doesn't list `environment.local.ts`;
     - `git check-ignore src/environments/environment.local.ts` prints the path.
 - [ ] **Step 6: Write `src/index.html`.**
-  - `lang="en"`, `<meta charset="utf-8">`, `<title>Campsite Finder</title>`, `<base href="/">`, the viewport meta, and `<link rel="icon" type="image/x-icon" href="favicon.ico">`;
+  - `lang="en"`, `<meta charset="utf-8">`, `<title>Campsite Finder</title>`, `<base href="/">`, the viewport meta, and `<link rel="icon" type="image/svg+xml" href="favicon.svg">` (the Farmer-Forge icon, `public/favicon.svg`, copied from `~/ReactProjects/Farmer-Forge/public/`; no `favicon.ico`);
   - preconnects to `https://fonts.googleapis.com` and `https://fonts.gstatic.com` (crossorigin);
   - the stylesheet `https://fonts.googleapis.com/css2?family=Yellowtail&family=Alfa+Slab+One&family=Work+Sans:wght@400;500;600;700&display=swap`;
   - `<body><app-root></app-root></body>`.
