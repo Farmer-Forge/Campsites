@@ -346,7 +346,7 @@ Read spec 3 in full. This task builds the services and the five shared component
 
 - [ ] **Step 1: Models and `CampgroundsService`** (spec 3, **Data it uses**, and spec 1's RPCs). `searchByName` escapes `%` and `_` before `ilike` (spec 8, change #4).
 - [ ] **Step 2: `FavoritesService` and `TripsService`,** as in Interfaces. In `app.ts`, the session effect also calls `favorites.loadFavoriteIds()` (spec 3, change #1).
-- [ ] **Step 3: `app-campground-detail-panel`** (spec 3: the expanded detail; the description is rendered with `[innerHTML]`).
+- [ ] **Step 3: `app-campground-detail-panel`** (spec 3: the expanded detail; the description is rendered with `[innerHTML]`). Directions is hidden for a campground with no location (spec 3, change #9): add `hasLocation(c)` to `campground.model.ts`.
   - **Structure:**
     - `<div class="campground-detail-panel">` with `<div class="description" [innerHTML]>`;
     - `<div class="links">` with Reserve (`rt-btn rt-btn--cherry rt-btn--shadow`) and Directions (`rt-btn`), both `target="_blank" rel="noopener"`.
@@ -395,6 +395,7 @@ Read spec 3 in full. This task builds the services and the five shared component
   - **Popup buttons** are plain DOM with class `view-details-button`.
   - **The new popup action "Add to trip…"** (signed in only) emits a new output, `addToTrip(id)`. The list's parent uses it to select that card and open its add-to-trip panel. Add a matching input to `app-campground-table`: `openPickerFor: string | null`, which opens that card's panel.
   - **Map size:** a `ResizeObserver` calls `invalidateSize()`.
+  - **No location** (spec 3, change #9): campgrounds failing `hasLocation` get no marker and no route point; trip markers keep their stop number from the full list; selecting one doesn't move the map.
   - **`campground-map.component.scss`, verbatim:**
     ```scss
 {{FILE:src/app/features/finder/campground-map/campground-map.component.scss}}

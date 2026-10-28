@@ -270,6 +270,13 @@ Shawn reviewed V1's behaviors and asked for them addressed. He handed the detail
    - Labels: "All states" when all are selected, "{n} states", "No states".
    - The saved state keeps `regions` for compatibility, computed as the regions whose states are all selected.
    - The query is as before: states are omitted when all are selected.
+9. **Campgrounds with no location** (at exactly 0,0; Shawn, 2026-10-27). They never come back from a search (spec 1, **Fixes** #8). Where they still appear, in Favorites or a trip:
+   - the map gives them no marker and no route point;
+   - trip markers keep their stop number from the full list;
+   - selecting one doesn't move the map;
+   - the detail panel shows no Directions button, because there's no `directionsUrl` and no location to send Google Maps to.
+
+   The check is `hasLocation(c)` in `campground.model.ts`.
 8. **No unused limit.** The client stops sending `result_limit`; the RPC's default doesn't apply when a radius is sent anyway. No visible change.
 
 ## Out of scope

@@ -11,7 +11,7 @@ import {
 } from '@angular/core';
 import * as L from 'leaflet';
 import 'leaflet.markercluster';
-import { Campground } from '../../../core/models/campground.model';
+import { Campground, hasLocation } from '../../../core/models/campground.model';
 import { Coordinates } from '../../../core/services/campgrounds.service';
 import { SupabaseService } from '../../../core/services/supabase.service';
 
@@ -63,7 +63,7 @@ export class CampgroundMapComponent implements AfterViewInit, OnDestroy {
       if (!this.ready) return;
       if (id && id !== this.lastSelectedId) {
         const campground = this.campgrounds().find((c) => c.id === id);
-        if (campground) this.map!.setView([campground.lat, campground.lng], 12);
+        if (campground && hasLocation(campground)) this.map!.setView([campground.lat, campground.lng], 12);
       }
       this.lastSelectedId = id;
     });
@@ -100,8 +100,12 @@ export class CampgroundMapComponent implements AfterViewInit, OnDestroy {
     this.map?.remove();
   }
 
-  private renderMarkers(campgrounds: Campground[], ordered: boolean, fit: boolean): void {
+  private renderMarkers(all: Campground[], ordered: boolean, fit: boolean): void {
     const map = this.map!;
+    // Campgrounds with no location (0,0) get no marker and no route point. Trip
+    // markers keep their stop number from the full list, so they match the stop cards.
+    const numbered = all.map((campground, index) => ({ campground, index })).filter((n) => hasLocation(n.campground));
+    const campgrounds = numbered.map((n) => n.campground);
     this.cluster!.clearLayers();
     this.markers.clear();
     if (this.line) {
@@ -109,7 +113,7 @@ export class CampgroundMapComponent implements AfterViewInit, OnDestroy {
       this.line = undefined;
     }
 
-    const markers = campgrounds.map((campground, index) => {
+    const markers = numbered.map(({ campground, index }) => {
       const marker = ordered
         ? L.marker([campground.lat, campground.lng], {
             icon: L.divIcon({
