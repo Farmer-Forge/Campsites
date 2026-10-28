@@ -58,6 +58,10 @@ export function toCampgroundRow(facility: RidbFacilityRecord): CampgroundRow | n
   if (lat == null || lng == null || Number.isNaN(lat) || Number.isNaN(lng)) {
     return null;
   }
+  // RIDB sends 0,0 when it doesn't know a facility's location (Shawn, 2026-10-27).
+  if (lat === 0 && lng === 0) {
+    return null;
+  }
 
   const agency = resolveAgency(facility.ORGANIZATION);
   if (!agency || agency === "NPS") {
