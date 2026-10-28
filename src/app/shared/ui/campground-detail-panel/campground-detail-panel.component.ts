@@ -1,5 +1,5 @@
 import { Component, computed, input } from '@angular/core';
-import { Campground } from '../../../core/models/campground.model';
+import { Campground, hasLocation } from '../../../core/models/campground.model';
 
 @Component({
   selector: 'app-campground-detail-panel',
@@ -16,7 +16,9 @@ import { Campground } from '../../../core/models/campground.model';
             >Reserve on recreation.gov</a
           >
         }
-        <a class="rt-btn" [href]="directionsUrl()" target="_blank" rel="noopener">Directions</a>
+        @if (directionsUrl()) {
+          <a class="rt-btn" [href]="directionsUrl()" target="_blank" rel="noopener">Directions</a>
+        }
       </div>
     </div>
   `,
@@ -55,9 +57,8 @@ export class CampgroundDetailPanelComponent {
 
   readonly directionsUrl = computed(() => {
     const c = this.campground();
-    return (
-      c.directionsUrl ||
-      `https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lng}`
-    );
+    if (c.directionsUrl) return c.directionsUrl;
+    // No location (0,0): no Google Maps fallback, so no Directions button.
+    return hasLocation(c) ? `https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lng}` : '';
   });
 }

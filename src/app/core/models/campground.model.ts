@@ -15,3 +15,11 @@ export interface Campground {
   contact: unknown;
   distanceMeters: number;
 }
+
+/**
+ * False for campgrounds stored at exactly 0,0: RIDB's "no location" (Shawn, 2026-10-27).
+ * They get no map marker or route point, and no Directions link.
+ */
+export function hasLocation(c: Pick<Campground, 'lat' | 'lng'>): boolean {
+  return !(c.lat === 0 && c.lng === 0);
+}

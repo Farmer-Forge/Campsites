@@ -271,3 +271,35 @@ Deno.test("toCampgroundRow sets state to null when the address has an empty stat
 
   assertEquals(row?.state, null);
 });
+
+Deno.test("toCampgroundRow skips a facility whose coordinates are 0,0 (RIDB's \"no location\")", () => {
+  const facility = {
+    FacilityID: "999001",
+    FacilityName: "Nowhere Campground",
+    FacilityDescription: "",
+    FacilityLatitude: 0,
+    FacilityLongitude: 0,
+    FacilityReservationURL: "",
+    FacilityDirections: "",
+    FacilityPhone: "",
+    FacilityEmail: "",
+    ORGANIZATION: [{ OrgAbbrevName: "USFS" }],
+  };
+  assertEquals(toCampgroundRow(facility as never), null);
+});
+
+Deno.test("toCampgroundRow keeps a facility with only one coordinate at 0", () => {
+  const facility = {
+    FacilityID: "999002",
+    FacilityName: "On the Prime Meridian",
+    FacilityDescription: "",
+    FacilityLatitude: 45,
+    FacilityLongitude: 0,
+    FacilityReservationURL: "",
+    FacilityDirections: "",
+    FacilityPhone: "",
+    FacilityEmail: "",
+    ORGANIZATION: [{ OrgAbbrevName: "USFS" }],
+  };
+  assertEquals(toCampgroundRow(facility as never)?.location, "POINT(0 45)");
+});
