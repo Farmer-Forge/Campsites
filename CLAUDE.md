@@ -39,7 +39,7 @@ Campsites is **CampsiteFinder V1.1**: a rebuild of the live CampsiteFinder site 
 
 ## The loop and the local stack (Phase 1, done 2026-10-23)
 
-- **`ralphloop/`** is MyGear's loop (from `dfeb147`), adapted for Angular. Its own tests run on Ralph with `bash ralphloop/tests/run-on-ralph.sh`. The worker image is `campsites-claude-worker:latest` (Node 22, Deno 2.9.5, psql, Claude Code), built on Ralph from `ralphloop/worker.Dockerfile`.
+- **`ralphloop/`** is MyGear's loop (from `dfeb147`), adapted for Angular. Its own tests run on Ralph with `bash ralphloop/tests/run-on-ralph.sh`. The worker image is `campsites-claude-worker:latest` (Node 22, Deno 2.9.5, psql, Claude Code), built on Ralph from `ralphloop/worker.Dockerfile`. **Every worker call runs on Sonnet** (`claude-sonnet-5-5`, Shawn, 2026-10-26). `RALPH_MODEL=<model>` overrides it for one run of `doloop.sh` or `chain.sh`.
 - **The local Supabase stack** runs on Ralph from `~/projects/Campsites` (as `claude`), with ports 54321 (API) and 54322 (DB). Its values are in `~/.secrets/campsites-supabase.env`.
 - **Dev login:** `admin@campsites.test` / `campsites-admin`, from `ralphloop/seed-dev.sh`. Re-run the seed after any `supabase db reset`.
 - **Local app settings:** `src/environments/environment.local.ts` (gitignored), the same shape as V1's `environment.ts`, swapped in by the `development` configuration. It's never committed: checkpoints skip it, and chain mode refuses a PR that contains it.

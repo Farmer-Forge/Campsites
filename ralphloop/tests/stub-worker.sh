@@ -19,6 +19,7 @@ LOG="ralphloop/activity.md"
 
 N=$(( $(find "$PROMPTS_DIR" -name 'prompt-*.txt' | wc -l) + 1 ))
 printf '%s\n' "$1" > "$PROMPTS_DIR/prompt-$N.txt"
+printf '%s\n' "${RALPH_WORKER_MODEL:-}" > "$PROMPTS_DIR/model-$N.txt"
 
 ACTION=$(head -n 1 "$ACTIONS")
 sed -i '1d' "$ACTIONS"

@@ -258,3 +258,18 @@ test_prompt_forbids_schema_changes_through_psql() {
     assert_contains "forbids editing edge functions" "$p" "supabase/functions/"
     assert_contains "forbids deploying functions" "$p" "supabase functions deploy"
 }
+
+test_worker_runs_on_sonnet_by_default() {
+    sandbox; run_loop tick tick tick
+    assert_eq "every worker call gets Sonnet" "$(cat "$SB/prompts/model-1.txt" 2>/dev/null)" "claude-sonnet-5-5"
+    assert_contains "says which model it uses" "$OUT" "Worker model: claude-sonnet-5-5"
+}
+
+test_worker_model_can_be_overridden() {
+    sandbox; EXTRA_ENV="RALPH_MODEL=claude-opus-5-5" run_loop tick tick tick
+    assert_eq "RALPH_MODEL picks the model" "$(cat "$SB/prompts/model-1.txt" 2>/dev/null)" "claude-opus-5-5"
+}
+
+test_real_worker_command_passes_the_model() {
+    assert_contains "docker's claude call has --model" "$(grep -n 'claude -p' "$LOOP_DIR/doloop.sh")" '--model "$WORKER_MODEL"'
+}
