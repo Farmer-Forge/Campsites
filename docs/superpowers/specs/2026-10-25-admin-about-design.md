@@ -58,7 +58,7 @@ Free-form notes that admins keep on a campground (type, name, value). **Nothing 
 ## About (`/about`)
 
 - **A hero section:** the eyebrow "Campsite Finder", the heading "About Us", and the tagline "Because it sounded fun."
-- **Contact:** "Questions, bugs, or ideas? Reach the admin at shawnpfarmer@gmail.com." The address is a `mailto:` link.
+- **Contact:** "Questions, bugs, or ideas? Reach the admin at admin@Farmer-Forge.com." The address is a `mailto:` link. (Shawn, 2026-10-27; V1 showed his personal address.)
 - The page has its own SCSS (`about.component.scss`, 58 lines), carried over verbatim.
 
 ## Proposed changes from V1 (Claude's suggestions, approved by Shawn 2026-10-25)
@@ -76,7 +76,7 @@ Free-form notes that admins keep on a campground (type, name, value). **Nothing 
 *Approved 2026-10-25 without changes to these, so V1.1 keeps V1's behavior on both: attributes stay admin-only, and the About page keeps the address.*
 
 - **Campground attributes are only ever visible to admins.** That's V1 as built, so V1.1 keeps it. Showing them in the Finder's detail panel would be a new feature for the V1.2 list, if you want it there.
-- **The About page shows your real email** (`shawnpfarmer@gmail.com`) on a public page, as V1 does. V1.1 keeps it unless you'd rather use another address.
+- **The About page's address** *(answered 2026-10-27)*: it's `admin@Farmer-Forge.com`, not V1's personal address.
 
 ## Out of scope
 
