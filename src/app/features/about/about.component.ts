@@ -6,5 +6,5 @@ import { Component } from '@angular/core';
   templateUrl: './about.component.html',
 })
 export class AboutComponent {
-  protected readonly adminEmail = 'shawnpfarmer@gmail.com';
+  protected readonly adminEmail = 'admin@Farmer-Forge.com';
 }
