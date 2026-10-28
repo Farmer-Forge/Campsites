@@ -59,6 +59,10 @@ later, if/when this project provisions Supabase Cloud as its actual
 production backend (MyGear's Task 9 is the template for that step, deferred
 until the MVP is otherwise finished — not part of the initial loop run).
 
+## Step 4b: Use the Farmer-Forge browser-tab icon
+
+- [ ] Copy `~/ReactProjects/Farmer-Forge/public/favicon.svg` to the app's `public/favicon.svg` and link it from `index.html` (`<link rel="icon" type="image/svg+xml" href="favicon.svg">`), replacing the framework's default icon (Shawn, 2026-10-26: the Farmer-Forge icon wherever possible). Put the same instruction in the scaffold task of `task.md`.
+
 ## Step 5: Adapt `doloop.sh` and write `task.md`
 
 - [ ] Copy `doloop.sh`, `loop-lib.sh` and `tests/` from an existing
