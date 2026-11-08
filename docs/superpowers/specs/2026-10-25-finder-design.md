@@ -54,6 +54,7 @@ Changing any filter reruns the search from the current search location. Nothing 
   - Options are park names (truncated to 30 characters with "…"), sorted by name; the value is the park code. All are selected to start.
   - Labels: "All parks", "{n} parks", "No parks".
 - **MILES FROM ME:** a segmented control, `All · 25 · 50 · 100 · 250`. "All" turns near-me off; a number turns it on with that radius. The default is All, with the radius remembered as 50. Each segment has `aria-pressed`.
+- **Reset filters** (change #11): a button at the end of the row.
 
 Regions and their states:
 
@@ -283,6 +284,13 @@ Shawn reviewed V1's behaviors and asked for them addressed. He handed the detail
    - the campground's marker stays visible and out of a cluster (the cluster group's `zoomToShowLayer`).
 
    It applies wherever the shared map is used: Finder, Favorites and Trip detail.
+11. **Reset filters** (Shawn, 2026-10-31; approved 2026-11-05, added 2026-11-08). New: V1 has no reset. A **"Reset filters"** button (`rt-btn rt-btn--sm`) at the end of the filter row puts every filter back to its starting value in one go and reruns the search once:
+   - AGENCY: all five chips on;
+   - Where: all regions and states selected;
+   - Park: all parks selected;
+   - MILES FROM ME: All, with the remembered radius back to 50.
+
+   It keeps the current search location: resetting doesn't ask for your location again or move you back to it. As with any filter change, nothing is searched if there's no location yet. It's disabled, not hidden, when the filters are already at those starting values. The saved state is written after the search succeeds, as for any other filter change.
 
 ## Out of scope
 
