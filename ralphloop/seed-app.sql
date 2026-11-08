@@ -28,6 +28,13 @@ select id, park_code, name, description, location, amenities, fees, reservation_
 from seed_campgrounds
 on conflict (id) do nothing;
 
+-- Corrections to production's data (Shawn, 2026-10-27). V1's own rows are unchanged.
+-- "NPS Priest Rock Public Use Cabin" (Alaska) has its longitude's sign flipped
+-- (+154.18 puts it in Russia). Flip it back; a second run finds nothing to change.
+update public.campgrounds
+set location = st_setsrid(st_point(-st_x(location::geometry), st_y(location::geometry)), 4326)::geography
+where id = '7FDEE7A6-EB52-43E9-A4D8-193545AB5207' and st_x(location::geometry) > 0;
+
 do $$
 begin
   raise notice 'Campground data: % campgrounds, % parks.',

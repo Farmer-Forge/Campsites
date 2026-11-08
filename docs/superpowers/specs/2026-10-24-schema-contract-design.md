@@ -12,8 +12,9 @@ The contract is these files:
 - `supabase/migrations/0001–0018`, unchanged from V1's `v1.0` tag;
 - `supabase/migrations/0019_function_search_path.sql`, which adds the one thing production had that `0001–0018` lacked (below);
 - `supabase/migrations/0020_security_fixes.sql`, the fixes Shawn asked for on 2026-10-24 (see **Fixes**). This is where V1.1's database **differs from V1's**;
-- `supabase/functions/`: V1's six edge functions, plus a caller check added to `nps-sync` and `ridb-sync` (`_shared/service-role.ts`, see **Fixes**);
-- `supabase/tests/security_fixes_test.sql`: pgTAP tests for `0020` (`supabase test db`, on Ralph);
+- `supabase/functions/`: V1's six edge functions, plus a caller check added to `nps-sync` and `ridb-sync` (`_shared/service-role.ts`, see **Fixes**) and the Priest Rock correction in `nps-sync/transform.ts` (**Fixes** #9);
+- `supabase/migrations/0021_skip_zero_locations.sql`: search leaves out campgrounds at 0,0 (Shawn, 2026-10-27; see **Fixes** #8);
+- `supabase/tests/security_fixes_test.sql` and `zero_location_test.sql`: pgTAP tests for `0020` and `0021` (`supabase test db`, on Ralph);
 - `deno.lock`, unchanged from V1.
 
 Rules (CLAUDE.md hard rule 3, worker prompt rule 4):
@@ -157,7 +158,7 @@ All are owned by `postgres` and pin `search_path`. "Admin-guarded" means the fun
 
 | Function | Kind | Who can execute | Does |
 |---|---|---|---|
-| `nearest_campgrounds(user_lat, user_lng, result_limit int = 50, agency_filter text[] = null, max_distance_m float = null, state_filter text[] = null, park_filter text[] = null)` | sql, stable | anon, authenticated | Campgrounds ordered by distance, with `lat`, `lng` and `distance_m`. Each filter is skipped when null. `state_filter` also keeps rows whose `state` is null. When `max_distance_m` is set, it returns **every** row within that radius and ignores `result_limit`; otherwise it returns the nearest `result_limit`. |
+| `nearest_campgrounds(user_lat, user_lng, result_limit int = 50, agency_filter text[] = null, max_distance_m float = null, state_filter text[] = null, park_filter text[] = null)` | sql, stable | anon, authenticated | Campgrounds ordered by distance, with `lat`, `lng` and `distance_m`. Each filter is skipped when null. `state_filter` also keeps rows whose `state` is null. When `max_distance_m` is set, it returns **every** row within that radius and ignores `result_limit`; otherwise it returns the nearest `result_limit`. **V1.1** (`0021`) also leaves out rows at exactly 0,0 (**Fixes** #8). |
 | `get_campgrounds_by_ids(campground_ids text[], agency_filter text[] = null)` | sql, stable | anon, authenticated | The same columns minus `distance_m`, for the given ids, optionally filtered by agency. Used for favorites and trip stops. |
 | `is_admin(uid uuid)` | sql, stable | authenticated | `true` if that user's `role = 'admin'`. Used by RLS, every admin function and the admin edge functions. |
 | `get_users_for_admin()` | plpgsql, security definer, admin-guarded | authenticated | Every user: `id, email, display_name, role, suspended, created_at` (email and created_at from `auth.users`), newest first. |
@@ -213,10 +214,12 @@ Shawn reviewed the behaviors below and asked for them fixed in V1.1, except `mod
 | 5 | Trip stop positions could repeat within a trip | Unique `(trip_id, position)`, deferrable initially immediate. New `reorder_trip_stops(p_trip_id, p_stop_ids uuid[])` sets every position in one statement (position = index in the array, from 0); it runs as the caller, so RLS applies. **V1.1's app reorders with this RPC**, not V1's one-update-per-stop, which a unique position would break part-way. | `0020` §5 |
 | 6 | Sync functions ran for any caller | `nps-sync` and `ridb-sync` return 403 unless `Authorization: Bearer <service role key>`, checked before anything else. Confirmed live on Ralph: the anon key now gets 403, where before the platform's JWT check let it through. | `_shared/service-role.ts` (+4 Deno tests) |
 | 7 | Constraint names said `profiles_…` | Renamed to `users_pkey`, `users_id_fkey`. | `0020` §6 |
+| 8 | **212 campgrounds sat at 0,0** (added 2026-10-27). RIDB sends 0,0 when it doesn't know a location, and `ridb-sync` stored it. | `nearest_campgrounds` leaves out rows at exactly 0,0, so Finder results and counts only hold real locations. `get_campgrounds_by_ids` still returns them, so favorites and trip stops keep working, and the Admin page's name search (`ilike`) still finds them. `ridb-sync` is unchanged: it still stores and refreshes them, so their names and Reserve links stay current. The rows stay in the seed, which mirrors production. | `0021` |
+| 9 | **"NPS Priest Rock Public Use Cabin" had its longitude's sign flipped** (+154.18, in Russia; added 2026-10-27) | `nps-sync` flips that one campground's longitude back when it's positive, so every sync stores the right value (+1 Deno test). It's not a general rule, because real US places such as Guam have a positive longitude. `ralphloop/seed-app.sql` makes the same correction after loading production's data. V1's own row is unchanged. | `nps-sync/transform.ts`; seed |
 
 **Correction to the first draft.** It said an admin could demote or suspend every other admin, leaving none. That can't happen: admins can't change their own role or suspension, so the caller always stays an admin. The real gaps were #3 (a suspended admin kept its powers) and #4 (self-deletion).
 
-**Tests:** `supabase/tests/security_fixes_test.sql`, 22 pgTAP tests. Each fix has tests, and so do the V1 behaviors that must keep working (an active user adds favorites, trips and stops, and changes their theme; an admin lists users). It was run red before `0020` (16 failing, 6 passing), then green after `0020`, and green again after a full `supabase db reset` and the dev seed.
+**Tests:** `supabase/tests/security_fixes_test.sql`, 22 pgTAP tests. Each fix has tests, and so do the V1 behaviors that must keep working (an active user adds favorites, trips and stops, and changes their theme; an admin lists users). It was run red before `0020` (16 failing, 6 passing), then green after `0020`, and green again after a full `supabase db reset` and the dev seed. `supabase/tests/zero_location_test.sql`, 5 pgTAP tests, covers `0021` (#8).
 
 ## Behaviors reviewed (2026-10-24)
 

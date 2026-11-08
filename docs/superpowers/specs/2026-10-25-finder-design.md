@@ -271,6 +271,13 @@ Shawn reviewed V1's behaviors and asked for them addressed. He handed the detail
    - The saved state keeps `regions` for compatibility, computed as the regions whose states are all selected.
    - The query is as before: states are omitted when all are selected.
 8. **No unused limit.** The client stops sending `result_limit`; the RPC's default doesn't apply when a radius is sent anyway. No visible change.
+9. **Campgrounds with no location** (at exactly 0,0; Shawn, 2026-10-27). They never come back from the Finder's search (`nearest_campgrounds`; spec 1, **Fixes** #8). Where they still appear, in Favorites or a trip:
+   - the map gives them no marker and no route point;
+   - trip markers keep their stop number from the full list;
+   - selecting one doesn't move the map;
+   - the detail panel shows no Directions button, even when the campground has a `directionsUrl`.
+
+   The check is `hasLocation(c)` in `campground.model.ts`.
 
 ## Out of scope
 

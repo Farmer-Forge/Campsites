@@ -72,7 +72,7 @@ mkdir -p src/environments && printf "export const environment = {\n  production:
 
 Done by Shawn and Claude in interactive sessions (2026-10-23 to 2026-10-25). The loop never runs this task.
 
-- [x] **Step 1: Start the stack.** `supabase start` in `~/projects/Campsites` on Ralph, from migrations `0001–0020`, on ports 54320–54329.
+- [x] **Step 1: Start the stack.** `supabase start` in `~/projects/Campsites` on Ralph, from migrations `0001–0021`, on ports 54320–54329.
 - [x] **Step 2: Write the secrets file.** `~/.secrets/campsites-supabase.env` (`SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_JWT_SECRET`, `DATABASE_URL`).
 - [x] **Step 3: Seed.** `./ralphloop/seed-dev.sh`: the dev admin, 4,900 campgrounds and 117 parks from the production backup, and the sample users Pat and Sam.
 - [x] **Step 4: Local auth URLs.** `supabase/config.toml` points `site_url` and the reset redirect URLs at the review app (`http://192.168.1.188:4200`) and worker steps (`http://127.0.0.1:4201`).
@@ -1126,7 +1126,7 @@ Read spec 3 in full. This task builds the services and the five shared component
 
 - [x] **Step 1: Models and `CampgroundsService`** (spec 3, **Data it uses**, and spec 1's RPCs). `searchByName` escapes `%` and `_` before `ilike` (spec 8, change #4).
 - [x] **Step 2: `FavoritesService` and `TripsService`,** as in Interfaces. In `app.ts`, the session effect also calls `favorites.loadFavoriteIds()` (spec 3, change #1).
-- [x] **Step 3: `app-campground-detail-panel`** (spec 3: the expanded detail; the description is rendered with `[innerHTML]`).
+- [x] **Step 3: `app-campground-detail-panel`** (spec 3: the expanded detail; the description is rendered with `[innerHTML]`). Directions is hidden for a campground with no location (spec 3, change #9): add `hasLocation(c)` to `campground.model.ts`.
   - **Structure:**
     - `<div class="campground-detail-panel">` with `<div class="description" [innerHTML]>`;
     - `<div class="links">` with Reserve (`rt-btn rt-btn--cherry rt-btn--shadow`) and Directions (`rt-btn`), both `target="_blank" rel="noopener"`.
@@ -1338,6 +1338,7 @@ Read spec 3 in full. This task builds the services and the five shared component
   - **Popup buttons** are plain DOM with class `view-details-button`.
   - **The new popup action "Add to trip…"** (signed in only) emits a new output, `addToTrip(id)`. The list's parent uses it to select that card and open its add-to-trip panel. Add a matching input to `app-campground-table`: `openPickerFor: string | null`, which opens that card's panel.
   - **Map size:** a `ResizeObserver` calls `invalidateSize()`.
+  - **No location** (spec 3, change #9): campgrounds failing `hasLocation` get no marker and no route point; trip markers keep their stop number from the full list; selecting one doesn't move the map.
   - **`campground-map.component.scss`, verbatim:**
     ```scss
 :host {

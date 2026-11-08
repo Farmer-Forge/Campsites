@@ -43,12 +43,19 @@ function resolveState(addresses: NpsAddressRecord[] | undefined): string | null 
   return (physical ?? addresses[0]).stateCode ?? null;
 }
 
+// "Priest Rock Public Use Cabin" (Alaska): NPS sends its longitude with the sign
+// flipped (+154.18, in Russia). Corrected here so every sync stores the fixed value
+// (Shawn, 2026-10-27). Not a general rule: real US places such as Guam have a
+// positive longitude.
+const PRIEST_ROCK_ID = "7FDEE7A6-EB52-43E9-A4D8-193545AB5207";
+
 export function toCampgroundRow(record: NpsCampgroundRecord): CampgroundRow | null {
   const lat = parseFloat(record.latitude);
-  const lng = parseFloat(record.longitude);
+  let lng = parseFloat(record.longitude);
   if (!record.id || Number.isNaN(lat) || Number.isNaN(lng)) {
     return null;
   }
+  if (record.id === PRIEST_ROCK_ID && lng > 0) lng = -lng;
   return {
     id: record.id,
     park_code: record.parkCode,
