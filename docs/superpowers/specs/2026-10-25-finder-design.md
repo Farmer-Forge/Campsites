@@ -179,7 +179,7 @@ Used by Finder (distances on, no notes), Favorites (notes on, plan mode) and Tri
 
 ### Campground map (`app-campground-map`)
 
-Used by Finder and Trip detail.
+Used by Finder, Favorites and Trip detail.
 
 **Map setup:**
 - OpenStreetMap tiles, attribution "&copy; OpenStreetMap contributors".
@@ -278,6 +278,11 @@ Shawn reviewed V1's behaviors and asked for them addressed. He handed the detail
    - the detail panel shows no Directions button, even when the campground has a `directionsUrl`.
 
    The check is `hasLocation(c)` in `campground.model.ts`.
+10. **Centring on a campground never zooms out** (Shawn, 2026-10-31; approved 2026-11-08). V1 recentres at zoom 12 when you click a marker, and when a campground is selected, which "View details ▸" and "Add to trip…" both do. Zoomed in closer than 12, that zooms the map out: the marker cluster merges the campground back into a cluster, its popup closes, and a campground right next to another one is lost. In V1.1:
+   - both use zoom 12 or the current zoom, whichever is closer in;
+   - the campground's marker stays visible and out of a cluster (the cluster group's `zoomToShowLayer`).
+
+   It applies wherever the shared map is used: Finder, Favorites and Trip detail.
 
 ## Out of scope
 
