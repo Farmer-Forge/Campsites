@@ -830,7 +830,7 @@ select.rt-input {
   - **`NotFoundComponent`:** spec 2, **Changes from V1**, #3. Inside `rt-content`, an `rt-page-card` with an `rt-title` "Page not found", the line "That page isn't on the map.", and `<a class="rt-btn rt-btn--cherry" routerLink="/">Back to the Finder</a>`.
   - **`AboutComponent`** (spec 9):
     - `<section class="about-hero">`: a `<div class="eyebrow">` "Campsite Finder", `<h1>` "About Us", and `<p class="tagline">` "Because it sounded fun.";
-    - then `<section class="contact"><p>`: "Questions, bugs, or ideas? Reach the admin at " + a `mailto:` link to `admin@Farmer-Forge.com` (`adminEmail` field) + ".".
+    - then `<section class="contact"><p>`: "Questions, bugs, or ideas? Reach the admin at", then a `<br />`, then a `mailto:` link to `admin@Farmer-Forge.com` (`adminEmail` field) + ".".
     - **`about.component.scss`, verbatim:**
       ```scss
 :host {

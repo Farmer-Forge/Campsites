@@ -58,7 +58,7 @@ Free-form notes that admins keep on a campground (type, name, value). **Nothing 
 ## About (`/about`)
 
 - **A hero section:** the eyebrow "Campsite Finder", the heading "About Us", and the tagline "Because it sounded fun."
-- **Contact:** "Questions, bugs, or ideas? Reach the admin at admin@Farmer-Forge.com." The address is a `mailto:` link. (Shawn, 2026-10-27; V1 showed his personal address.)
+- **Contact:** "Questions, bugs, or ideas? Reach the admin at admin@Farmer-Forge.com." The address is a `mailto:` link on its own line (a `<br>` before it, so it never wraps mid-address). (Shawn, 2026-10-27; V1 showed his personal address.)
 - The page has its own SCSS (`about.component.scss`, 58 lines), carried over verbatim.
 
 ## Proposed changes from V1 (Claude's suggestions, approved by Shawn 2026-10-25)
