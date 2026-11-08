@@ -121,3 +121,24 @@ Deno.test("toParkRow returns null when the code or name is missing", () => {
   assertEquals(toParkRow({ parkCode: "grsm", name: "" }), null);
   assertEquals(toParkRow({ parkCode: "", name: "Great Smoky Mountains" }), null);
 });
+
+Deno.test("toCampgroundRow flips Priest Rock's longitude back to the western hemisphere", () => {
+  const record = {
+    id: "7FDEE7A6-EB52-43E9-A4D8-193545AB5207",
+    parkCode: "lacl",
+    name: "Priest Rock Public Use Cabin",
+    description: "",
+    latitude: "60.3093333056",
+    longitude: "154.177",
+    amenities: {},
+    fees: [],
+    reservationUrl: "",
+    directionsUrl: "",
+    images: [],
+    contacts: {},
+  };
+
+  assertEquals(toCampgroundRow(record)?.location, "POINT(-154.177 60.3093333056)");
+  assertEquals(toCampgroundRow({ ...record, longitude: "-154.177" })?.location, "POINT(-154.177 60.3093333056)");
+  assertEquals(toCampgroundRow({ ...record, id: "guam1", longitude: "144.7" })?.location, "POINT(144.7 60.3093333056)");
+});

@@ -57,8 +57,8 @@ export class CampgroundDetailPanelComponent {
 
   readonly directionsUrl = computed(() => {
     const c = this.campground();
-    if (c.directionsUrl) return c.directionsUrl;
-    // No location (0,0): no Google Maps fallback, so no Directions button.
-    return hasLocation(c) ? `https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lng}` : '';
+    // No location (0,0): no Directions button, even with a directionsUrl.
+    if (!hasLocation(c)) return '';
+    return c.directionsUrl || `https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lng}`;
   });
 }

@@ -72,7 +72,7 @@ mkdir -p src/environments && printf "export const environment = {\n  production:
 
 Done by Shawn and Claude in interactive sessions (2026-10-23 to 2026-10-25). The loop never runs this task.
 
-- [x] **Step 1: Start the stack.** `supabase start` in `~/projects/Campsites` on Ralph, from migrations `0001–0020`, on ports 54320–54329.
+- [x] **Step 1: Start the stack.** `supabase start` in `~/projects/Campsites` on Ralph, from migrations `0001–0021`, on ports 54320–54329.
 - [x] **Step 2: Write the secrets file.** `~/.secrets/campsites-supabase.env` (`SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_JWT_SECRET`, `DATABASE_URL`).
 - [x] **Step 3: Seed.** `./ralphloop/seed-dev.sh`: the dev admin, 4,900 campgrounds and 117 parks from the production backup, and the sample users Pat and Sam.
 - [x] **Step 4: Local auth URLs.** `supabase/config.toml` points `site_url` and the reset redirect URLs at the review app (`http://192.168.1.188:4200`) and worker steps (`http://127.0.0.1:4201`).

@@ -3,7 +3,7 @@
 -- points (212 rows in production, all RIDB; Shawn, 2026-10-27). They aren't
 -- "near" anything, so search leaves them out. get_campgrounds_by_ids is
 -- unchanged, so favorites and trip stops that point at one keep working.
--- ridb-sync now skips 0,0 facilities too (supabase/functions/ridb-sync/transform.ts).
+-- ridb-sync still stores them (and keeps them up to date); search and the app hide them.
 -- Tested by supabase/tests/zero_location_test.sql.
 --
 -- Same signature, body and settings as 0015/0019, plus the one condition.
