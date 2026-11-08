@@ -1339,6 +1339,7 @@ Read spec 3 in full. This task builds the services and the five shared component
   - **The new popup action "Add to trip…"** (signed in only) emits a new output, `addToTrip(id)`. The list's parent uses it to select that card and open its add-to-trip panel. Add a matching input to `app-campground-table`: `openPickerFor: string | null`, which opens that card's panel.
   - **Map size:** a `ResizeObserver` calls `invalidateSize()`.
   - **No location** (spec 3, change #9): campgrounds failing `hasLocation` get no marker and no route point; trip markers keep their stop number from the full list; selecting one doesn't move the map.
+  - **Never zooms out** (spec 3, change #10): a marker click and a newly selected campground use zoom 12 or the current zoom, whichever is closer in, and the cluster group's `zoomToShowLayer` keeps that campground's marker out of a cluster.
   - **`campground-map.component.scss`, verbatim:**
     ```scss
 :host {
