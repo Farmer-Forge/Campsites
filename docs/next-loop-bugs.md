@@ -22,7 +22,7 @@ At zoom 12 the marker cluster group merges nearby markers again, so a campground
 
 **What's missing:** there's no way to undo all the filter changes at once. You have to put back every agency chip, the Where picker, the Park picker and the miles control one by one.
 
-**This is new, not a fix.** V1 has no reset either. **Deferred (Shawn, 2026-11-05):** it waits until Shawn is happy with the loop's build. Only then does it go into spec 3 and `task.md`.
+**This is new, not a fix.** V1 has no reset either. It was deferred on 2026-11-05 until Shawn was happy with the loop's build. **Added (Shawn, 2026-11-08):** folded into spec 3 as change #11, and into `task.md` and its template (Task 6). The code changes when the loop next runs.
 
 **Fix to spec (approved, Shawn, 2026-11-05):** a "Reset filters" button in the filter bar. It puts every filter back to its starting value in one go and reruns the search once:
 - AGENCY: all five chips on;

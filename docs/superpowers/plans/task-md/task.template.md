@@ -413,7 +413,7 @@ Read spec 3 in full. This task builds the services and the five shared component
 
 ## Task 6: The Finder page (spec 3)
 
-Read spec 3 in full: the page, the filter bar, how a search runs, the location messages, saved state, and Changes #5–#8.
+Read spec 3 in full: the page, the filter bar, how a search runs, the location messages, saved state, and Changes #5–#8 and #11.
 
 **Files:**
 - Create: `src/app/core/services/geolocation.service.ts`, `finder-state.service.ts`
@@ -430,11 +430,13 @@ Read spec 3 in full: the page, the filter bar, how a search runs, the location m
   - **Constants:** 1609.34 m per mile; "Show all" is 20,038,000 m; the five agencies; radius choices `[null, 25, 50, 100, 250]`; the region→state table.
   - **Change #5:** a `loading` state for the first load only, and an `updating` signal for reloads.
   - **Change #7:** the single **Where** picker.
+  - **Change #11:** Reset filters puts every filter back to its starting value and reruns the search once, from the current search location.
 - [ ] **Step 3: The Finder's template.** Class structure:
   - **Filter bar:** `div.filter-bar` holds `div.filter-group` blocks:
     - the agency group: `span.rt-label` "AGENCY", then `button.chip` (`is-on`, `aria-pressed`) per agency;
     - the PrimeNG multiselect group: **Where**, grouped by region, with filter and labels as in change #7; then **Park**, shown when there are park codes, with the change #6 note `rt-notice` "Park filter shows NPS campgrounds only" when not all parks are selected;
-    - `div.filter-group.radius-group`: `span.rt-label` "MILES FROM ME" + `div.segmented` of buttons (`is-on`).
+    - `div.filter-group.radius-group`: `span.rt-label` "MILES FROM ME" + `div.segmented` of buttons (`is-on`);
+    - last, a `div.filter-group` with `button.rt-btn.rt-btn--sm` "Reset filters" (change #11), `[disabled]` when the filters are at their starting values. No new styles.
   - **Body:**
     - `div.rt-map-layout` holds `div.rt-map-frame` (`<app-campground-map>` with `[allowLocationPick]="true"`) and `div.rt-side`, which holds, in order:
       - `div.list-header`: `h1.rt-list-title` "{n} campground(s)", `span.nearest` "nearest first", and "Updating…" while `updating()`;
@@ -459,6 +461,7 @@ Read spec 3 in full: the page, the filter bar, how a search runs, the location m
 - Allow location: the map centers on you at about a 100-mile view, and the list shows "{n} campgrounds · nearest first" with mustard distance badges.
 - Toggle agency chips, the Where picker (ticking a region ticks its states) and Park: the list updates **without blanking**, and "Updating…" shows meanwhile. Picking a few parks shows the NPS-only note.
 - Miles **All**: the whole country. Scrolling stays smooth (virtual list), and the map stays responsive (chunked markers).
+- Change a few filters, then **Reset filters**: every filter goes back to its start in one search, with no location prompt. The button is greyed out until you change a filter again.
 - Click a card: it expands with the description, Reserve (when there is a URL) and Directions.
 - Right-click the map → "Search from here". Change location → the manual lat/lng panel.
 - Go to About and back: your search and filters are kept, with no location prompt. Refresh: they're still kept.
