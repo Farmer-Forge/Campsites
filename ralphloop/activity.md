@@ -141,3 +141,6 @@ TASK 6 COMPLETE
 
 ## Task 7, call 2
 - Step 2: added `fitToCampgrounds` input to campground-map; `drawMarkers` now fits bounds (padding 32) when `ordered || fit` and there are located points (the route line stays ordered-only). Bound `[fitToCampgrounds]="true"` in favorites.component.html. `ng lint` and `ng build` pass.
+
+## Task 7, call 3
+- Step 3: the `favorites` route (FavoritesComponent, `authGuard`) was already in app.routes.ts from Step 1; confirmed it, `ng build` succeeds.
