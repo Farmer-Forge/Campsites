@@ -92,3 +92,6 @@ TASK 3 COMPLETE
 
 ## Task 5, call 3
 - Step 3: added `hasLocation(c)` (false only at exactly 0,0) to campground.model.ts and wrote shared/ui/campground-detail-panel (inline template and styles verbatim). Description via `[innerHTML]`; Reserve only when `reservationUrl` is set; Directions uses `directionsUrl` or the Google Maps fallback and is hidden when `!hasLocation`. No raw colors. `ng lint` and `ng build` pass (budget warning pre-existing).
+
+## Task 5, call 4
+- Step 4: wrote shared/ui/favorite-toggle (input `campgroundId`). Renders only when `supabase.session()` is set; heart fills from `favoriteIds` and never loads anything; click stops propagation and calls `toggleFavorite` (errors swallowed, state unchanged). Title/aria-pressed per spec. `ng lint` and `ng build` pass (budget warning pre-existing).
