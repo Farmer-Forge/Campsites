@@ -1896,7 +1896,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
 - **`CampgroundAttributesService`:** `attributes` signal; `loadForCampground`, `addAttribute`, `updateAttribute`, `deleteAttribute`.
 
 - [x] **Step 1: The three services and models,** as above (spec 8, spec 1's RPCs and edge functions).
-- [ ] **Step 2: The Admin page** (spec 8, with the exact texts), plus changes #1–#3: "You" on your own row, plain-English errors, and stats refreshing after a delete.
+- [x] **Step 2: The Admin page** (spec 8, with the exact texts), plus changes #1–#3: "You" on your own row, plain-English errors, and stats refreshing after a delete.
   - **Structure:**
     - `div.rt-content.admin` with `h1.rt-title` "Admin";
     - `div.admin-stats` of `div.admin-stat` (`span.admin-stat-value.favorites` / `.trips`, `span.admin-stat-label`);

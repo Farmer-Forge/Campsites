@@ -175,3 +175,6 @@ TASK 8 COMPLETE
 
 ## Task 9, call 1
 - Step 1: wrote admin-user and campground-attribute models and the AdminUsers, AdminStats and CampgroundAttributes services. Users/attributes signals update in place after each change; edge functions go through one `invoke` helper (FunctionsHttpError -> Error(response text || message)). Services throw raw errors; the component (Step 2) must map the plain-English messages (change #2). deleteUser removes the row only; Step 2 must call loadStats afterwards (change #3). ng lint and ng build pass.
+
+## Task 9, call 2
+- Step 2: wrote features/admin/admin.component.ts + .html (styles verbatim). Stats and users load on open; errors show above the table, mapped for "cannot remove the last admin" / "not authorized" (#2). Own row shows "You" instead of role/Suspend/Delete, Edit stays (#1). deleteUser is followed by loadStats (#3). Campground search uses the existing CampgroundsService.searchByName (already escapes % and _, limit 20). Not routed yet (Step 3), so `ng build` doesn't compile it into a chunk until then; `ng lint` and `ng build` pass. Hex-colour grep finds nothing.
