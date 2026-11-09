@@ -127,3 +127,6 @@ TASK 5 COMPLETE
 
 ## Task 6, call 5
 - Step 5: `app.routes.ts` `''` now lazy-loads FinderComponent. `ng lint` and `ng build` pass.
+
+## Task 6, call 6
+- Step 6: `ng lint` passes; `ng build` succeeds (only warnings). Checked every exact text from spec 3 against the code: the four geolocation messages (in geolocation.service.ts), blocked help, manual panel help/placeholders/buttons, "Finding campgrounds near you...", "Unable to load nearby campgrounds.", Reset filters, Park note, "nearest first", Change location, Search from here. No gaps found ("location blocked" in the spec is a state flag, not display text).
