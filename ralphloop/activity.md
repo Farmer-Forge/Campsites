@@ -98,3 +98,6 @@ TASK 3 COMPLETE
 
 ## Task 5, call 5
 - Step 5: wrote shared/ui/add-to-trip (input `campgroundId`, output `done`). On init loads trips and the trip ids containing the campground; trip buttons disabled with " (added)"; "Create & Add" (or Enter) ignores blank names; the three error texts per spec. Styles verbatim, no raw colors. `ng lint` and `ng build` pass (budget warning pre-existing).
+
+## Task 5, call 6
+- Step 6: wrote shared/ui/campground-table (virtual-scroll viewport with autosize, `*cdkVirtualFor` trackBy id). Styles verbatim plus `cdk-virtual-scroll-viewport { display: block; }` under `:host`-level rules (added, per the step's allowance). Card header has role=button/tabindex/Enter key to satisfy lint; Enter only counts when the card itself is the target. Selection from outside expands the card and calls `scrollToIndex(i, 'smooth')`. Notes drafts are kept in a plain Map, emitted on blur. Miles: one decimal under 100, rounded above. Step 7 must add the `openPickerFor` input (sets `pickerId`). `ng lint` and `ng build` pass.

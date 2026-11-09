@@ -1209,7 +1209,7 @@ Read spec 3 in full. This task builds the services and the five shared component
   background: var(--rt-card);
 }
     ```
-- [ ] **Step 6: `app-campground-table`,** virtual-scrolled (spec 3, **Campground card list**, plus change #2).
+- [x] **Step 6: `app-campground-table`,** virtual-scrolled (spec 3, **Campground card list**, plus change #2).
   - **The viewport:** `<cdk-virtual-scroll-viewport autosize class="rt-scroll-list">`, using `ScrollingModule` from `@angular/cdk/scrolling` and `CdkAutoSizeVirtualScroll` from `@angular/cdk-experimental/scrolling`, with `*cdkVirtualFor` over the campgrounds (`trackBy` id). The viewport must fill the side column (flex: 1; min-height: 0).
   - **A selection from outside** expands that card and calls `viewport.scrollToIndex(index, 'smooth')`.
   - **Card structure:**
