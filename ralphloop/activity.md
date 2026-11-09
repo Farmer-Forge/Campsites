@@ -112,3 +112,6 @@ TASK 3 COMPLETE
 - Step 9: worktree had no code changes to commit; every Task 5 file appears in `git log main..HEAD --stat` via checkpoint commits. Step treated as done.
 
 TASK 5 COMPLETE
+
+## Task 6, call 1
+- Step 1: wrote geolocation.service.ts (rejects with the spec message per error code; checkPermissionState returns unsupported when missing/throwing) and finder-state.service.ts (memory then sessionStorage `campsite-finder.finder`, full validation, storage errors swallowed). `ng lint` and `ng build` pass (budget warning pre-existing).
