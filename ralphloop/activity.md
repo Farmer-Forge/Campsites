@@ -181,3 +181,8 @@ TASK 8 COMPLETE
 
 ## Task 9, call 3
 - Step 3: `admin` now lazy-loads AdminComponent (adminGuard); removed the now-unused `placeholder` const from app.routes.ts (the placeholder component files remain for Step 5 to delete). ng lint and ng build pass; the admin chunk is built.
+
+## Task 9, call 4
+- Step 5: Step 4 had left features/placeholder/ in place, so I deleted it (no other references); ng lint and ng build pass. Committed the removal; admin page, services and route were already in checkpoint commits.
+
+TASK 9 COMPLETE
