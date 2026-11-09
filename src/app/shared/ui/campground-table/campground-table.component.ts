@@ -242,6 +242,7 @@ export class CampgroundTableComponent {
   readonly notes = input<Map<string, string | null>>(new Map());
   readonly planMode = input(false);
   readonly planSelected = input<Set<string>>(new Set());
+  readonly openPickerFor = input<string | null>(null);
 
   readonly selectedChange = output<Campground | null>();
   readonly noteChange = output<{ campgroundId: string; note: string }>();
@@ -254,6 +255,13 @@ export class CampgroundTableComponent {
   private readonly drafts = new Map<string, string>();
 
   constructor() {
+    effect(() => {
+      const id = this.openPickerFor();
+      if (id) {
+        this.pickerId.set(id);
+      }
+    });
+
     effect(() => {
       const selected = this.selected();
       const list = this.campgrounds();
