@@ -1631,7 +1631,7 @@ Read the Trips list and Trip detail sections and Proposed changes #3 and #5–#1
 - Modify: `src/app/core/services/trips.service.ts` (`loadAllStops(tripIds): Promise<Map<string, TripStop[]>>` in two requests, change #5), `src/app/app.routes.ts`
 
 - [x] **Step 1: `TripsService.loadAllStops`.** One `trip_stops` select for all the given trip ids (`order by position`), then one `getByIds` for every campground. Returns the stops per trip.
-- [ ] **Step 2: The Trips list** (spec 7, plus changes #3, #6 and #7).
+- [x] **Step 2: The Trips list** (spec 7, plus changes #3, #6 and #7).
   - **Structure:**
     - `div.rt-content` with `h1.rt-title` "Trips", then `p.empty`;
     - `div.postcards` of `article.postcard`, each holding:

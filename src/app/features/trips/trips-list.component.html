@@ -1,0 +1,53 @@
+<div class="rt-content">
+  <h1 class="rt-title">Trips</h1>
+  @if (loadError()) {
+    <p class="rt-error">Couldn't load your trips — try again.</p>
+    <div>
+      <button type="button" class="rt-btn rt-btn--sm" (click)="load()">Try again</button>
+    </div>
+  } @else if (!loading()) {
+    @if (deleteError()) {
+      <p class="rt-error">Couldn't delete this trip — try again.</p>
+    }
+    @if (trips().length === 0) {
+      <p class="empty">
+        No trips yet. Select some favorites on the <a routerLink="/favorites">Favorites</a> page and choose "Plan a
+        trip" to create one.
+      </p>
+    } @else {
+      <div class="postcards">
+        @for (trip of trips(); track trip.id) {
+          <article class="postcard">
+            <a class="postcard-header" [routerLink]="['/trips', trip.id]">
+              <span class="greetings">Greetings from</span>
+              <span class="trip-name">{{ trip.name }}</span>
+            </a>
+            <div class="postcard-body">
+              @if (stops().has(trip.id)) {
+                <div class="stop-count">{{ stopCount(trip.id) }}</div>
+                <div class="route">{{ route(trip.id) }}</div>
+              }
+            </div>
+            <div class="postcard-footer">
+              @if (confirmingId() === trip.id) {
+                <div class="confirm">
+                  <span>Delete this trip? This cannot be undone.</span>
+                  <button type="button" class="rt-btn rt-btn--sm" (click)="confirmingId.set(null)">Cancel</button>
+                  <button type="button" class="rt-btn rt-btn--sm rt-btn--cherry" (click)="confirmDelete(trip.id)">
+                    Yes, delete this trip
+                  </button>
+                </div>
+              } @else {
+                <span>Created {{ trip.createdAt | date }}</span>
+                <a class="rt-btn rt-btn--sm rt-btn--mustard open" [routerLink]="['/trips', trip.id]">Open</a>
+                <button type="button" class="rt-btn rt-btn--sm rt-btn--danger-outline" (click)="askDelete(trip.id)">
+                  Delete
+                </button>
+              }
+            </div>
+          </article>
+        }
+      </div>
+    }
+  }
+</div>

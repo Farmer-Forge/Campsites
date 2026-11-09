@@ -155,3 +155,6 @@ TASK 7 COMPLETE
 
 ## Task 8, call 1
 - Step 1: added TripsService.loadAllStops(tripIds): one trip_stops select (.in, order by position), one getByIds for the unique campground ids; returns a Map with an entry (possibly empty) for every trip id; stops whose campground is missing are skipped. Empty input makes no requests. ng lint and ng build pass.
+
+## Task 8, call 2
+- Step 2: wrote features/trips/trips-list.component.ts + .html (styles verbatim, plus a small `.confirm` wrap rule). Load: `loadTrips`, then one `loadAllStops`; a failed stops load leaves no summaries; a trips load failure shows "Couldn't load your trips — try again." with Try again (#3). Delete uses an inline confirmation in the footer (#6) and shows "Couldn't delete this trip — try again." on failure (#7). I already pointed the `trips` route at TripsListComponent (Step 4 only needs `trips/:id`). `ng lint` and `ng build` pass.
