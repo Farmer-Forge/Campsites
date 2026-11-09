@@ -33,6 +33,7 @@ export class CampgroundMapComponent implements AfterViewInit, OnDestroy {
   readonly campgrounds = input.required<Campground[]>();
   readonly selectedId = input<string | null>(null);
   readonly ordered = input(false);
+  readonly fitToCampgrounds = input(false);
   readonly searchLocation = input<Coordinates | null>(null);
   readonly allowLocationPick = input(false);
 
@@ -61,7 +62,7 @@ export class CampgroundMapComponent implements AfterViewInit, OnDestroy {
       if (!this.ready()) {
         return;
       }
-      this.drawMarkers(this.campgrounds(), this.ordered());
+      this.drawMarkers(this.campgrounds(), this.ordered(), this.fitToCampgrounds());
     });
 
     effect(() => {
@@ -104,7 +105,7 @@ export class CampgroundMapComponent implements AfterViewInit, OnDestroy {
     this.map?.remove();
   }
 
-  private drawMarkers(campgrounds: Campground[], ordered: boolean): void {
+  private drawMarkers(campgrounds: Campground[], ordered: boolean, fit: boolean): void {
     const map = this.map;
     const cluster = this.cluster;
     if (!map || !cluster) {
@@ -130,13 +131,11 @@ export class CampgroundMapComponent implements AfterViewInit, OnDestroy {
     });
     cluster.addLayers(markers);
 
-    if (ordered) {
-      if (points.length >= 2) {
-        this.route = L.polyline(points, { color: this.cssColor('--rt-cherry') }).addTo(map);
-      }
-      if (points.length > 0) {
-        map.fitBounds(L.latLngBounds(points), { padding: [32, 32] });
-      }
+    if (ordered && points.length >= 2) {
+      this.route = L.polyline(points, { color: this.cssColor('--rt-cherry') }).addTo(map);
+    }
+    if ((ordered || fit) && points.length > 0) {
+      map.fitBounds(L.latLngBounds(points), { padding: [32, 32] });
     }
   }
 
