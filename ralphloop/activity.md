@@ -124,3 +124,6 @@ TASK 5 COMPLETE
 
 ## Task 6, call 4
 - Step 4: replaced the stub finder.component.scss with the verbatim V1 styles from the step (134 lines, no changes). `ng lint` and `ng build` pass (budget warning pre-existing).
+
+## Task 6, call 5
+- Step 5: `app.routes.ts` `''` now lazy-loads FinderComponent. `ng lint` and `ng build` pass.
