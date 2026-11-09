@@ -1125,7 +1125,7 @@ Read spec 3 in full. This task builds the services and the five shared component
 - **Components:** the inputs and outputs in spec 3, **Shared pieces**, with these selectors: `app-campground-map`, `app-campground-table`, `app-campground-detail-panel`, `app-favorite-toggle`, `app-add-to-trip`.
 
 - [x] **Step 1: Models and `CampgroundsService`** (spec 3, **Data it uses**, and spec 1's RPCs). `searchByName` escapes `%` and `_` before `ilike` (spec 8, change #4).
-- [ ] **Step 2: `FavoritesService` and `TripsService`,** as in Interfaces. In `app.ts`, the session effect also calls `favorites.loadFavoriteIds()` (spec 3, change #1).
+- [x] **Step 2: `FavoritesService` and `TripsService`,** as in Interfaces. In `app.ts`, the session effect also calls `favorites.loadFavoriteIds()` (spec 3, change #1).
 - [ ] **Step 3: `app-campground-detail-panel`** (spec 3: the expanded detail; the description is rendered with `[innerHTML]`). Directions is hidden for a campground with no location (spec 3, change #9): add `hasLocation(c)` to `campground.model.ts`.
   - **Structure:**
     - `<div class="campground-detail-panel">` with `<div class="description" [innerHTML]>`;

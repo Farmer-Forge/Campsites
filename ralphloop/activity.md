@@ -86,3 +86,6 @@ TASK 3 COMPLETE
 
 ## Task 5, call 1
 - Step 1: wrote campground.model.ts, trip.model.ts and campgrounds.service.ts (getNearest pages 1,000 at a time and sends no result_limit; getByIds, getParkCodes (paged), getParkNames, searchByName escaping `\`, `%`, `_`). `get_campgrounds_by_ids` returns no distance, so those rows get distanceMeters 0. `ng lint` and `ng build` pass (budget warning pre-existing).
+
+## Task 5, call 2
+- Step 2: wrote favorites.service.ts (read-only signals, load/toggle/updateNote, onSignOut clear) and trips.service.ts (all methods in spec 7's table; reorderStops uses the `reorder_trip_stops` RPC; createTrip deletes the new trip if its stops fail to insert). app.ts's session effect now also calls `favorites.loadFavoriteIds()`. `ng lint` and `ng build` pass.
