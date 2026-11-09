@@ -121,3 +121,6 @@ TASK 5 COMPLETE
 
 ## Task 6, call 3
 - Step 3: wrote finder.component.html (and added `NgTemplateOutlet` to the component's imports). Filter bar: agency chips, single Where multiselect (grouped, filter, label via `#selectedItems` template), Park multiselect shown when park codes exist with the `rt-notice` note, MILES FROM ME segmented control, Reset filters (`[disabled]="filtersAtStart()"`). Body: map + side column (list header with "Updating…", location controls, device-location error, manual panel, table); first load shows "Finding campgrounds near you..." in `.status-area`. Error state (error and no search location) replaces the filter bar and body, with the device-location button and the manual panel without the map tip. Shared `ng-template`s `deviceError` and `manualPanel` serve both. The map's `addToTrip` goes to `onAddToTrip`. Scss still the stub (Step 4); route not yet changed (Step 5). `ng lint` and `ng build` pass (budget warning pre-existing).
+
+## Task 6, call 4
+- Step 4: replaced the stub finder.component.scss with the verbatim V1 styles from the step (134 lines, no changes). `ng lint` and `ng build` pass (budget warning pre-existing).
