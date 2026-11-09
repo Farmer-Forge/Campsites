@@ -1124,9 +1124,9 @@ Read spec 3 in full. This task builds the services and the five shared component
 - **`TripsService`:** the methods in spec 7's TripsService table. `reorderStops` calls `rpc('reorder_trip_stops', { p_trip_id, p_stop_ids })`. `createTrip` deletes the new trip if inserting its stops fails (spec 7, change #9). It registers an `onSignOut` reset that clears `trips`.
 - **Components:** the inputs and outputs in spec 3, **Shared pieces**, with these selectors: `app-campground-map`, `app-campground-table`, `app-campground-detail-panel`, `app-favorite-toggle`, `app-add-to-trip`.
 
-- [ ] **Step 1: Models and `CampgroundsService`** (spec 3, **Data it uses**, and spec 1's RPCs). `searchByName` escapes `%` and `_` before `ilike` (spec 8, change #4).
-- [ ] **Step 2: `FavoritesService` and `TripsService`,** as in Interfaces. In `app.ts`, the session effect also calls `favorites.loadFavoriteIds()` (spec 3, change #1).
-- [ ] **Step 3: `app-campground-detail-panel`** (spec 3: the expanded detail; the description is rendered with `[innerHTML]`). Directions is hidden for a campground with no location (spec 3, change #9): add `hasLocation(c)` to `campground.model.ts`.
+- [x] **Step 1: Models and `CampgroundsService`** (spec 3, **Data it uses**, and spec 1's RPCs). `searchByName` escapes `%` and `_` before `ilike` (spec 8, change #4).
+- [x] **Step 2: `FavoritesService` and `TripsService`,** as in Interfaces. In `app.ts`, the session effect also calls `favorites.loadFavoriteIds()` (spec 3, change #1).
+- [x] **Step 3: `app-campground-detail-panel`** (spec 3: the expanded detail; the description is rendered with `[innerHTML]`). Directions is hidden for a campground with no location (spec 3, change #9): add `hasLocation(c)` to `campground.model.ts`.
   - **Structure:**
     - `<div class="campground-detail-panel">` with `<div class="description" [innerHTML]>`;
     - `<div class="links">` with Reserve (`rt-btn rt-btn--cherry rt-btn--shadow`) and Directions (`rt-btn`), both `target="_blank" rel="noopener"`.
@@ -1160,7 +1160,7 @@ Read spec 3 in full. This task builds the services and the five shared component
   flex-wrap: wrap;
 }
     ```
-- [ ] **Step 4: `app-favorite-toggle`** (spec 3, plus change #1: the heart only reads `favoriteIds`).
+- [x] **Step 4: `app-favorite-toggle`** (spec 3, plus change #1: the heart only reads `favoriteIds`).
   - It renders only when signed in, as `<button class="rt-icon-btn favorite-button">` with the heart SVG (24×24 viewBox, path `M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z`, `fill` set to `currentColor` when favorited, otherwise `none`, stroke-width 2).
   - Clicking calls `stopPropagation()`.
   - **Inline styles, verbatim:**
@@ -1169,7 +1169,7 @@ Read spec 3 in full. This task builds the services and the five shared component
   color: var(--rt-cherry);
 }
     ```
-- [ ] **Step 5: `app-add-to-trip`** (spec 3, with its exact texts).
+- [x] **Step 5: `app-add-to-trip`** (spec 3, with its exact texts).
   - **Structure:**
     - `<div class="add-to-trip-panel">` with `<div class="rt-label">ADD TO TRIP</div>`;
     - `<div class="trip-options">` of `rt-btn rt-btn--sm trip-option` buttons;
@@ -1209,7 +1209,7 @@ Read spec 3 in full. This task builds the services and the five shared component
   background: var(--rt-card);
 }
     ```
-- [ ] **Step 6: `app-campground-table`,** virtual-scrolled (spec 3, **Campground card list**, plus change #2).
+- [x] **Step 6: `app-campground-table`,** virtual-scrolled (spec 3, **Campground card list**, plus change #2).
   - **The viewport:** `<cdk-virtual-scroll-viewport autosize class="rt-scroll-list">`, using `ScrollingModule` from `@angular/cdk/scrolling` and `CdkAutoSizeVirtualScroll` from `@angular/cdk-experimental/scrolling`, with `*cdkVirtualFor` over the campgrounds (`trackBy` id). The viewport must fill the side column (flex: 1; min-height: 0).
   - **A selection from outside** expands that card and calls `viewport.scrollToIndex(index, 'smooth')`.
   - **Card structure:**
@@ -1333,7 +1333,7 @@ Read spec 3 in full. This task builds the services and the five shared component
 }
     ```
     The viewport takes the `rt-scroll-list` class. If the virtual viewport needs `display:block` or a height rule, add it under `:host` in this block, and say so in `activity.md`.
-- [ ] **Step 7: `app-campground-map`** (spec 3, **Campground map**, plus changes #3 and #4).
+- [x] **Step 7: `app-campground-map`** (spec 3, **Campground map**, plus changes #3 and #4).
   - **Markers:** Leaflet's default icons use `imagePath = ''` with `marker-icon.png`, `marker-icon-2x.png` and `marker-shadow.png`. The marker cluster gets `{ chunkedLoading: true }`.
   - **Popup buttons** are plain DOM with class `view-details-button`.
   - **The new popup action "Add to trip…"** (signed in only) emits a new output, `addToTrip(id)`. The list's parent uses it to select that card and open its add-to-trip panel. Add a matching input to `app-campground-table`: `openPickerFor: string | null`, which opens that card's panel.
@@ -1353,11 +1353,11 @@ Read spec 3 in full. This task builds the services and the five shared component
   width: 100%;
 }
     ```
-- [ ] **Step 8: Verify.**
+- [x] **Step 8: Verify.**
   - Lint and build. The production build stays under the 1 MB initial-budget error; it may warn.
   - Paging check against the local RPC: `curl -s -X POST "$SUPABASE_URL/rest/v1/rpc/nearest_campgrounds" -H "apikey: $SUPABASE_ANON_KEY" -H "Authorization: Bearer $SUPABASE_ANON_KEY" -H 'Content-Type: application/json' -H 'Range: 0-999' -d '{"user_lat":39.8,"user_lng":-98.6,"max_distance_m":20038000}' | grep -o '"id"' | wc -l` prints `1000`. That proves the 1,000-row cap that paging handles.
   - Re-read spec 3's **Shared pieces** and Changes #1–#4.
-- [ ] **Step 9: Commit.** `git commit -m "Task 5: campground, favorites and trips services; shared map, card list, detail panel, heart and add-to-trip"`
+- [x] **Step 9: Commit.** `git commit -m "Task 5: campground, favorites and trips services; shared map, card list, detail panel, heart and add-to-trip"`
 
 **QC (for Shawn, in the browser):** nothing new to see yet. These pieces first appear on the Finder (Task 6).
 

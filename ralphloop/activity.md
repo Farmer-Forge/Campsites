@@ -83,3 +83,32 @@ TASK 4 COMPLETE
 - Step 6: `ng lint` passes and `ng build` succeeds. Pat password login returns an access_token (count 1); Sam `users.suspended` is `t`. Re-read spec 4 and grepped every exact text (headings, buttons, notices, reset states, errors): all present. Gaps: none.
 
 TASK 3 COMPLETE
+
+## Task 5, call 1
+- Step 1: wrote campground.model.ts, trip.model.ts and campgrounds.service.ts (getNearest pages 1,000 at a time and sends no result_limit; getByIds, getParkCodes (paged), getParkNames, searchByName escaping `\`, `%`, `_`). `get_campgrounds_by_ids` returns no distance, so those rows get distanceMeters 0. `ng lint` and `ng build` pass (budget warning pre-existing).
+
+## Task 5, call 2
+- Step 2: wrote favorites.service.ts (read-only signals, load/toggle/updateNote, onSignOut clear) and trips.service.ts (all methods in spec 7's table; reorderStops uses the `reorder_trip_stops` RPC; createTrip deletes the new trip if its stops fail to insert). app.ts's session effect now also calls `favorites.loadFavoriteIds()`. `ng lint` and `ng build` pass.
+
+## Task 5, call 3
+- Step 3: added `hasLocation(c)` (false only at exactly 0,0) to campground.model.ts and wrote shared/ui/campground-detail-panel (inline template and styles verbatim). Description via `[innerHTML]`; Reserve only when `reservationUrl` is set; Directions uses `directionsUrl` or the Google Maps fallback and is hidden when `!hasLocation`. No raw colors. `ng lint` and `ng build` pass (budget warning pre-existing).
+
+## Task 5, call 4
+- Step 4: wrote shared/ui/favorite-toggle (input `campgroundId`). Renders only when `supabase.session()` is set; heart fills from `favoriteIds` and never loads anything; click stops propagation and calls `toggleFavorite` (errors swallowed, state unchanged). Title/aria-pressed per spec. `ng lint` and `ng build` pass (budget warning pre-existing).
+
+## Task 5, call 5
+- Step 5: wrote shared/ui/add-to-trip (input `campgroundId`, output `done`). On init loads trips and the trip ids containing the campground; trip buttons disabled with " (added)"; "Create & Add" (or Enter) ignores blank names; the three error texts per spec. Styles verbatim, no raw colors. `ng lint` and `ng build` pass (budget warning pre-existing).
+
+## Task 5, call 6
+- Step 6: wrote shared/ui/campground-table (virtual-scroll viewport with autosize, `*cdkVirtualFor` trackBy id). Styles verbatim plus `cdk-virtual-scroll-viewport { display: block; }` under `:host`-level rules (added, per the step's allowance). Card header has role=button/tabindex/Enter key to satisfy lint; Enter only counts when the card itself is the target. Selection from outside expands the card and calls `scrollToIndex(i, 'smooth')`. Notes drafts are kept in a plain Map, emitted on blur. Miles: one decimal under 100, rounded above. Step 7 must add the `openPickerFor` input (sets `pickerId`). `ng lint` and `ng build` pass.
+
+## Task 5, call 7
+- Step 7: wrote shared/ui/campground-map (inline template, scss verbatim). Plain Leaflet + markercluster (`chunkedLoading: true`, `imagePath = ''`), ResizeObserver → `invalidateSize()`. Inputs campgrounds, selectedId, ordered, searchLocation, allowLocationPick; outputs viewDetails, locationPick, addToTrip. Popup is plain DOM ("View details ▸", and "Add to trip…" when signed in). No-location campgrounds get no marker/route point; stop numbers come from the full list. Marker click and new selection use `max(12, currentZoom)` plus `zoomToShowLayer`. Search location recentres at zoom 9. Added `openPickerFor` input to the table. `ng lint` and `ng build` pass (budget warning pre-existing; map isn't routed yet so it isn't in the bundle).
+
+## Task 5, call 8
+- Step 8: `ng lint` passes; `ng build` succeeds (initial-budget warning only, no error). The paging curl against the local RPC returns 1000 ids. Re-read spec 3 shared pieces and changes #1–#4 against the code: favorites read-only heart, virtual-scrolled list, `hasLocation` guard, map clustering/zoom all present.
+
+## Task 5, call 9
+- Step 9: worktree had no code changes to commit; every Task 5 file appears in `git log main..HEAD --stat` via checkpoint commits. Step treated as done.
+
+TASK 5 COMPLETE
