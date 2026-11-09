@@ -164,3 +164,6 @@ TASK 7 COMPLETE
 
 ## Task 8, call 4
 - Step 4: `trips/:id` now lazy-loads TripDetailComponent (authGuard); `trips` was already routed. ng lint and ng build pass.
+
+## Task 8, call 5
+- Step 5: `ng lint` passes; `ng build` succeeds (only the leaflet.markercluster warning). Re-read spec 7 against both templates: empty text, postcard header/body/footer, Open/Delete, inline delete confirmation, trip-not-found vs load error, rename with Cancel, meta row, stop cards, move/remove/add and their error texts all present. `grep -rn "window.confirm\|confirm(" src/app` finds nothing.
