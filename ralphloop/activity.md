@@ -152,3 +152,6 @@ TASK 6 COMPLETE
 - Step 5: nothing to commit; the favorites component, map and route changes appear in `git log main..HEAD --stat` via checkpoint commits. Step treated as done.
 
 TASK 7 COMPLETE
+
+## Task 8, call 1
+- Step 1: added TripsService.loadAllStops(tripIds): one trip_stops select (.in, order by position), one getByIds for the unique campground ids; returns a Map with an entry (possibly empty) for every trip id; stops whose campground is missing are skipped. Empty input makes no requests. ng lint and ng build pass.
