@@ -1378,7 +1378,7 @@ Read spec 3 in full: the page, the filter bar, how a search runs, the location m
   - `FinderSnapshot` is `{ location: Coordinates; agencies: string[]; states: string[]; regions: string[]; parks: string[] | null; nearMeEnabled: boolean; radiusMiles: number }`.
 
 - [x] **Step 1: `GeolocationService` and `FinderStateService`,** exactly as spec 3 describes, including every message text and validation rule.
-- [ ] **Step 2: The Finder's logic** (spec 3, **How a search runs** and **Saved state**).
+- [x] **Step 2: The Finder's logic** (spec 3, **How a search runs** and **Saved state**).
   - **Constants:** 1609.34 m per mile; "Show all" is 20,038,000 m; the five agencies; radius choices `[null, 25, 50, 100, 250]`; the region→state table.
   - **Change #5:** a `loading` state for the first load only, and an `updating` signal for reloads.
   - **Change #7:** the single **Where** picker.

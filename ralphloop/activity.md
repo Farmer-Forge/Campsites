@@ -115,3 +115,6 @@ TASK 5 COMPLETE
 
 ## Task 6, call 1
 - Step 1: wrote geolocation.service.ts (rejects with the spec message per error code; checkPermissionState returns unsupported when missing/throwing) and finder-state.service.ts (memory then sessionStorage `campsite-finder.finder`, full validation, storage errors swallowed). `ng lint` and `ng build` pass (budget warning pre-existing).
+
+## Task 6, call 2
+- Step 2: wrote finder.component.ts (logic only) with stub .html/.scss that Steps 3 and 4 replace. Signals for filters, results, `loading` (first load only), `updating` (reloads), errors, blocked flag, manual panel. `loadNearest(coords?)` follows spec 3 (stale-response guard via a request counter; saves the snapshot on success). Single Where picker: `whereGroups` (grouped by region), `onStatesChange`, `whereLabel`; park options/`parkLabel`; `filtersAtStart` for Reset's `[disabled]`; `resetFilters()` reruns once from the current search location. Handlers for the template: `toggleAgency`, `selectRadius`, `onParksChange`, `toggleManual`, `searchManual` (manualLat/manualLng strings), `useDeviceLocation`, `onLocationPick`, `onSelectedChange`, `onViewDetails`, `onAddToTrip` (sets selected + `pickerFor`). Route not yet changed (Step 3 or later). `ng lint` passes; `ng build` succeeds (only unused-import warnings for the stub template, and the pre-existing budget warning).
