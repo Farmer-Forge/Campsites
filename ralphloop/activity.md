@@ -138,3 +138,6 @@ TASK 6 COMPLETE
 
 ## Task 7, call 1
 - Step 1: wrote features/favorites/favorites.component.ts (+ .html, inline styles verbatim). The card list is `loaded` filtered by `favoriteIds`, so unhearting removes the card at once (change #1). Load error shows "Couldn't load your favorites — try again." with a Try again button (#3); empty text uses "Tap the heart" (#2). Plan mode: ticks kept in a Set (tick order), Save enabled for a trimmed name plus at least one still-favorited tick; saves via `createTrip`, then navigates to `/trips/{id}`. Notes save on blur through `updateNote` (blank → null). I also pointed the `favorites` route at FavoritesComponent already (Step 3 only needs to confirm it). Change #4 is NOT bound yet: Step 2 must add the `fitToCampgrounds` input to the map and then add `[fitToCampgrounds]="true"` to `<app-campground-map>` in favorites.component.html. `ng lint` and `ng build` pass.
+
+## Task 7, call 2
+- Step 2: added `fitToCampgrounds` input to campground-map; `drawMarkers` now fits bounds (padding 32) when `ordered || fit` and there are located points (the route line stays ordered-only). Bound `[fitToCampgrounds]="true"` in favorites.component.html. `ng lint` and `ng build` pass.
