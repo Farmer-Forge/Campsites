@@ -158,3 +158,6 @@ TASK 7 COMPLETE
 
 ## Task 8, call 2
 - Step 2: wrote features/trips/trips-list.component.ts + .html (styles verbatim, plus a small `.confirm` wrap rule). Load: `loadTrips`, then one `loadAllStops`; a failed stops load leaves no summaries; a trips load failure shows "Couldn't load your trips — try again." with Try again (#3). Delete uses an inline confirmation in the footer (#6) and shows "Couldn't delete this trip — try again." on failure (#7). I already pointed the `trips` route at TripsListComponent (Step 4 only needs `trips/:id`). `ng lint` and `ng build` pass.
+
+## Task 8, call 3
+- Step 3: wrote features/trips/trip-detail.component.ts + .html (styles verbatim). Loads trip + stops in parallel, then favorites for the add select (failure leaves it empty). States: load error ("Couldn't load this trip — try again." + Try again), "Trip not found." (both with "‹ All trips"). Rename has Save/Cancel (blank can't save, Enter saves); delete uses an inline confirmation in the meta row; move swaps on screen, calls `reorderStops`, and on failure shows the error and re-reads stops; Remove/Add reload stops. The component isn't routed yet (Step 4 points `trips/:id` at `TripDetailComponent`), so `ng build` doesn't compile it into a chunk until then. `ng lint` and `ng build` pass.
