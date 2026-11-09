@@ -1383,7 +1383,7 @@ Read spec 3 in full: the page, the filter bar, how a search runs, the location m
   - **Change #5:** a `loading` state for the first load only, and an `updating` signal for reloads.
   - **Change #7:** the single **Where** picker.
   - **Change #11:** Reset filters puts every filter back to its starting value and reruns the search once, from the current search location.
-- [ ] **Step 3: The Finder's template.** Class structure:
+- [x] **Step 3: The Finder's template.** Class structure:
   - **Filter bar:** `div.filter-bar` holds `div.filter-group` blocks:
     - the agency group: `span.rt-label` "AGENCY", then `button.chip` (`is-on`, `aria-pressed`) per agency;
     - the PrimeNG multiselect group: **Where**, grouped by region, with filter and labels as in change #7; then **Park**, shown when there are park codes, with the change #6 note `rt-notice` "Park filter shows NPS campgrounds only" when not all parks are selected;

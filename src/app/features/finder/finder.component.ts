@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MultiSelectModule } from 'primeng/multiselect';
@@ -28,7 +29,7 @@ const BLOCKED_HELP =
 
 @Component({
   selector: 'app-finder',
-  imports: [FormsModule, MultiSelectModule, CampgroundMapComponent, CampgroundTableComponent],
+  imports: [NgTemplateOutlet, FormsModule, MultiSelectModule, CampgroundMapComponent, CampgroundTableComponent],
   templateUrl: './finder.component.html',
   styleUrl: './finder.component.scss',
 })

@@ -1,1 +1,176 @@
-<!-- template: step 3 -->
+<ng-template #deviceError>
+  @if (deviceLocationError() || error()) {
+    <div class="device-location-error">
+      <div class="rt-message rt-message--error">{{ error() || deviceLocationError() }}</div>
+      @if (locationBlocked()) {
+        <p class="rt-message">{{ blockedHelp }}</p>
+      }
+    </div>
+  }
+</ng-template>
+
+<ng-template #manualPanel>
+  @if (manualOpen()) {
+    <div class="rt-dashed-panel">
+      <form class="manual-location" (ngSubmit)="searchManual()">
+        <input
+          class="rt-input"
+          type="number"
+          step="any"
+          name="lat"
+          required
+          placeholder="Latitude (e.g. 44.31)"
+          aria-label="Latitude"
+          [(ngModel)]="manualLat"
+        />
+        <input
+          class="rt-input"
+          type="number"
+          step="any"
+          name="lng"
+          required
+          placeholder="Longitude (e.g. -68.21)"
+          aria-label="Longitude"
+          [(ngModel)]="manualLng"
+        />
+        <button type="submit" class="rt-btn rt-btn--sm rt-btn--cherry">Search this location</button>
+      </form>
+      <p class="manual-location-help">
+        Don't know your coordinates? Search "[your city] coordinates" or right-click your location in
+        <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer">Google Maps</a> and copy the two
+        numbers shown.
+      </p>
+      @if (!error()) {
+        <p class="manual-location-help map-pick-help">
+          <strong>Tip:</strong> right-click any spot on the map and choose <strong>Search from here</strong>.
+        </p>
+      }
+    </div>
+  }
+</ng-template>
+
+@if (error() && !searchLocation()) {
+  <div class="status-area">
+    <ng-container *ngTemplateOutlet="deviceError" />
+    <button type="button" class="rt-btn rt-btn--sm rt-btn--cherry" (click)="useDeviceLocation()">
+      Use my device location
+    </button>
+    <ng-container *ngTemplateOutlet="manualPanel" />
+  </div>
+} @else {
+  <div class="filter-bar">
+    <div class="filter-group">
+      <span class="rt-label">AGENCY</span>
+      @for (agency of agencies; track agency) {
+        <button
+          type="button"
+          class="chip"
+          [class.is-on]="selectedAgencies().includes(agency)"
+          [attr.aria-pressed]="selectedAgencies().includes(agency)"
+          (click)="toggleAgency(agency)"
+        >
+          {{ agency }}
+        </button>
+      }
+    </div>
+
+    <div class="filter-group">
+      <span class="rt-label">WHERE</span>
+      <p-multiselect
+        [options]="whereGroups"
+        [group]="true"
+        optionGroupLabel="label"
+        optionGroupChildren="items"
+        [ngModel]="selectedStates()"
+        (ngModelChange)="onStatesChange($event)"
+        [filter]="true"
+        ariaLabel="Where"
+      >
+        <ng-template #selectedItems>{{ whereLabel() }}</ng-template>
+      </p-multiselect>
+    </div>
+
+    @if (parkCodes().length > 0) {
+      <div class="filter-group">
+        <span class="rt-label">PARK</span>
+        <p-multiselect
+          [options]="parkOptions()"
+          [ngModel]="selectedParks()"
+          (ngModelChange)="onParksChange($event)"
+          [filter]="true"
+          ariaLabel="Park"
+        >
+          <ng-template #selectedItems>{{ parkLabel() }}</ng-template>
+        </p-multiselect>
+        @if (!allParksSelected()) {
+          <p class="rt-notice">Park filter shows NPS campgrounds only</p>
+        }
+      </div>
+    }
+
+    <div class="filter-group radius-group">
+      <span class="rt-label">MILES FROM ME</span>
+      <div class="segmented">
+        @for (miles of radiusChoices; track miles) {
+          <button
+            type="button"
+            [class.is-on]="miles === null ? !nearMeEnabled() : nearMeEnabled() && radiusMiles() === miles"
+            [attr.aria-pressed]="miles === null ? !nearMeEnabled() : nearMeEnabled() && radiusMiles() === miles"
+            (click)="selectRadius(miles)"
+          >
+            {{ miles ?? 'All' }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <button type="button" class="rt-btn rt-btn--sm" [disabled]="filtersAtStart()" (click)="resetFilters()">
+        Reset filters
+      </button>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="status-area">Finding campgrounds near you...</div>
+  } @else {
+    <div class="rt-map-layout">
+      <div class="rt-map-frame">
+        <app-campground-map
+          [campgrounds]="results()"
+          [selectedId]="selected()?.id ?? null"
+          [searchLocation]="searchLocation()"
+          [allowLocationPick]="true"
+          (viewDetails)="onViewDetails($event)"
+          (locationPick)="onLocationPick($event)"
+          (addToTrip)="onAddToTrip($event)"
+        />
+      </div>
+      <div class="rt-side">
+        <div class="list-header">
+          <h1 class="rt-list-title">{{ results().length }} campground(s)</h1>
+          <span class="nearest">nearest first</span>
+          @if (updating()) {
+            <span class="nearest">Updating…</span>
+          }
+        </div>
+        <div class="location-controls">
+          <button type="button" class="rt-text-btn rt-text-btn--teal" (click)="toggleManual()">
+            {{ manualOpen() ? 'Cancel' : 'Change location' }}
+          </button>
+          <button type="button" class="rt-text-btn rt-text-btn--teal" (click)="useDeviceLocation()">
+            Use my device location
+          </button>
+        </div>
+        <ng-container *ngTemplateOutlet="deviceError" />
+        <ng-container *ngTemplateOutlet="manualPanel" />
+        <app-campground-table
+          [campgrounds]="results()"
+          [selected]="selected()"
+          [openPickerFor]="pickerFor()"
+          (selectedChange)="onSelectedChange($event)"
+        />
+      </div>
+    </div>
+  }
+}
