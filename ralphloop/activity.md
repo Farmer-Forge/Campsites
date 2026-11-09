@@ -144,3 +144,6 @@ TASK 6 COMPLETE
 
 ## Task 7, call 3
 - Step 3: the `favorites` route (FavoritesComponent, `authGuard`) was already in app.routes.ts from Step 1; confirmed it, `ng build` succeeds.
+
+## Task 7, call 4
+- Step 4: `ng lint` passes; `ng build` succeeds (only the leaflet.markercluster CommonJS warning). Re-read spec 6 Favorites against the template: header/Plan a trip/Cancel, planner hint, Trip name, Save Trip, save/note/load errors, Try again, and the change #2 empty text all present.
