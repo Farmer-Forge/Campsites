@@ -95,3 +95,6 @@ TASK 3 COMPLETE
 
 ## Task 5, call 4
 - Step 4: wrote shared/ui/favorite-toggle (input `campgroundId`). Renders only when `supabase.session()` is set; heart fills from `favoriteIds` and never loads anything; click stops propagation and calls `toggleFavorite` (errors swallowed, state unchanged). Title/aria-pressed per spec. `ng lint` and `ng build` pass (budget warning pre-existing).
+
+## Task 5, call 5
+- Step 5: wrote shared/ui/add-to-trip (input `campgroundId`, output `done`). On init loads trips and the trip ids containing the campground; trip buttons disabled with " (added)"; "Create & Add" (or Enter) ignores blank names; the three error texts per spec. Styles verbatim, no raw colors. `ng lint` and `ng build` pass (budget warning pre-existing).
