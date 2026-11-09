@@ -112,3 +112,26 @@ TASK 3 COMPLETE
 - Step 9: worktree had no code changes to commit; every Task 5 file appears in `git log main..HEAD --stat` via checkpoint commits. Step treated as done.
 
 TASK 5 COMPLETE
+
+## Task 6, call 1
+- Step 1: wrote geolocation.service.ts (rejects with the spec message per error code; checkPermissionState returns unsupported when missing/throwing) and finder-state.service.ts (memory then sessionStorage `campsite-finder.finder`, full validation, storage errors swallowed). `ng lint` and `ng build` pass (budget warning pre-existing).
+
+## Task 6, call 2
+- Step 2: wrote finder.component.ts (logic only) with stub .html/.scss that Steps 3 and 4 replace. Signals for filters, results, `loading` (first load only), `updating` (reloads), errors, blocked flag, manual panel. `loadNearest(coords?)` follows spec 3 (stale-response guard via a request counter; saves the snapshot on success). Single Where picker: `whereGroups` (grouped by region), `onStatesChange`, `whereLabel`; park options/`parkLabel`; `filtersAtStart` for Reset's `[disabled]`; `resetFilters()` reruns once from the current search location. Handlers for the template: `toggleAgency`, `selectRadius`, `onParksChange`, `toggleManual`, `searchManual` (manualLat/manualLng strings), `useDeviceLocation`, `onLocationPick`, `onSelectedChange`, `onViewDetails`, `onAddToTrip` (sets selected + `pickerFor`). Route not yet changed (Step 3 or later). `ng lint` passes; `ng build` succeeds (only unused-import warnings for the stub template, and the pre-existing budget warning).
+
+## Task 6, call 3
+- Step 3: wrote finder.component.html (and added `NgTemplateOutlet` to the component's imports). Filter bar: agency chips, single Where multiselect (grouped, filter, label via `#selectedItems` template), Park multiselect shown when park codes exist with the `rt-notice` note, MILES FROM ME segmented control, Reset filters (`[disabled]="filtersAtStart()"`). Body: map + side column (list header with "Updating…", location controls, device-location error, manual panel, table); first load shows "Finding campgrounds near you..." in `.status-area`. Error state (error and no search location) replaces the filter bar and body, with the device-location button and the manual panel without the map tip. Shared `ng-template`s `deviceError` and `manualPanel` serve both. The map's `addToTrip` goes to `onAddToTrip`. Scss still the stub (Step 4); route not yet changed (Step 5). `ng lint` and `ng build` pass (budget warning pre-existing).
+
+## Task 6, call 4
+- Step 4: replaced the stub finder.component.scss with the verbatim V1 styles from the step (134 lines, no changes). `ng lint` and `ng build` pass (budget warning pre-existing).
+
+## Task 6, call 5
+- Step 5: `app.routes.ts` `''` now lazy-loads FinderComponent. `ng lint` and `ng build` pass.
+
+## Task 6, call 6
+- Step 6: `ng lint` passes; `ng build` succeeds (only warnings). Checked every exact text from spec 3 against the code: the four geolocation messages (in geolocation.service.ts), blocked help, manual panel help/placeholders/buttons, "Finding campgrounds near you...", "Unable to load nearby campgrounds.", Reset filters, Park note, "nearest first", Change location, Search from here. No gaps found ("location blocked" in the spec is a state flag, not display text).
+
+## Task 6, call 7
+- Step 7: nothing to commit; the Finder files appear in `git log main..HEAD --stat` via checkpoint commits. Step treated as done.
+
+TASK 6 COMPLETE
