@@ -147,3 +147,8 @@ TASK 6 COMPLETE
 
 ## Task 7, call 4
 - Step 4: `ng lint` passes; `ng build` succeeds (only the leaflet.markercluster CommonJS warning). Re-read spec 6 Favorites against the template: header/Plan a trip/Cancel, planner hint, Trip name, Save Trip, save/note/load errors, Try again, and the change #2 empty text all present.
+
+## Task 7, call 5
+- Step 5: nothing to commit; the favorites component, map and route changes appear in `git log main..HEAD --stat` via checkpoint commits. Step treated as done.
+
+TASK 7 COMPLETE
