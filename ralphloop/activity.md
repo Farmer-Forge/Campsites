@@ -172,3 +172,17 @@ TASK 7 COMPLETE
 - Step 6: nothing to commit; the trips list, trip detail, service and route changes appear in `git log main..HEAD --stat` via checkpoint commits. Step treated as done.
 
 TASK 8 COMPLETE
+
+## Task 9, call 1
+- Step 1: wrote admin-user and campground-attribute models and the AdminUsers, AdminStats and CampgroundAttributes services. Users/attributes signals update in place after each change; edge functions go through one `invoke` helper (FunctionsHttpError -> Error(response text || message)). Services throw raw errors; the component (Step 2) must map the plain-English messages (change #2). deleteUser removes the row only; Step 2 must call loadStats afterwards (change #3). ng lint and ng build pass.
+
+## Task 9, call 2
+- Step 2: wrote features/admin/admin.component.ts + .html (styles verbatim). Stats and users load on open; errors show above the table, mapped for "cannot remove the last admin" / "not authorized" (#2). Own row shows "You" instead of role/Suspend/Delete, Edit stays (#1). deleteUser is followed by loadStats (#3). Campground search uses the existing CampgroundsService.searchByName (already escapes % and _, limit 20). Not routed yet (Step 3), so `ng build` doesn't compile it into a chunk until then; `ng lint` and `ng build` pass. Hex-colour grep finds nothing.
+
+## Task 9, call 3
+- Step 3: `admin` now lazy-loads AdminComponent (adminGuard); removed the now-unused `placeholder` const from app.routes.ts (the placeholder component files remain for Step 5 to delete). ng lint and ng build pass; the admin chunk is built.
+
+## Task 9, call 4
+- Step 5: Step 4 had left features/placeholder/ in place, so I deleted it (no other references); ng lint and ng build pass. Committed the removal; admin page, services and route were already in checkpoint commits.
+
+TASK 9 COMPLETE
