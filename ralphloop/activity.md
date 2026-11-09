@@ -167,3 +167,8 @@ TASK 7 COMPLETE
 
 ## Task 8, call 5
 - Step 5: `ng lint` passes; `ng build` succeeds (only the leaflet.markercluster warning). Re-read spec 7 against both templates: empty text, postcard header/body/footer, Open/Delete, inline delete confirmation, trip-not-found vs load error, rename with Cancel, meta row, stop cards, move/remove/add and their error texts all present. `grep -rn "window.confirm\|confirm(" src/app` finds nothing.
+
+## Task 8, call 6
+- Step 6: nothing to commit; the trips list, trip detail, service and route changes appear in `git log main..HEAD --stat` via checkpoint commits. Step treated as done.
+
+TASK 8 COMPLETE
