@@ -161,3 +161,6 @@ TASK 7 COMPLETE
 
 ## Task 8, call 3
 - Step 3: wrote features/trips/trip-detail.component.ts + .html (styles verbatim). Loads trip + stops in parallel, then favorites for the add select (failure leaves it empty). States: load error ("Couldn't load this trip — try again." + Try again), "Trip not found." (both with "‹ All trips"). Rename has Save/Cancel (blank can't save, Enter saves); delete uses an inline confirmation in the meta row; move swaps on screen, calls `reorderStops`, and on failure shows the error and re-reads stops; Remove/Add reload stops. The component isn't routed yet (Step 4 points `trips/:id` at `TripDetailComponent`), so `ng build` doesn't compile it into a chunk until then. `ng lint` and `ng build` pass.
+
+## Task 8, call 4
+- Step 4: `trips/:id` now lazy-loads TripDetailComponent (authGuard); `trips` was already routed. ng lint and ng build pass.
