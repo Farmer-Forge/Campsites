@@ -152,3 +152,23 @@ TASK 6 COMPLETE
 - Step 5: nothing to commit; the favorites component, map and route changes appear in `git log main..HEAD --stat` via checkpoint commits. Step treated as done.
 
 TASK 7 COMPLETE
+
+## Task 8, call 1
+- Step 1: added TripsService.loadAllStops(tripIds): one trip_stops select (.in, order by position), one getByIds for the unique campground ids; returns a Map with an entry (possibly empty) for every trip id; stops whose campground is missing are skipped. Empty input makes no requests. ng lint and ng build pass.
+
+## Task 8, call 2
+- Step 2: wrote features/trips/trips-list.component.ts + .html (styles verbatim, plus a small `.confirm` wrap rule). Load: `loadTrips`, then one `loadAllStops`; a failed stops load leaves no summaries; a trips load failure shows "Couldn't load your trips — try again." with Try again (#3). Delete uses an inline confirmation in the footer (#6) and shows "Couldn't delete this trip — try again." on failure (#7). I already pointed the `trips` route at TripsListComponent (Step 4 only needs `trips/:id`). `ng lint` and `ng build` pass.
+
+## Task 8, call 3
+- Step 3: wrote features/trips/trip-detail.component.ts + .html (styles verbatim). Loads trip + stops in parallel, then favorites for the add select (failure leaves it empty). States: load error ("Couldn't load this trip — try again." + Try again), "Trip not found." (both with "‹ All trips"). Rename has Save/Cancel (blank can't save, Enter saves); delete uses an inline confirmation in the meta row; move swaps on screen, calls `reorderStops`, and on failure shows the error and re-reads stops; Remove/Add reload stops. The component isn't routed yet (Step 4 points `trips/:id` at `TripDetailComponent`), so `ng build` doesn't compile it into a chunk until then. `ng lint` and `ng build` pass.
+
+## Task 8, call 4
+- Step 4: `trips/:id` now lazy-loads TripDetailComponent (authGuard); `trips` was already routed. ng lint and ng build pass.
+
+## Task 8, call 5
+- Step 5: `ng lint` passes; `ng build` succeeds (only the leaflet.markercluster warning). Re-read spec 7 against both templates: empty text, postcard header/body/footer, Open/Delete, inline delete confirmation, trip-not-found vs load error, rename with Cancel, meta row, stop cards, move/remove/add and their error texts all present. `grep -rn "window.confirm\|confirm(" src/app` finds nothing.
+
+## Task 8, call 6
+- Step 6: nothing to commit; the trips list, trip detail, service and route changes appear in `git log main..HEAD --stat` via checkpoint commits. Step treated as done.
+
+TASK 8 COMPLETE
