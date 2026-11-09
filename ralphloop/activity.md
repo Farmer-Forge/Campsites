@@ -178,3 +178,6 @@ TASK 8 COMPLETE
 
 ## Task 9, call 2
 - Step 2: wrote features/admin/admin.component.ts + .html (styles verbatim). Stats and users load on open; errors show above the table, mapped for "cannot remove the last admin" / "not authorized" (#2). Own row shows "You" instead of role/Suspend/Delete, Edit stays (#1). deleteUser is followed by loadStats (#3). Campground search uses the existing CampgroundsService.searchByName (already escapes % and _, limit 20). Not routed yet (Step 3), so `ng build` doesn't compile it into a chunk until then; `ng lint` and `ng build` pass. Hex-colour grep finds nothing.
+
+## Task 9, call 3
+- Step 3: `admin` now lazy-loads AdminComponent (adminGuard); removed the now-unused `placeholder` const from app.routes.ts (the placeholder component files remain for Step 5 to delete). ng lint and ng build pass; the admin chunk is built.
