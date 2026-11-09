@@ -89,3 +89,6 @@ TASK 3 COMPLETE
 
 ## Task 5, call 2
 - Step 2: wrote favorites.service.ts (read-only signals, load/toggle/updateNote, onSignOut clear) and trips.service.ts (all methods in spec 7's table; reorderStops uses the `reorder_trip_stops` RPC; createTrip deletes the new trip if its stops fail to insert). app.ts's session effect now also calls `favorites.loadFavoriteIds()`. `ng lint` and `ng build` pass.
+
+## Task 5, call 3
+- Step 3: added `hasLocation(c)` (false only at exactly 0,0) to campground.model.ts and wrote shared/ui/campground-detail-panel (inline template and styles verbatim). Description via `[innerHTML]`; Reserve only when `reservationUrl` is set; Directions uses `directionsUrl` or the Google Maps fallback and is hidden when `!hasLocation`. No raw colors. `ng lint` and `ng build` pass (budget warning pre-existing).
