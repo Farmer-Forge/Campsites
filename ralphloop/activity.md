@@ -104,3 +104,11 @@ TASK 3 COMPLETE
 
 ## Task 5, call 7
 - Step 7: wrote shared/ui/campground-map (inline template, scss verbatim). Plain Leaflet + markercluster (`chunkedLoading: true`, `imagePath = ''`), ResizeObserver → `invalidateSize()`. Inputs campgrounds, selectedId, ordered, searchLocation, allowLocationPick; outputs viewDetails, locationPick, addToTrip. Popup is plain DOM ("View details ▸", and "Add to trip…" when signed in). No-location campgrounds get no marker/route point; stop numbers come from the full list. Marker click and new selection use `max(12, currentZoom)` plus `zoomToShowLayer`. Search location recentres at zoom 9. Added `openPickerFor` input to the table. `ng lint` and `ng build` pass (budget warning pre-existing; map isn't routed yet so it isn't in the bundle).
+
+## Task 5, call 8
+- Step 8: `ng lint` passes; `ng build` succeeds (initial-budget warning only, no error). The paging curl against the local RPC returns 1000 ids. Re-read spec 3 shared pieces and changes #1–#4 against the code: favorites read-only heart, virtual-scrolled list, `hasLocation` guard, map clustering/zoom all present.
+
+## Task 5, call 9
+- Step 9: worktree had no code changes to commit; every Task 5 file appears in `git log main..HEAD --stat` via checkpoint commits. Step treated as done.
+
+TASK 5 COMPLETE
