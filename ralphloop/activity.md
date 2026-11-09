@@ -172,3 +172,6 @@ TASK 7 COMPLETE
 - Step 6: nothing to commit; the trips list, trip detail, service and route changes appear in `git log main..HEAD --stat` via checkpoint commits. Step treated as done.
 
 TASK 8 COMPLETE
+
+## Task 9, call 1
+- Step 1: wrote admin-user and campground-attribute models and the AdminUsers, AdminStats and CampgroundAttributes services. Users/attributes signals update in place after each change; edge functions go through one `invoke` helper (FunctionsHttpError -> Error(response text || message)). Services throw raw errors; the component (Step 2) must map the plain-English messages (change #2). deleteUser removes the row only; Step 2 must call loadStats afterwards (change #3). ng lint and ng build pass.
