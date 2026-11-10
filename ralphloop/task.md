@@ -1403,7 +1403,7 @@ Read spec 3 in full: the page, the filter bar, how a search runs, the location m
   - **The error state** (spec 3, **Error state**), inside `div.status-area`, in order: the error message (`rt-message rt-message--error`); the blocked help when blocked; a `button.rt-text-btn.rt-text-btn--teal.retry` "Use my device location"; and the manual panel, **always shown** (it's the only way to search here), without the map tip.
   - **The manual panel is one shared `ng-template` with no `@if` inside it.** The side column wraps its own use in `@if (manualOpen())` (toggled by "Change location"); the error state uses it unwrapped.
   - **The map's `addToTrip` output** sets the selection and the table's `openPickerFor` (spec 3, change #4).
-- [ ] **Step 4: `finder.component.scss`, verbatim from V1:**
+- [x] **Step 4: `finder.component.scss`, verbatim from V1:**
   ```scss
 :host {
   flex: 1;

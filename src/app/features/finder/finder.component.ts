@@ -32,6 +32,7 @@ const PARK_LABEL_MAX = 30;
   selector: 'app-finder',
   imports: [FormsModule, NgTemplateOutlet, MultiSelect, CampgroundMapComponent, CampgroundTableComponent],
   templateUrl: './finder.component.html',
+  styleUrl: './finder.component.scss',
 })
 export class FinderComponent implements OnInit {
   private readonly campgroundsService = inject(CampgroundsService);

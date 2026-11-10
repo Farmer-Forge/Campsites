@@ -119,3 +119,6 @@ TASK 5 COMPLETE
 
 ## Task 6, call 2
 - Step 3: Step 2's logic was missing from the tree (see call 1 note), so I wrote it together with the template: `features/finder/finder.component.ts` + `.html` (no `styleUrl` yet; Step 4 adds `finder.component.scss` and must add `styleUrl: './finder.component.scss'`). Logic: constants, first-load-only `loading` and `updating` signals, single grouped Where multiselect (region group header is a button via the `#group` template that toggles the region's states), Park multiselect with the NPS-only `rt-notice`, radius segmented control, Reset filters (disabled at starting values, one search from the current location), saved-state restore on open, request counter so stale responses are ignored. The manual panel is one `ng-template` (no `@if`); the map tip uses `[hidden]` on its context value. `addToTrip` sets selection and `openPickerFor`. `ng lint`, `ng build` and `ngc --noEmit` pass; no raw colors. Not yet routed (Step 5), so not exercised in a browser.
+
+## Task 6, call 3
+- Step 4: wrote `finder.component.scss` verbatim from task.md (134 lines) and added `styleUrl: './finder.component.scss'` to finder.component.ts. `ng lint` and `ng build` pass (budget warning pre-existing; the Finder isn't routed yet, Step 5).
