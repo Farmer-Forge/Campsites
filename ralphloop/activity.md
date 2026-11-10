@@ -133,3 +133,7 @@ TASK 5 COMPLETE
 - Step 7: worktree clean; Finder files (features/finder, geolocation and finder-state services, route) appear in `git log main..HEAD --stat` via checkpoint commits. Treated as done.
 
 TASK 6 COMPLETE
+
+## Task 7, call 1
+- Step 1: created `features/favorites/favorites.component.ts` + `.html` (styles verbatim, inline). Favorites shown = loaded campgrounds filtered by `favoriteIds` (change #1); empty text, load error + "Try again", note error, plan mode with tick order, Save Trip → `/trips/{id}`. `ng lint` and `ng build` pass; no raw colors; not exercised in a browser.
+- Note: Step 2 was ticked but `fitToCampgrounds` was missing from the map, so I added it (input; `fitBounds` with 32px padding when true, as in ordered mode). I also routed `favorites` to the component (Step 3's work) in `app.routes.ts`; Step 3 only needs checking.
