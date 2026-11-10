@@ -89,3 +89,6 @@ TASK 3 COMPLETE
 
 ## Task 5, call 2
 - Step 2: wrote FavoritesService (signals, loadFavoriteIds, toggleFavorite, updateNote with `.select()` and "No matching favorite to update", onSignOut reset) and TripsService (all spec 7 methods; createTrip deletes the new trip if the stops insert fails; reorderStops calls `reorder_trip_stops`; onSignOut clears `trips`). app.ts session effect also calls `loadFavoriteIds()` (errors swallowed so the effect never throws). `ng lint` and `ng build` pass.
+
+## Task 5, call 3
+- Step 3: added `hasLocation(c)` to campground.model.ts and `app-campground-detail-panel` (input `campground`; description via `[innerHTML]`; Reserve only when `reservationUrl` set; Directions hidden when no location, falls back to the Google Maps dir URL). Inline styles verbatim. No raw colors; `ng lint` and `ng build` pass (budget warning pre-existing).

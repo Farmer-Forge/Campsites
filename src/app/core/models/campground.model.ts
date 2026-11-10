@@ -15,3 +15,7 @@ export interface Campground {
   contact: unknown;
   distanceMeters: number;
 }
+
+export function hasLocation(c: Pick<Campground, 'lat' | 'lng'>): boolean {
+  return !(c.lat === 0 && c.lng === 0);
+}
