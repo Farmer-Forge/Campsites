@@ -112,3 +112,7 @@ TASK 3 COMPLETE
 - Step 9: worktree clean; nothing to commit. Confirmed the services, models and shared components appear in `git log main..HEAD --stat` via checkpoint commits. Step treated as done.
 
 TASK 5 COMPLETE
+
+## Task 6, call 1
+- Step 1: added GeolocationService (10s timeout, spec 3's exact messages, unknown codes fall back to the "could not be determined" text; `checkPermissionState` returns 'unsupported' on a throw) and FinderStateService (memory first, then `sessionStorage['campsite-finder.finder']`, spec 3 validation, storage errors swallowed). `ng lint` and `ng build` pass (budget warning pre-existing).
+- Note: Step 2 was already ticked in task.md, but `src/app/features/finder/` doesn't exist yet, so no Finder logic is in the tree. Step 3 should create finder.component.ts with the Step 2 logic (constants, `loading`/`updating`, Where picker, Reset filters) along with the template.
