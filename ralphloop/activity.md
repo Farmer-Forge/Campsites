@@ -156,3 +156,6 @@ TASK 7 COMPLETE
 ## Task 8, call 2
 - Step 3: created `features/trips/trips-list.component.ts/.html` (missing from call 1's Step 2: postcards, inline delete confirmation, load error + Try again, delete error) and `trip-detail.component.ts/.html` (not found vs load error, ordered map, rename with Cancel, inline delete confirm, optimistic move via `reorderStops` with re-read on failure, remove, add from favorites not in the trip). Styles verbatim, inline.
 - Also routed `trips` and `trips/:id` to the real components with `authGuard` in `app.routes.ts` (Step 4's work), so ticked Step 4 too. `ng lint` and `ng build` pass; no `confirm(` in src/app. Not exercised in a browser.
+
+## Task 8, call 3
+- Step 5: `ng lint` and `ng build` pass (leaflet.markercluster non-ESM warning only); `grep "confirm("` in src/app finds nothing. Re-read spec 7 and changes #3, #5–#8, #10 against trips-list and trip-detail: all texts, inline delete confirmation, rename Cancel, reorder via `reorderStops`, load error + Try again present. Not exercised in a browser.
