@@ -1545,7 +1545,7 @@ Read spec 3 in full: the page, the filter bar, how a search runs, the location m
 - [x] **Step 6: Verify.**
   - Lint and build.
   - Re-read spec 3 end to end. Check every exact text: the location messages, blocked help, manual panel help, labels, "Finding campgrounds near you...", and "Unable to load nearby campgrounds.". List any gap in `activity.md`.
-- [ ] **Step 7: Commit.** `git commit -m "Task 6: the Finder page (filters, map and list, location, saved search)"`
+- [x] **Step 7: Commit.** `git commit -m "Task 6: the Finder page (filters, map and list, location, saved search)"`
 
 **QC (for Shawn, in the browser):** use the Finder at http://192.168.1.188:4200. Ralph's campgrounds are the full production set. Over plain `http://192.168.1.188`, Chrome won't share your location (it isn't a secure origin), so you'll start in the error state. To test device location, use an ssh tunnel (`ssh -L 4200:localhost:4200 ralph`, then http://localhost:4200) or list the address under `chrome://flags/#unsafely-treat-insecure-origin-as-secure`.
 - Error state (location timed out, denied or unavailable): under the message and "Use my device location", the lat/lng panel shows, and "Search this location" works.

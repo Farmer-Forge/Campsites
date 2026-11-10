@@ -128,3 +128,8 @@ TASK 5 COMPLETE
 
 ## Task 6, call 5
 - Step 6: `ng lint` passes; `ng build` succeeds (leaflet.markercluster non-ESM warning only). Re-read spec 3 against the code: every exact text found (4 location messages + unsupported in geolocation.service.ts; blocked help, "Finding campgrounds near you...", manual panel labels/help/tip, "Search this location", "Use my device location", "Change location", "nearest first" in the template; "Unable to load nearby campgrounds." in finder.component.ts). Region/State labels ("All regions" etc.) are absent by design: change #7 replaces them with one "Where" picker ("All states"/"{n} states"). No gaps. Not exercised in a browser.
+
+## Task 6, call 6
+- Step 7: worktree clean; Finder files (features/finder, geolocation and finder-state services, route) appear in `git log main..HEAD --stat` via checkpoint commits. Treated as done.
+
+TASK 6 COMPLETE
