@@ -159,3 +159,8 @@ TASK 7 COMPLETE
 
 ## Task 8, call 3
 - Step 5: `ng lint` and `ng build` pass (leaflet.markercluster non-ESM warning only); `grep "confirm("` in src/app finds nothing. Re-read spec 7 and changes #3, #5–#8, #10 against trips-list and trip-detail: all texts, inline delete confirmation, rename Cancel, reorder via `reorderStops`, load error + Try again present. Not exercised in a browser.
+
+## Task 8, call 4
+- Step 6: worktree clean; trips list and detail components, `trips.service.ts` and routes appear in `git log main..HEAD --stat` via checkpoint commits. Treated as done.
+
+TASK 8 COMPLETE
