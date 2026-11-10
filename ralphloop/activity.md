@@ -148,3 +148,7 @@ TASK 6 COMPLETE
 - Step 5: worktree clean; favorites files appear in `git log main..HEAD --stat` via checkpoint commits. Treated as done.
 
 TASK 7 COMPLETE
+
+## Task 8, call 1
+- Step 1: added `TripsService.loadAllStops(tripIds)`: one `trip_stops` select (`in trip_id`, `order by position`), one `getByIds` for the distinct campgrounds; returns a Map with an entry (possibly empty) per trip id. `ng lint` and `ng build` pass.
+- Note: Step 2 is ticked but `src/app/features/trips/` doesn't exist, so the Trips list component isn't in the tree. Step 3 (or a later call) must create `trips-list.component.ts/.html` with Step 2's structure and styles, as happened in Tasks 6 and 7.

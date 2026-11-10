@@ -70,6 +70,31 @@ export class TripsService {
     });
   }
 
+  async loadAllStops(tripIds: string[]): Promise<Map<string, TripStop[]>> {
+    const result = new Map<string, TripStop[]>(tripIds.map((id) => [id, []]));
+    if (tripIds.length === 0) {
+      return result;
+    }
+    const { data, error } = await this.supabase.client
+      .from('trip_stops')
+      .select('id, trip_id, campground_id, position')
+      .in('trip_id', tripIds)
+      .order('position');
+    if (error) {
+      throw error;
+    }
+    const rows = data ?? [];
+    const campgrounds = await this.campgrounds.getByIds([...new Set(rows.map((r) => r.campground_id as string))]);
+    const byId = new Map(campgrounds.map((c) => [c.id, c]));
+    for (const row of rows) {
+      const campground = byId.get(row.campground_id);
+      if (campground) {
+        result.get(row.trip_id)?.push({ stopId: row.id, campground });
+      }
+    }
+    return result;
+  }
+
   async createTrip(name: string, campgroundIds: string[]): Promise<string> {
     const userId = this.supabase.session()?.user.id;
     if (!userId) {
