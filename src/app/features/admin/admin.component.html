@@ -1,0 +1,252 @@
+<div class="rt-content admin">
+  <h1 class="rt-title">Admin</h1>
+
+  <div class="admin-stats">
+    <div class="admin-stat">
+      <span class="admin-stat-value favorites">{{ stats().favoritesCount }}</span>
+      <span class="admin-stat-label">Favorites</span>
+    </div>
+    <div class="admin-stat">
+      <span class="admin-stat-value trips">{{ stats().tripsCount }}</span>
+      <span class="admin-stat-label">Trips</span>
+    </div>
+  </div>
+  @if (statsError()) {
+    <p class="rt-error">{{ statsError() }}</p>
+  }
+
+  <div class="tabs" role="tablist">
+    <button
+      class="tab"
+      type="button"
+      role="tab"
+      [class.active]="tab() === 'users'"
+      [attr.aria-selected]="tab() === 'users'"
+      (click)="tab.set('users')"
+    >
+      Users
+    </button>
+    <button
+      class="tab"
+      type="button"
+      role="tab"
+      [class.active]="tab() === 'attributes'"
+      [attr.aria-selected]="tab() === 'attributes'"
+      (click)="tab.set('attributes')"
+    >
+      Campground Attributes
+    </button>
+  </div>
+
+  @if (tab() === 'users') {
+    <div class="tab-panel" role="tabpanel">
+      <form class="add-user-form" (ngSubmit)="invite()">
+        <input class="rt-input" type="email" name="inviteEmail" placeholder="Email" [(ngModel)]="inviteEmail" />
+        <input
+          class="rt-input"
+          type="text"
+          name="inviteName"
+          placeholder="Display name (optional)"
+          [(ngModel)]="inviteName"
+        />
+        <button class="rt-btn rt-btn--cherry rt-btn--shadow" type="submit" [disabled]="inviting()">Invite User</button>
+      </form>
+
+      @if (error()) {
+        <p class="rt-error">{{ error() }}</p>
+      }
+
+      <div class="rt-table-card">
+        <table class="rt-table users-table">
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Display Name</th>
+              <th>Role</th>
+              <th>Suspended</th>
+              <th>Created</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (user of users(); track user.id) {
+              <tr>
+                <td class="email">
+                  @if (editingId() === user.id) {
+                    <input class="rt-input rt-input--sm" type="email" name="editEmail" [(ngModel)]="editEmail" />
+                  } @else {
+                    {{ user.email }}
+                  }
+                </td>
+                <td>
+                  @if (editingId() === user.id) {
+                    <input class="rt-input rt-input--sm" type="text" name="editName" [(ngModel)]="editName" />
+                  } @else {
+                    {{ user.displayName }}
+                  }
+                </td>
+                @if (user.id === myId) {
+                  <td colspan="2"><span class="rt-notice">You</span></td>
+                } @else {
+                  <td>
+                    <p-select
+                      class="role-pill"
+                      [class.role-admin]="user.role === 'admin'"
+                      [options]="roles"
+                      optionLabel="label"
+                      optionValue="value"
+                      [ngModel]="user.role"
+                      (ngModelChange)="changeRole(user, $event)"
+                      appendTo="body"
+                    />
+                  </td>
+                  <td>
+                    <button class="rt-text-btn rt-text-btn--teal" type="button" (click)="toggleSuspended(user)">
+                      {{ user.suspended ? 'Unsuspend' : 'Suspend' }}
+                    </button>
+                  </td>
+                }
+                <td>{{ user.createdAt | date }}</td>
+                <td>
+                  <div class="rt-row-actions">
+                    @if (editingId() === user.id) {
+                      <button class="rt-text-btn rt-text-btn--teal" type="button" (click)="editingId.set(null)">
+                        Cancel
+                      </button>
+                      <button class="rt-text-btn rt-text-btn--teal" type="button" (click)="saveEdit(user)">Save</button>
+                    } @else if (deletingId() === user.id) {
+                      <button class="rt-text-btn rt-text-btn--teal" type="button" (click)="deletingId.set(null)">
+                        Cancel
+                      </button>
+                      <button class="rt-text-btn rt-text-btn--cherry" type="button" (click)="confirmDelete(user)">
+                        Yes, delete
+                      </button>
+                    } @else {
+                      <button class="rt-text-btn rt-text-btn--teal" type="button" (click)="startEdit(user)">
+                        Edit
+                      </button>
+                      @if (user.id !== myId) {
+                        <button class="rt-text-btn rt-text-btn--cherry" type="button" (click)="deletingId.set(user.id)">
+                          Delete
+                        </button>
+                      }
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  } @else {
+    <div class="tab-panel" role="tabpanel">
+      <p-autocomplete
+        class="campground-search"
+        name="campground"
+        placeholder="Search campgrounds by name"
+        optionLabel="name"
+        [forceSelection]="true"
+        [suggestions]="suggestions"
+        [(ngModel)]="selectedCampground"
+        (completeMethod)="search($event)"
+        (onSelect)="pickCampground($event.value)"
+        (onClear)="pickCampground(null)"
+      />
+
+      @if (attrError()) {
+        <p class="rt-error">{{ attrError() }}</p>
+      }
+
+      @if (selectedCampground) {
+        <div class="rt-table-card">
+          <table class="rt-table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Name</th>
+                <th>Value</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (attr of attributes(); track attr.id) {
+                <tr>
+                  @if (editingAttrId() === attr.id) {
+                    <td>
+                      <input class="rt-input rt-input--sm" type="text" name="eType" [(ngModel)]="editAttr.type" />
+                    </td>
+                    <td>
+                      <input class="rt-input rt-input--sm" type="text" name="eName" [(ngModel)]="editAttr.name" />
+                    </td>
+                    <td>
+                      <input class="rt-input rt-input--sm" type="text" name="eValue" [(ngModel)]="editAttr.value" />
+                    </td>
+                    <td>
+                      <div class="rt-row-actions">
+                        <button class="rt-text-btn rt-text-btn--teal" type="button" (click)="editingAttrId.set(null)">
+                          Cancel
+                        </button>
+                        <button class="rt-text-btn rt-text-btn--teal" type="button" (click)="saveAttr(attr)">
+                          Save
+                        </button>
+                      </div>
+                    </td>
+                  } @else {
+                    <td>{{ attr.type }}</td>
+                    <td class="attr-name">{{ attr.name }}</td>
+                    <td>{{ attr.value }}</td>
+                    <td>
+                      <div class="rt-row-actions">
+                        <button class="rt-text-btn rt-text-btn--teal" type="button" (click)="startEditAttr(attr)">
+                          Edit
+                        </button>
+                        <button class="rt-text-btn rt-text-btn--cherry" type="button" (click)="deleteAttr(attr)">
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr>
+                <td>
+                  <input
+                    class="rt-input rt-input--sm"
+                    type="text"
+                    name="nType"
+                    placeholder="Type"
+                    [(ngModel)]="newAttr.type"
+                  />
+                </td>
+                <td>
+                  <input
+                    class="rt-input rt-input--sm"
+                    type="text"
+                    name="nName"
+                    placeholder="Name"
+                    [(ngModel)]="newAttr.name"
+                  />
+                </td>
+                <td>
+                  <input
+                    class="rt-input rt-input--sm"
+                    type="text"
+                    name="nValue"
+                    placeholder="Value"
+                    [(ngModel)]="newAttr.value"
+                  />
+                </td>
+                <td>
+                  <button class="rt-btn rt-btn--mustard rt-btn--sm" type="button" (click)="addAttr()">Add</button>
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      }
+    </div>
+  }
+</div>

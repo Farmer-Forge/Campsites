@@ -168,3 +168,7 @@ TASK 8 COMPLETE
 ## Task 9, call 1
 - Step 1: created `admin-user.model.ts`, `campground-attribute.model.ts`, and `admin-users.service.ts`, `admin-stats.service.ts`, `campground-attributes.service.ts`. Edge functions go through one private `invoke` helper (FunctionsHttpError → `Error(await error.context.text() || error.message)`). Users sort newest first and update in place after each change. `ng lint` and `ng build` pass. Not exercised against the database.
 - Note: Step 2 is ticked but `features/admin/` doesn't exist, and Step 3 (route → AdminComponent) is unchecked: the admin route is still a placeholder. A later call must create `admin.component.ts/.html` (Step 2's structure and styles, spec 8 changes #1–#4, including the `%`/`_` escape in the campground search) before Step 3.
+
+## Task 9, call 2
+- Step 3: created `features/admin/admin.component.ts/.html` (stats pills, role=tab Users / Campground Attributes, invite form, users table with "You" row, role select, suspend, edit, inline delete confirm, attributes autocomplete + table + add row; styles verbatim inline; plain-English errors for "last admin" / "not authorized"; stats refresh after delete; search uses `CampgroundsService.searchByName`, which escapes `%`/`_`). Routed `admin` → `AdminComponent` with `adminGuard` and removed the placeholder helper from `app.routes.ts`. `ng lint` and `ng build` pass; no raw colors. Not exercised in a browser.
+- Note: `features/placeholder/` still exists on disk; Step 4 says to delete it (it's ticked already, so check that in the next call).
