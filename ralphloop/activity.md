@@ -112,3 +112,24 @@ TASK 3 COMPLETE
 - Step 9: worktree clean; nothing to commit. Confirmed the services, models and shared components appear in `git log main..HEAD --stat` via checkpoint commits. Step treated as done.
 
 TASK 5 COMPLETE
+
+## Task 6, call 1
+- Step 1: added GeolocationService (10s timeout, spec 3's exact messages, unknown codes fall back to the "could not be determined" text; `checkPermissionState` returns 'unsupported' on a throw) and FinderStateService (memory first, then `sessionStorage['campsite-finder.finder']`, spec 3 validation, storage errors swallowed). `ng lint` and `ng build` pass (budget warning pre-existing).
+- Note: Step 2 was already ticked in task.md, but `src/app/features/finder/` doesn't exist yet, so no Finder logic is in the tree. Step 3 should create finder.component.ts with the Step 2 logic (constants, `loading`/`updating`, Where picker, Reset filters) along with the template.
+
+## Task 6, call 2
+- Step 3: Step 2's logic was missing from the tree (see call 1 note), so I wrote it together with the template: `features/finder/finder.component.ts` + `.html` (no `styleUrl` yet; Step 4 adds `finder.component.scss` and must add `styleUrl: './finder.component.scss'`). Logic: constants, first-load-only `loading` and `updating` signals, single grouped Where multiselect (region group header is a button via the `#group` template that toggles the region's states), Park multiselect with the NPS-only `rt-notice`, radius segmented control, Reset filters (disabled at starting values, one search from the current location), saved-state restore on open, request counter so stale responses are ignored. The manual panel is one `ng-template` (no `@if`); the map tip uses `[hidden]` on its context value. `addToTrip` sets selection and `openPickerFor`. `ng lint`, `ng build` and `ngc --noEmit` pass; no raw colors. Not yet routed (Step 5), so not exercised in a browser.
+
+## Task 6, call 3
+- Step 4: wrote `finder.component.scss` verbatim from task.md (134 lines) and added `styleUrl: './finder.component.scss'` to finder.component.ts. `ng lint` and `ng build` pass (budget warning pre-existing; the Finder isn't routed yet, Step 5).
+
+## Task 6, call 4
+- Step 5: `app.routes.ts` `''` now lazy-loads `FinderComponent` (placeholder still used by other routes). `ng lint` and `ng build` pass (leaflet.markercluster non-ESM warning only).
+
+## Task 6, call 5
+- Step 6: `ng lint` passes; `ng build` succeeds (leaflet.markercluster non-ESM warning only). Re-read spec 3 against the code: every exact text found (4 location messages + unsupported in geolocation.service.ts; blocked help, "Finding campgrounds near you...", manual panel labels/help/tip, "Search this location", "Use my device location", "Change location", "nearest first" in the template; "Unable to load nearby campgrounds." in finder.component.ts). Region/State labels ("All regions" etc.) are absent by design: change #7 replaces them with one "Where" picker ("All states"/"{n} states"). No gaps. Not exercised in a browser.
+
+## Task 6, call 6
+- Step 7: worktree clean; Finder files (features/finder, geolocation and finder-state services, route) appear in `git log main..HEAD --stat` via checkpoint commits. Treated as done.
+
+TASK 6 COMPLETE

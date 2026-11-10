@@ -1380,13 +1380,13 @@ Read spec 3 in full: the page, the filter bar, how a search runs, the location m
 - **`FinderStateService`:** `snapshot(): FinderSnapshot | null` and `save(snapshot)`, with key `campsite-finder.finder` in `sessionStorage` and the validation in spec 3.
   - `FinderSnapshot` is `{ location: Coordinates; agencies: string[]; states: string[]; regions: string[]; parks: string[] | null; nearMeEnabled: boolean; radiusMiles: number }`.
 
-- [ ] **Step 1: `GeolocationService` and `FinderStateService`,** exactly as spec 3 describes, including every message text and validation rule.
+- [x] **Step 1: `GeolocationService` and `FinderStateService`,** exactly as spec 3 describes, including every message text and validation rule.
 - [x] **Step 2: The Finder's logic** (spec 3, **How a search runs** and **Saved state**).
   - **Constants:** 1609.34 m per mile; "Show all" is 20,038,000 m; the five agencies; radius choices `[null, 25, 50, 100, 250]`; the region→state table.
   - **Change #5:** a `loading` state for the first load only, and an `updating` signal for reloads.
   - **Change #7:** the single **Where** picker.
   - **Change #11:** Reset filters puts every filter back to its starting value and reruns the search once, from the current search location.
-- [ ] **Step 3: The Finder's template.** Class structure:
+- [x] **Step 3: The Finder's template.** Class structure:
   - **Filter bar:** `div.filter-bar` holds `div.filter-group` blocks:
     - the agency group: `span.rt-label` "AGENCY", then `button.chip` (`is-on`, `aria-pressed`) per agency;
     - the PrimeNG multiselect group: **Where**, grouped by region, with filter and labels as in change #7; then **Park**, shown when there are park codes, with the change #6 note `rt-notice` "Park filter shows NPS campgrounds only" when not all parks are selected;
@@ -1403,7 +1403,7 @@ Read spec 3 in full: the page, the filter bar, how a search runs, the location m
   - **The error state** (spec 3, **Error state**), inside `div.status-area`, in order: the error message (`rt-message rt-message--error`); the blocked help when blocked; a `button.rt-text-btn.rt-text-btn--teal.retry` "Use my device location"; and the manual panel, **always shown** (it's the only way to search here), without the map tip.
   - **The manual panel is one shared `ng-template` with no `@if` inside it.** The side column wraps its own use in `@if (manualOpen())` (toggled by "Change location"); the error state uses it unwrapped.
   - **The map's `addToTrip` output** sets the selection and the table's `openPickerFor` (spec 3, change #4).
-- [ ] **Step 4: `finder.component.scss`, verbatim from V1:**
+- [x] **Step 4: `finder.component.scss`, verbatim from V1:**
   ```scss
 :host {
   flex: 1;
@@ -1541,11 +1541,11 @@ Read spec 3 in full: the page, the filter bar, how a search runs, the location m
 }
   ```
   V1 had two multiselects (region + state) in a `filter-group`; the single Where picker uses the same group. The "Updating…" text uses `span.nearest`'s style. The park note is `rt-notice`.
-- [ ] **Step 5: Route.** `''` → `FinderComponent`.
-- [ ] **Step 6: Verify.**
+- [x] **Step 5: Route.** `''` → `FinderComponent`.
+- [x] **Step 6: Verify.**
   - Lint and build.
   - Re-read spec 3 end to end. Check every exact text: the location messages, blocked help, manual panel help, labels, "Finding campgrounds near you...", and "Unable to load nearby campgrounds.". List any gap in `activity.md`.
-- [ ] **Step 7: Commit.** `git commit -m "Task 6: the Finder page (filters, map and list, location, saved search)"`
+- [x] **Step 7: Commit.** `git commit -m "Task 6: the Finder page (filters, map and list, location, saved search)"`
 
 **QC (for Shawn, in the browser):** use the Finder at http://192.168.1.188:4200. Ralph's campgrounds are the full production set. Over plain `http://192.168.1.188`, Chrome won't share your location (it isn't a secure origin), so you'll start in the error state. To test device location, use an ssh tunnel (`ssh -L 4200:localhost:4200 ralph`, then http://localhost:4200) or list the address under `chrome://flags/#unsafely-treat-insecure-origin-as-secure`.
 - Error state (location timed out, denied or unavailable): under the message and "Use my device location", the lat/lng panel shows, and "Search this location" works.

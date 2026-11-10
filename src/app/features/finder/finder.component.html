@@ -1,0 +1,202 @@
+<ng-template #manualPanel let-tip>
+  <div class="rt-dashed-panel">
+    <form class="manual-location" (ngSubmit)="submitManual()">
+      <input
+        class="rt-input"
+        type="number"
+        step="any"
+        name="lat"
+        required
+        placeholder="Latitude (e.g. 44.31)"
+        aria-label="Latitude"
+        [ngModel]="manualLat()"
+        (ngModelChange)="manualLat.set($event)"
+      />
+      <input
+        class="rt-input"
+        type="number"
+        step="any"
+        name="lng"
+        required
+        placeholder="Longitude (e.g. -68.21)"
+        aria-label="Longitude"
+        [ngModel]="manualLng()"
+        (ngModelChange)="manualLng.set($event)"
+      />
+      <button type="submit" class="rt-btn rt-btn--cherry">Search this location</button>
+    </form>
+    <p class="manual-location-help">
+      Don't know your coordinates? Search "[your city] coordinates" or right-click your location in
+      <a href="https://maps.google.com" target="_blank" rel="noopener">Google Maps</a> and copy the two numbers
+      shown.
+    </p>
+    <p class="manual-location-help map-pick-help" [hidden]="!tip">
+      <strong>Tip:</strong> right-click any spot on the map and choose <strong>Search from here</strong>.
+    </p>
+  </div>
+</ng-template>
+
+@if (!pageError()) {
+  <div class="filter-bar">
+    <div class="filter-group">
+      <span class="rt-label">AGENCY</span>
+      @for (agency of agencies; track agency) {
+        <button
+          type="button"
+          class="chip"
+          [class.is-on]="selectedAgencies().includes(agency)"
+          [attr.aria-pressed]="selectedAgencies().includes(agency)"
+          (click)="toggleAgency(agency)"
+        >
+          {{ agency }}
+        </button>
+      }
+    </div>
+
+    <div class="filter-group">
+      <span class="rt-label">WHERE</span>
+      <p-multiselect
+        [options]="whereOptions"
+        [group]="true"
+        optionLabel="label"
+        optionValue="value"
+        optionGroupLabel="label"
+        optionGroupChildren="items"
+        [filter]="true"
+        [showToggleAll]="false"
+        [maxSelectedLabels]="0"
+        [selectedItemsLabel]="whereLabel()"
+        placeholder="No states"
+        ariaLabel="Where"
+        [ngModel]="selectedStates()"
+        (ngModelChange)="onStatesChange($event)"
+      >
+        <ng-template #group let-region>
+          <button
+            type="button"
+            class="rt-text-btn rt-text-btn--teal"
+            [attr.aria-pressed]="regionOn(region.value)"
+            (click)="toggleRegion(region.value)"
+          >
+            {{ regionOn(region.value) ? '☑' : '☐' }} {{ region.label }}
+          </button>
+        </ng-template>
+      </p-multiselect>
+    </div>
+
+    @if (parkCodes().length > 0) {
+      <div class="filter-group">
+        <span class="rt-label">PARK</span>
+        <p-multiselect
+          [options]="parkOptions()"
+          optionLabel="label"
+          optionValue="value"
+          [filter]="true"
+          [maxSelectedLabels]="0"
+          [selectedItemsLabel]="parkLabel()"
+          placeholder="No parks"
+          ariaLabel="Park"
+          [ngModel]="selectedParks()"
+          (ngModelChange)="onParksChange($event)"
+        />
+        @if (!allParksSelected()) {
+          <p class="rt-notice">Park filter shows NPS campgrounds only</p>
+        }
+      </div>
+    }
+
+    <div class="filter-group radius-group">
+      <span class="rt-label">MILES FROM ME</span>
+      <div class="segmented">
+        @for (miles of radiusChoices; track miles) {
+          <button
+            type="button"
+            [class.is-on]="miles === null ? !nearMeEnabled() : nearMeEnabled() && radiusMiles() === miles"
+            [attr.aria-pressed]="miles === null ? !nearMeEnabled() : nearMeEnabled() && radiusMiles() === miles"
+            (click)="setRadius(miles)"
+          >
+            {{ miles ?? 'All' }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <button type="button" class="rt-btn rt-btn--sm" [disabled]="atStartingFilters()" (click)="resetFilters()">
+        Reset filters
+      </button>
+    </div>
+  </div>
+}
+
+@if (pageError(); as error) {
+  <div class="status-area">
+    <p class="rt-message rt-message--error">{{ error }}</p>
+    @if (locationBlocked()) {
+      <p class="rt-notice">
+        Location is blocked for this site. Click the icon left of the address bar → Site settings → Location →
+        Allow, then press Use my device location again.
+      </p>
+    }
+    <button type="button" class="rt-text-btn rt-text-btn--teal retry" (click)="loadNearest()">
+      Use my device location
+    </button>
+    <ng-container [ngTemplateOutlet]="manualPanel" [ngTemplateOutletContext]="{ $implicit: false }" />
+  </div>
+} @else if (loading()) {
+  <div class="status-area">
+    <p>Finding campgrounds near you...</p>
+  </div>
+} @else {
+  <div class="rt-map-layout">
+    <div class="rt-map-frame">
+      <app-campground-map
+        [campgrounds]="results()"
+        [selectedId]="selected()?.id ?? null"
+        [searchLocation]="searchLocation()"
+        [allowLocationPick]="true"
+        (viewDetails)="viewDetails($event)"
+        (addToTrip)="addToTrip($event)"
+        (locationPick)="pickLocation($event)"
+      />
+    </div>
+    <div class="rt-side">
+      <div class="list-header">
+        <h1 class="rt-list-title">{{ results().length }} {{ results().length === 1 ? 'campground' : 'campgrounds' }}</h1>
+        <span class="nearest">nearest first</span>
+        @if (updating()) {
+          <span class="nearest">Updating…</span>
+        }
+      </div>
+      <div class="location-controls">
+        <button type="button" class="rt-text-btn rt-text-btn--teal" (click)="manualOpen.set(!manualOpen())">
+          {{ manualOpen() ? 'Cancel' : 'Change location' }}
+        </button>
+        <button type="button" class="rt-text-btn rt-text-btn--teal" (click)="loadNearest()">
+          Use my device location
+        </button>
+      </div>
+      @if (deviceError(); as message) {
+        <div class="device-location-error">
+          <p class="rt-message rt-message--error">{{ message }}</p>
+          @if (locationBlocked()) {
+            <p class="rt-notice">
+              Location is blocked for this site. Click the icon left of the address bar → Site settings →
+              Location → Allow, then press Use my device location again.
+            </p>
+          }
+        </div>
+      }
+      @if (manualOpen()) {
+        <ng-container [ngTemplateOutlet]="manualPanel" [ngTemplateOutletContext]="{ $implicit: true }" />
+      }
+      <app-campground-table
+        [campgrounds]="results()"
+        [selected]="selected()"
+        [showDistance]="true"
+        [openPickerFor]="openPickerFor()"
+        (selectedChange)="selected.set($event)"
+      />
+    </div>
+  </div>
+}
