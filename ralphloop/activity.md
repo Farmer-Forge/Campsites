@@ -104,3 +104,6 @@ TASK 3 COMPLETE
 
 ## Task 5, call 7
 - Step 7: added shared/ui/campground-map (`app-campground-map`; inputs campgrounds, selectedId, ordered, searchLocation, allowLocationPick; outputs viewDetails, addToTrip, locationPick) with the verbatim scss. Cluster uses `chunkedLoading`; popups are plain DOM ("View details ▸", and "Add to trip…" only when signed in); right-click (`contextmenu`) pick popup with "Search from here"; no-location campgrounds get no marker/route point and keep stop numbers from the full list; marker click and selection use max(12, current zoom) plus `zoomToShowLayer`. Added `openPickerFor` input to `app-campground-table`. `ng lint`, `ng build` and `ngc --noEmit` pass (map isn't imported by any page yet, so it isn't in the bundle). Not exercised in a browser.
+
+## Task 5, call 8
+- Step 8: `ng lint` passes; `ng build` succeeds (initial-bundle budget warning only, no error). Paging check prints 1000. grep for cdk-virtual/scrollToIndex/cdk-experimental finds nothing; `contextmenu` found in campground-map.component.ts:93. Re-read spec 3 Changes #1–#4 against the implementation: all covered.
