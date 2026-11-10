@@ -143,3 +143,8 @@ TASK 6 COMPLETE
 
 ## Task 7, call 3
 - Step 4: `ng lint` and `ng build` pass (leaflet.markercluster non-ESM warning only). Re-read spec 6 Favorites and changes #1–#4 against the component: header/Plan a trip button, planner hint/name/Save Trip/error, load error + Try again, "Tap the heart" empty text, note error above list, `fitToCampgrounds` on the map, route with authGuard. No gaps. Not exercised in a browser.
+
+## Task 7, call 4
+- Step 5: worktree clean; favorites files appear in `git log main..HEAD --stat` via checkpoint commits. Treated as done.
+
+TASK 7 COMPLETE
