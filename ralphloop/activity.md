@@ -140,3 +140,6 @@ TASK 6 COMPLETE
 
 ## Task 7, call 2
 - Step 3: checked `app.routes.ts`: `favorites` lazy-loads `FavoritesComponent` with `authGuard` (added in call 1). Nothing more to change.
+
+## Task 7, call 3
+- Step 4: `ng lint` and `ng build` pass (leaflet.markercluster non-ESM warning only). Re-read spec 6 Favorites and changes #1–#4 against the component: header/Plan a trip button, planner hint/name/Save Trip/error, load error + Try again, "Tap the heart" empty text, note error above list, `fitToCampgrounds` on the map, route with authGuard. No gaps. Not exercised in a browser.
