@@ -107,3 +107,8 @@ TASK 3 COMPLETE
 
 ## Task 5, call 8
 - Step 8: `ng lint` passes; `ng build` succeeds (initial-bundle budget warning only, no error). Paging check prints 1000. grep for cdk-virtual/scrollToIndex/cdk-experimental finds nothing; `contextmenu` found in campground-map.component.ts:93. Re-read spec 3 Changes #1–#4 against the implementation: all covered.
+
+## Task 5, call 9
+- Step 9: worktree clean; nothing to commit. Confirmed the services, models and shared components appear in `git log main..HEAD --stat` via checkpoint commits. Step treated as done.
+
+TASK 5 COMPLETE
