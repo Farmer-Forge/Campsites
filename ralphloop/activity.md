@@ -164,3 +164,7 @@ TASK 7 COMPLETE
 - Step 6: worktree clean; trips list and detail components, `trips.service.ts` and routes appear in `git log main..HEAD --stat` via checkpoint commits. Treated as done.
 
 TASK 8 COMPLETE
+
+## Task 9, call 1
+- Step 1: created `admin-user.model.ts`, `campground-attribute.model.ts`, and `admin-users.service.ts`, `admin-stats.service.ts`, `campground-attributes.service.ts`. Edge functions go through one private `invoke` helper (FunctionsHttpError → `Error(await error.context.text() || error.message)`). Users sort newest first and update in place after each change. `ng lint` and `ng build` pass. Not exercised against the database.
+- Note: Step 2 is ticked but `features/admin/` doesn't exist, and Step 3 (route → AdminComponent) is unchecked: the admin route is still a placeholder. A later call must create `admin.component.ts/.html` (Step 2's structure and styles, spec 8 changes #1–#4, including the `%`/`_` escape in the campground search) before Step 3.
