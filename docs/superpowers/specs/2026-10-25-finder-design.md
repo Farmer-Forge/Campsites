@@ -113,13 +113,13 @@ Shown instead of the filter bar and body:
 - the error message (`rt-message--error`);
 - the blocked help, when blocked;
 - a "Use my device location" button;
-- the manual-location panel, without the map tip.
+- the manual-location panel, **always shown** (no "Change location" toggle here; it's the only way to search), without the map tip.
 
 ### Map (Finder use)
 
 The shared map (below), given the results, the selected campground, the search location, and `allowLocationPick = true`.
 
-- **Right-clicking the map** opens a popup with the clicked coordinates (4 decimal places) and a **"Search from here"** button. Clicking it closes the popup, closes the manual panel, and searches from that point.
+- **Right-clicking the map** opens a popup with the clicked coordinates (4 decimal places) and a **"Search from here"** button. Clicking it closes the popup, closes the manual panel, and searches from that point. A plain left-click on the map doesn't search.
 - **A popup's "View details ▸"** selects that campground. The list expands its card and scrolls it into view.
 
 ## Saved state (survives navigation and refresh)
@@ -250,9 +250,10 @@ Shawn reviewed V1's behaviors and asked for them addressed. He handed the detail
    - The heart never loads anything itself; it only reads `favoriteIds`.
 
    That removes V1's one-request-per-card storm, and the previous user's hearts showing after a sign-out.
-2. **The card list is virtual-scrolled.** It uses the Angular CDK's `cdk-virtual-scroll-viewport` (`@angular/cdk`, same major version as Angular). Only the cards on screen are drawn, so "Show all" still lists every result.
-   - **Variable heights:** expanded cards, open add-to-trip panels and note rows change a card's height, so the list uses autosize (`@angular/cdk-experimental/scrolling`) or an equivalent that handles them.
-   - **Scrolling to a selection:** a card selected from the map scrolls into view through the viewport (`scrollToIndex`).
+2. **Off-screen cards aren't drawn.** Each card has CSS `content-visibility: auto` (with `contain-intrinsic-size: auto` and the collapsed card's height), so the browser skips laying out and painting cards outside the list's view, and "Show all" stays smooth. The list itself is a plain `@for`.
+   - **Variable heights** (expanded cards, open add-to-trip panels, note rows) just work.
+   - **Scrolling to a selection:** a card selected from the map scrolls into view with `scrollIntoView({ behavior: 'smooth', block: 'nearest' })`, as in V1.
+   - **Revised 2026-11-09 (Shawn):** this change first used the CDK's virtual scroll with the autosize strategy, which doesn't support `scrollToIndex`, so "View details ▸" couldn't scroll to its card (`docs/next-loop-bugs.md`, bug 4). Virtual scrolling was dropped; `@angular/cdk-experimental` isn't used.
    - **Everything else is unchanged:** the card's look, the clicks, plan mode and notes. Favorites and Trips use the same list.
 3. **The map loads markers in chunks.** The marker cluster uses `chunkedLoading: true`, so adding thousands of markers doesn't freeze the page. Clustering and the map's look are unchanged.
 4. **"Add to trip…" in the map popup.**
