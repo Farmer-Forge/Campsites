@@ -83,3 +83,6 @@ TASK 4 COMPLETE
 - Step 6: `ng lint` passes and `ng build` succeeds. Pat password login returns an access_token (count 1); Sam `users.suspended` is `t`. Re-read spec 4 and grepped every exact text (headings, buttons, notices, reset states, errors): all present. Gaps: none.
 
 TASK 3 COMPLETE
+
+## Task 5, call 1
+- Step 1: added campground.model.ts, trip.model.ts and CampgroundsService (getNearest pages with `.range()` and sends no `result_limit`; getByIds, getParkCodes (paged, distinct, sorted), getParkNames, searchByName with `\`, `%`, `_` escaped). `Coordinates` exported. `ng lint` and `ng build` pass (budget warning pre-existing).
