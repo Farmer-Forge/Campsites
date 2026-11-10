@@ -1209,7 +1209,7 @@ Read spec 3 in full. This task builds the services and the five shared component
   background: var(--rt-card);
 }
     ```
-- [ ] **Step 6: `app-campground-table`** (spec 3, **Campground card list**, plus change #2).
+- [x] **Step 6: `app-campground-table`** (spec 3, **Campground card list**, plus change #2).
   - **The list:** a plain `div.rt-scroll-list` with `@for` over the campgrounds (`track c.id`). **No CDK virtual scroll** (spec 3, change #2): the browser skips off-screen cards because each `.campground-card` gets `content-visibility: auto; contain-intrinsic-size: auto 80px;` (add both to the `.campground-card` rule in the scss below). The list fills the side column (`.rt-scroll-list` already scrolls).
   - **Remove the unused package:** `npm uninstall @angular/cdk-experimental`. Keep `@angular/cdk` (PrimeNG needs it).
   - **A selection from outside** expands that card, then, once it has rendered (`afterNextRender`), scrolls it into view with `element.scrollIntoView({ behavior: 'smooth', block: 'nearest' })`. Each card carries `[attr.data-id]="c.id"` so it can be found. Never `scrollToIndex`.
