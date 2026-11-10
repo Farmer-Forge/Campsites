@@ -122,3 +122,6 @@ TASK 5 COMPLETE
 
 ## Task 6, call 3
 - Step 4: wrote `finder.component.scss` verbatim from task.md (134 lines) and added `styleUrl: './finder.component.scss'` to finder.component.ts. `ng lint` and `ng build` pass (budget warning pre-existing; the Finder isn't routed yet, Step 5).
+
+## Task 6, call 4
+- Step 5: `app.routes.ts` `''` now lazy-loads `FinderComponent` (placeholder still used by other routes). `ng lint` and `ng build` pass (leaflet.markercluster non-ESM warning only).
