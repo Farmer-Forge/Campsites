@@ -20,7 +20,7 @@
 - **Pages** live in `src/app/features/<feature>/`, and shared pieces in `src/app/shared/ui/`.
 - **The database is fixed** (spec 1): this plan never writes SQL migrations.
 
-**Tech Stack:** Angular 22.x (standalone, signals, `@if`/`@for`), PrimeNG 22 (Aura), `@angular/cdk` + `@angular/cdk-experimental` 22 (virtual scroll), Leaflet 1.9 + `@bluehalo/ngx-leaflet` 22 + markercluster, `@supabase/supabase-js` ^2.112.3, TypeScript ~6.0, `angular-eslint`, Prettier.
+**Tech Stack:** Angular 22.x (standalone, signals, `@if`/`@for`), PrimeNG 22 (Aura), `@angular/cdk` 22 (a PrimeNG peer), Leaflet 1.9 + `@bluehalo/ngx-leaflet` 22 + markercluster, `@supabase/supabase-js` ^2.112.3, TypeScript ~6.0, `angular-eslint`, Prettier.
 
 ## Global Constraints
 
@@ -126,7 +126,7 @@ Read spec 2 in full, including **Changes from V1**, and spec 9's About section.
   - **Then the test tooling:** remove any test target, `tsconfig.spec.json` and test dependency the generator added. There are no tests in this project.
   - **Verify:** `git status --short` shows only the files listed above plus `.gitignore`; nothing under `supabase/` or `ralphloop/` changed.
 - [x] **Step 2: Install the dependencies.**
-  - **Runtime:** `npm install primeng@^22.0.0 @primeuix/themes@^3.0.0 primeicons@^8.0.0 @supabase/supabase-js@^2.112.3 leaflet@^1.9.4 leaflet.markercluster@^1.5.3 @bluehalo/ngx-leaflet@^22.0.0 @bluehalo/ngx-leaflet-markercluster@^22.0.0 @angular/animations@^22 @angular/cdk@^22 @angular/cdk-experimental@^22`
+  - **Runtime:** `npm install primeng@^22.0.0 @primeuix/themes@^3.0.0 primeicons@^8.0.0 @supabase/supabase-js@^2.112.3 leaflet@^1.9.4 leaflet.markercluster@^1.5.3 @bluehalo/ngx-leaflet@^22.0.0 @bluehalo/ngx-leaflet-markercluster@^22.0.0 @angular/animations@^22 @angular/cdk@^22`
   - **Dev:** `npm install -D @types/leaflet@^1.9.22 @types/leaflet.markercluster@^1.5.6 prettier@^3.8.1`
   - **Verify:**
     - `npx ng build` succeeds;
@@ -1124,9 +1124,9 @@ Read spec 3 in full. This task builds the services and the five shared component
 - **`TripsService`:** the methods in spec 7's TripsService table. `reorderStops` calls `rpc('reorder_trip_stops', { p_trip_id, p_stop_ids })`. `createTrip` deletes the new trip if inserting its stops fails (spec 7, change #9). It registers an `onSignOut` reset that clears `trips`.
 - **Components:** the inputs and outputs in spec 3, **Shared pieces**, with these selectors: `app-campground-map`, `app-campground-table`, `app-campground-detail-panel`, `app-favorite-toggle`, `app-add-to-trip`.
 
-- [x] **Step 1: Models and `CampgroundsService`** (spec 3, **Data it uses**, and spec 1's RPCs). `searchByName` escapes `%` and `_` before `ilike` (spec 8, change #4).
-- [x] **Step 2: `FavoritesService` and `TripsService`,** as in Interfaces. In `app.ts`, the session effect also calls `favorites.loadFavoriteIds()` (spec 3, change #1).
-- [x] **Step 3: `app-campground-detail-panel`** (spec 3: the expanded detail; the description is rendered with `[innerHTML]`). Directions is hidden for a campground with no location (spec 3, change #9): add `hasLocation(c)` to `campground.model.ts`.
+- [ ] **Step 1: Models and `CampgroundsService`** (spec 3, **Data it uses**, and spec 1's RPCs). `searchByName` escapes `%` and `_` before `ilike` (spec 8, change #4).
+- [ ] **Step 2: `FavoritesService` and `TripsService`,** as in Interfaces. In `app.ts`, the session effect also calls `favorites.loadFavoriteIds()` (spec 3, change #1).
+- [ ] **Step 3: `app-campground-detail-panel`** (spec 3: the expanded detail; the description is rendered with `[innerHTML]`). Directions is hidden for a campground with no location (spec 3, change #9): add `hasLocation(c)` to `campground.model.ts`.
   - **Structure:**
     - `<div class="campground-detail-panel">` with `<div class="description" [innerHTML]>`;
     - `<div class="links">` with Reserve (`rt-btn rt-btn--cherry rt-btn--shadow`) and Directions (`rt-btn`), both `target="_blank" rel="noopener"`.
@@ -1160,7 +1160,7 @@ Read spec 3 in full. This task builds the services and the five shared component
   flex-wrap: wrap;
 }
     ```
-- [x] **Step 4: `app-favorite-toggle`** (spec 3, plus change #1: the heart only reads `favoriteIds`).
+- [ ] **Step 4: `app-favorite-toggle`** (spec 3, plus change #1: the heart only reads `favoriteIds`).
   - It renders only when signed in, as `<button class="rt-icon-btn favorite-button">` with the heart SVG (24×24 viewBox, path `M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z`, `fill` set to `currentColor` when favorited, otherwise `none`, stroke-width 2).
   - Clicking calls `stopPropagation()`.
   - **Inline styles, verbatim:**
@@ -1169,7 +1169,7 @@ Read spec 3 in full. This task builds the services and the five shared component
   color: var(--rt-cherry);
 }
     ```
-- [x] **Step 5: `app-add-to-trip`** (spec 3, with its exact texts).
+- [ ] **Step 5: `app-add-to-trip`** (spec 3, with its exact texts).
   - **Structure:**
     - `<div class="add-to-trip-panel">` with `<div class="rt-label">ADD TO TRIP</div>`;
     - `<div class="trip-options">` of `rt-btn rt-btn--sm trip-option` buttons;
@@ -1209,9 +1209,10 @@ Read spec 3 in full. This task builds the services and the five shared component
   background: var(--rt-card);
 }
     ```
-- [x] **Step 6: `app-campground-table`,** virtual-scrolled (spec 3, **Campground card list**, plus change #2).
-  - **The viewport:** `<cdk-virtual-scroll-viewport autosize class="rt-scroll-list">`, using `ScrollingModule` from `@angular/cdk/scrolling` and `CdkAutoSizeVirtualScroll` from `@angular/cdk-experimental/scrolling`, with `*cdkVirtualFor` over the campgrounds (`trackBy` id). The viewport must fill the side column (flex: 1; min-height: 0).
-  - **A selection from outside** expands that card and calls `viewport.scrollToIndex(index, 'smooth')`.
+- [ ] **Step 6: `app-campground-table`** (spec 3, **Campground card list**, plus change #2).
+  - **The list:** a plain `div.rt-scroll-list` with `@for` over the campgrounds (`track c.id`). **No CDK virtual scroll** (spec 3, change #2): the browser skips off-screen cards because each `.campground-card` gets `content-visibility: auto; contain-intrinsic-size: auto 80px;` (add both to the `.campground-card` rule in the scss below). The list fills the side column (`.rt-scroll-list` already scrolls).
+  - **Remove the unused package:** `npm uninstall @angular/cdk-experimental`. Keep `@angular/cdk` (PrimeNG needs it).
+  - **A selection from outside** expands that card, then, once it has rendered (`afterNextRender`), scrolls it into view with `element.scrollIntoView({ behavior: 'smooth', block: 'nearest' })`. Each card carries `[attr.data-id]="c.id"` so it can be found. Never `scrollToIndex`.
   - **Card structure:**
     - `<div class="campground-card" [class.is-open]>`, containing `<div class="card-main">`, which holds, in order:
       - in plan mode, `button.plan-check` (`is-checked`), with the check SVG `M20 6 9 17l-5-5`;
@@ -1332,13 +1333,14 @@ Read spec 3 in full. This task builds the services and the five shared component
   }
 }
     ```
-    The viewport takes the `rt-scroll-list` class. If the virtual viewport needs `display:block` or a height rule, add it under `:host` in this block, and say so in `activity.md`.
-- [x] **Step 7: `app-campground-map`** (spec 3, **Campground map**, plus changes #3 and #4).
+    The list takes the `rt-scroll-list` class. If it needs a height rule, add it under `:host` in this block, and say so in `activity.md`.
+- [ ] **Step 7: `app-campground-map`** (spec 3, **Campground map**, plus changes #3 and #4).
   - **Markers:** Leaflet's default icons use `imagePath = ''` with `marker-icon.png`, `marker-icon-2x.png` and `marker-shadow.png`. The marker cluster gets `{ chunkedLoading: true }`.
   - **Popup buttons** are plain DOM with class `view-details-button`.
   - **The new popup action "Add to trip…"** (signed in only) emits a new output, `addToTrip(id)`. The list's parent uses it to select that card and open its add-to-trip panel. Add a matching input to `app-campground-table`: `openPickerFor: string | null`, which opens that card's panel.
   - **Map size:** a `ResizeObserver` calls `invalidateSize()`.
   - **No location** (spec 3, change #9): campgrounds failing `hasLocation` get no marker and no route point; trip markers keep their stop number from the full list; selecting one doesn't move the map.
+  - **Location pick** (spec 3, **Map (Finder use)**): only when `allowLocationPick` is true, listen for the map's `contextmenu` event (right-click), **never `click`**. It opens a Leaflet popup at that point: plain DOM with the coordinates as `lat.toFixed(4), lng.toFixed(4)` and a `button.view-details-button` "Search from here". Only that button emits `locationPick({ lat, lng })`, and it closes the popup first. A plain left-click on the map does nothing.
   - **Never zooms out** (spec 3, change #10): a marker click and a newly selected campground use zoom 12 or the current zoom, whichever is closer in, and the cluster group's `zoomToShowLayer` keeps that campground's marker out of a cluster.
   - **`campground-map.component.scss`, verbatim:**
     ```scss
@@ -1353,11 +1355,12 @@ Read spec 3 in full. This task builds the services and the five shared component
   width: 100%;
 }
     ```
-- [x] **Step 8: Verify.**
+- [ ] **Step 8: Verify.**
   - Lint and build. The production build stays under the 1 MB initial-budget error; it may warn.
   - Paging check against the local RPC: `curl -s -X POST "$SUPABASE_URL/rest/v1/rpc/nearest_campgrounds" -H "apikey: $SUPABASE_ANON_KEY" -H "Authorization: Bearer $SUPABASE_ANON_KEY" -H 'Content-Type: application/json' -H 'Range: 0-999' -d '{"user_lat":39.8,"user_lng":-98.6,"max_distance_m":20038000}' | grep -o '"id"' | wc -l` prints `1000`. That proves the 1,000-row cap that paging handles.
+  - `grep -rnE "cdk-virtual|scrollToIndex|cdk-experimental" src package.json` finds nothing, and `grep -n "contextmenu" src/app/shared/ui/campground-map/campground-map.component.ts` finds the location pick.
   - Re-read spec 3's **Shared pieces** and Changes #1–#4.
-- [x] **Step 9: Commit.** `git commit -m "Task 5: campground, favorites and trips services; shared map, card list, detail panel, heart and add-to-trip"`
+- [ ] **Step 9: Commit.** `git commit -m "Task 5: campground, favorites and trips services; shared map, card list, detail panel, heart and add-to-trip"`
 
 **QC (for Shawn, in the browser):** nothing new to see yet. These pieces first appear on the Finder (Task 6).
 
@@ -1377,13 +1380,13 @@ Read spec 3 in full: the page, the filter bar, how a search runs, the location m
 - **`FinderStateService`:** `snapshot(): FinderSnapshot | null` and `save(snapshot)`, with key `campsite-finder.finder` in `sessionStorage` and the validation in spec 3.
   - `FinderSnapshot` is `{ location: Coordinates; agencies: string[]; states: string[]; regions: string[]; parks: string[] | null; nearMeEnabled: boolean; radiusMiles: number }`.
 
-- [x] **Step 1: `GeolocationService` and `FinderStateService`,** exactly as spec 3 describes, including every message text and validation rule.
-- [x] **Step 2: The Finder's logic** (spec 3, **How a search runs** and **Saved state**).
+- [ ] **Step 1: `GeolocationService` and `FinderStateService`,** exactly as spec 3 describes, including every message text and validation rule.
+- [ ] **Step 2: The Finder's logic** (spec 3, **How a search runs** and **Saved state**).
   - **Constants:** 1609.34 m per mile; "Show all" is 20,038,000 m; the five agencies; radius choices `[null, 25, 50, 100, 250]`; the region→state table.
   - **Change #5:** a `loading` state for the first load only, and an `updating` signal for reloads.
   - **Change #7:** the single **Where** picker.
   - **Change #11:** Reset filters puts every filter back to its starting value and reruns the search once, from the current search location.
-- [x] **Step 3: The Finder's template.** Class structure:
+- [ ] **Step 3: The Finder's template.** Class structure:
   - **Filter bar:** `div.filter-bar` holds `div.filter-group` blocks:
     - the agency group: `span.rt-label` "AGENCY", then `button.chip` (`is-on`, `aria-pressed`) per agency;
     - the PrimeNG multiselect group: **Where**, grouped by region, with filter and labels as in change #7; then **Park**, shown when there are park codes, with the change #6 note `rt-notice` "Park filter shows NPS campgrounds only" when not all parks are selected;
@@ -1397,8 +1400,10 @@ Read spec 3 in full: the page, the filter bar, how a search runs, the location m
       - the manual panel (`rt-dashed-panel` > `form.manual-location` + `p.manual-location-help`, and `.map-pick-help` for the tip);
       - `<app-campground-table>`.
     - `div.status-area` for the first load and the error state.
+  - **The error state** (spec 3, **Error state**), inside `div.status-area`, in order: the error message (`rt-message rt-message--error`); the blocked help when blocked; a `button.rt-text-btn.rt-text-btn--teal.retry` "Use my device location"; and the manual panel, **always shown** (it's the only way to search here), without the map tip.
+  - **The manual panel is one shared `ng-template` with no `@if` inside it.** The side column wraps its own use in `@if (manualOpen())` (toggled by "Change location"); the error state uses it unwrapped.
   - **The map's `addToTrip` output** sets the selection and the table's `openPickerFor` (spec 3, change #4).
-- [x] **Step 4: `finder.component.scss`, verbatim from V1:**
+- [ ] **Step 4: `finder.component.scss`, verbatim from V1:**
   ```scss
 :host {
   flex: 1;
@@ -1536,19 +1541,21 @@ Read spec 3 in full: the page, the filter bar, how a search runs, the location m
 }
   ```
   V1 had two multiselects (region + state) in a `filter-group`; the single Where picker uses the same group. The "Updating…" text uses `span.nearest`'s style. The park note is `rt-notice`.
-- [x] **Step 5: Route.** `''` → `FinderComponent`.
-- [x] **Step 6: Verify.**
+- [ ] **Step 5: Route.** `''` → `FinderComponent`.
+- [ ] **Step 6: Verify.**
   - Lint and build.
   - Re-read spec 3 end to end. Check every exact text: the location messages, blocked help, manual panel help, labels, "Finding campgrounds near you...", and "Unable to load nearby campgrounds.". List any gap in `activity.md`.
-- [x] **Step 7: Commit.** `git commit -m "Task 6: the Finder page (filters, map and list, location, saved search)"`
+- [ ] **Step 7: Commit.** `git commit -m "Task 6: the Finder page (filters, map and list, location, saved search)"`
 
-**QC (for Shawn, in the browser):** use the Finder at http://192.168.1.188:4200. The browser will ask for your location; Ralph's campgrounds are the full production set.
+**QC (for Shawn, in the browser):** use the Finder at http://192.168.1.188:4200. Ralph's campgrounds are the full production set. Over plain `http://192.168.1.188`, Chrome won't share your location (it isn't a secure origin), so you'll start in the error state. To test device location, use an ssh tunnel (`ssh -L 4200:localhost:4200 ralph`, then http://localhost:4200) or list the address under `chrome://flags/#unsafely-treat-insecure-origin-as-secure`.
+- Error state (location timed out, denied or unavailable): under the message and "Use my device location", the lat/lng panel shows, and "Search this location" works.
 - Allow location: the map centers on you at about a 100-mile view, and the list shows "{n} campgrounds · nearest first" with mustard distance badges.
 - Toggle agency chips, the Where picker (ticking a region ticks its states) and Park: the list updates **without blanking**, and "Updating…" shows meanwhile. Picking a few parks shows the NPS-only note.
-- Miles **All**: the whole country. Scrolling stays smooth (virtual list), and the map stays responsive (chunked markers).
+- Miles **All**: the whole country. It appears in about a second, scrolling stays smooth (off-screen cards aren't drawn), and the map stays responsive (chunked markers).
 - Change a few filters, then **Reset filters**: every filter goes back to its start in one search, with no location prompt. The button is greyed out until you change a filter again.
 - Click a card: it expands with the description, Reserve (when there is a URL) and Directions.
-- Right-click the map → "Search from here". Change location → the manual lat/lng panel.
+- Right-click the map: a popup with the coordinates and "Search from here", which searches from there. A plain left-click on the map doesn't search. Change location → the manual lat/lng panel.
+- Click a marker, then "View details ▸": the list scrolls to that card and opens it, even far down a "Show all" list.
 - Go to About and back: your search and filters are kept, with no location prompt. Refresh: they're still kept.
 - Signed in as Pat: hearts are filled on Pat's favorites; + opens the add-to-trip panel. A marker popup's "Add to trip…" opens that card's panel.
 - Block location in the browser: the blocked help appears, and the manual panel works.
@@ -1563,7 +1570,7 @@ Read the Favorites section and Proposed changes #1–#4 in `2026-10-25-favorites
 - Create: `src/app/features/favorites/favorites.component.ts`, `.html`
 - Modify: `src/app/shared/ui/campground-map/campground-map.component.ts` (add `fitToCampgrounds: boolean` input, change #4), `src/app/app.routes.ts`
 
-- [x] **Step 1: The Favorites page** (spec 6, with the exact texts and the plan-a-trip flow), plus changes #1–#4.
+- [ ] **Step 1: The Favorites page** (spec 6, with the exact texts and the plan-a-trip flow), plus changes #1–#4.
   - **Change #1:** unfavoriting removes the card.
   - **Change #2:** the "Tap the heart" empty text.
   - **Change #3:** the load error with "Try again".
@@ -1609,10 +1616,10 @@ Read the Favorites section and Proposed changes #1–#4 in `2026-10-25-favorites
   }
 }
     ```
-- [x] **Step 2: Map `fitToCampgrounds`.** When it's true and the campgrounds change, `fitBounds` them with 32px padding, the same as ordered mode.
-- [x] **Step 3: Route.** `favorites` → `FavoritesComponent` (`authGuard`).
-- [x] **Step 4: Verify.** Lint and build. Re-read spec 6.
-- [x] **Step 5: Commit.** `git commit -m "Task 7: favorites page (notes, plan a trip)"`
+- [ ] **Step 2: Map `fitToCampgrounds`.** When it's true and the campgrounds change, `fitBounds` them with 32px padding, the same as ordered mode.
+- [ ] **Step 3: Route.** `favorites` → `FavoritesComponent` (`authGuard`).
+- [ ] **Step 4: Verify.** Lint and build. Re-read spec 6.
+- [ ] **Step 5: Commit.** `git commit -m "Task 7: favorites page (notes, plan a trip)"`
 
 **QC (for Shawn, in the browser):**
 - As Pat: three favorites, one with a note. The map fits them.
@@ -1630,8 +1637,8 @@ Read the Trips list and Trip detail sections and Proposed changes #3 and #5–#1
 - Create: `src/app/features/trips/trips-list.component.ts`, `.html`; `trip-detail.component.ts`, `.html`
 - Modify: `src/app/core/services/trips.service.ts` (`loadAllStops(tripIds): Promise<Map<string, TripStop[]>>` in two requests, change #5), `src/app/app.routes.ts`
 
-- [x] **Step 1: `TripsService.loadAllStops`.** One `trip_stops` select for all the given trip ids (`order by position`), then one `getByIds` for every campground. Returns the stops per trip.
-- [x] **Step 2: The Trips list** (spec 7, plus changes #3, #6 and #7).
+- [ ] **Step 1: `TripsService.loadAllStops`.** One `trip_stops` select for all the given trip ids (`order by position`), then one `getByIds` for every campground. Returns the stops per trip.
+- [ ] **Step 2: The Trips list** (spec 7, plus changes #3, #6 and #7).
   - **Structure:**
     - `div.rt-content` with `h1.rt-title` "Trips", then `p.empty`;
     - `div.postcards` of `article.postcard`, each holding:
@@ -1710,7 +1717,7 @@ Read the Trips list and Trip detail sections and Proposed changes #3 and #5–#1
   margin-left: auto;
 }
     ```
-- [x] **Step 3: Trip detail** (spec 7, plus changes #3, #6, #8 and #10).
+- [ ] **Step 3: Trip detail** (spec 7, plus changes #3, #6, #8 and #10).
   - **Structure:**
     - not found: `div.rt-content` with `a.back-link` "‹ All trips";
     - otherwise `div.rt-map-layout` > the map (ordered) + `div.rt-side`, holding:
@@ -1861,12 +1868,12 @@ Read the Trips list and Trip detail sections and Proposed changes #3 and #5–#1
   }
 }
     ```
-- [x] **Step 4: Routes.** `trips` and `trips/:id` → the real components (`authGuard`).
-- [x] **Step 5: Verify.**
+- [ ] **Step 4: Routes.** `trips` and `trips/:id` → the real components (`authGuard`).
+- [ ] **Step 5: Verify.**
   - Lint and build.
   - Re-read spec 7.
   - `grep -rn "window.confirm\|confirm(" src/app` finds nothing.
-- [x] **Step 6: Commit.** `git commit -m "Task 8: trips list (postcards) and trip detail (route map, reorder, add and remove stops)"`
+- [ ] **Step 6: Commit.** `git commit -m "Task 8: trips list (postcards) and trip detail (route map, reorder, add and remove stops)"`
 
 **QC (for Shawn, in the browser):**
 - As Pat: the "Sample road trip" postcard with "2 stops" and the route.
@@ -1895,8 +1902,8 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
 - **`AdminStatsService`:** `stats` signal `{ favoritesCount, tripsCount }`; `loadStats`.
 - **`CampgroundAttributesService`:** `attributes` signal; `loadForCampground`, `addAttribute`, `updateAttribute`, `deleteAttribute`.
 
-- [x] **Step 1: The three services and models,** as above (spec 8, spec 1's RPCs and edge functions).
-- [x] **Step 2: The Admin page** (spec 8, with the exact texts), plus changes #1–#3: "You" on your own row, plain-English errors, and stats refreshing after a delete.
+- [ ] **Step 1: The three services and models,** as above (spec 8, spec 1's RPCs and edge functions).
+- [ ] **Step 2: The Admin page** (spec 8, with the exact texts), plus changes #1–#3: "You" on your own row, plain-English errors, and stats refreshing after a delete.
   - **Structure:**
     - `div.rt-content.admin` with `h1.rt-title` "Admin";
     - `div.admin-stats` of `div.admin-stat` (`span.admin-stat-value.favorites` / `.trips`, `span.admin-stat-label`);
@@ -2012,12 +2019,12 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
   width: 100%;
 }
     ```
-- [x] **Step 3: Route.** `admin` → `AdminComponent` (`adminGuard`).
-- [x] **Step 4: Verify.**
+- [ ] **Step 3: Route.** `admin` → `AdminComponent` (`adminGuard`).
+- [ ] **Step 4: Verify.**
   - Lint and build.
   - `grep -rn "PlaceholderComponent" src/app/app.routes.ts` finds nothing. Every page is now real, so delete `src/app/features/placeholder/`.
   - Re-read spec 8.
-- [x] **Step 5: Commit.** `git commit -m "Task 9: admin page (stats, users, campground attributes); remove the placeholder"`
+- [ ] **Step 5: Commit.** `git commit -m "Task 9: admin page (stats, users, campground attributes); remove the placeholder"`
 
 **QC (for Shawn, in the browser):**
 - As the admin: the stats pills; Users lists admin, Pat and Sam.

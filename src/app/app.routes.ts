@@ -3,36 +3,19 @@ import { adminGuard } from './core/guards/admin.guard';
 import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
 
+const placeholder = () => import('./features/placeholder/placeholder.component').then((m) => m.PlaceholderComponent);
+
 export const routes: Routes = [
-  {
-    path: '',
-    loadComponent: () => import('./features/finder/finder.component').then((m) => m.FinderComponent),
-  },
-  {
-    path: 'favorites',
-    loadComponent: () => import('./features/favorites/favorites.component').then((m) => m.FavoritesComponent),
-    canActivate: [authGuard],
-  },
-  {
-    path: 'trips',
-    loadComponent: () => import('./features/trips/trips-list.component').then((m) => m.TripsListComponent),
-    canActivate: [authGuard],
-  },
-  {
-    path: 'trips/:id',
-    loadComponent: () => import('./features/trips/trip-detail.component').then((m) => m.TripDetailComponent),
-    canActivate: [authGuard],
-  },
+  { path: '', loadComponent: placeholder },
+  { path: 'favorites', loadComponent: placeholder, canActivate: [authGuard] },
+  { path: 'trips', loadComponent: placeholder, canActivate: [authGuard] },
+  { path: 'trips/:id', loadComponent: placeholder, canActivate: [authGuard] },
   {
     path: 'account',
     loadComponent: () => import('./features/account/account.component').then((m) => m.AccountComponent),
     canActivate: [authGuard],
   },
-  {
-    path: 'admin',
-    loadComponent: () => import('./features/admin/admin.component').then((m) => m.AdminComponent),
-    canActivate: [adminGuard],
-  },
+  { path: 'admin', loadComponent: placeholder, canActivate: [adminGuard] },
   {
     path: 'login',
     loadComponent: () => import('./features/auth/login.component').then((m) => m.LoginComponent),
