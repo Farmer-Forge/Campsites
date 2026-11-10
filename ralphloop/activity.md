@@ -92,3 +92,6 @@ TASK 3 COMPLETE
 
 ## Task 5, call 3
 - Step 3: added `hasLocation(c)` to campground.model.ts and `app-campground-detail-panel` (input `campground`; description via `[innerHTML]`; Reserve only when `reservationUrl` set; Directions hidden when no location, falls back to the Google Maps dir URL). Inline styles verbatim. No raw colors; `ng lint` and `ng build` pass (budget warning pre-existing).
+
+## Task 5, call 4
+- Step 4: added shared/ui/favorite-toggle (`app-favorite-toggle`, input `campgroundId`). Renders only when signed in; `rt-icon-btn favorite-button`, heart SVG filled when in `favoriteIds`, title/aria-pressed, `stopPropagation()` on click. It only reads `favoriteIds` (no per-heart load, change #1). Toggle errors are swallowed. `ng lint` and `ng build` pass.
