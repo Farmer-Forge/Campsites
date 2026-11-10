@@ -152,3 +152,7 @@ TASK 7 COMPLETE
 ## Task 8, call 1
 - Step 1: added `TripsService.loadAllStops(tripIds)`: one `trip_stops` select (`in trip_id`, `order by position`), one `getByIds` for the distinct campgrounds; returns a Map with an entry (possibly empty) per trip id. `ng lint` and `ng build` pass.
 - Note: Step 2 is ticked but `src/app/features/trips/` doesn't exist, so the Trips list component isn't in the tree. Step 3 (or a later call) must create `trips-list.component.ts/.html` with Step 2's structure and styles, as happened in Tasks 6 and 7.
+
+## Task 8, call 2
+- Step 3: created `features/trips/trips-list.component.ts/.html` (missing from call 1's Step 2: postcards, inline delete confirmation, load error + Try again, delete error) and `trip-detail.component.ts/.html` (not found vs load error, ordered map, rename with Cancel, inline delete confirm, optimistic move via `reorderStops` with re-read on failure, remove, add from favorites not in the trip). Styles verbatim, inline.
+- Also routed `trips` and `trips/:id` to the real components with `authGuard` in `app.routes.ts` (Step 4's work), so ticked Step 4 too. `ng lint` and `ng build` pass; no `confirm(` in src/app. Not exercised in a browser.

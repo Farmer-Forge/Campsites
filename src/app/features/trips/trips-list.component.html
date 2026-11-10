@@ -1,0 +1,55 @@
+<div class="rt-content">
+  <h1 class="rt-title">Trips</h1>
+  @if (loadError()) {
+    <p class="rt-message rt-message--error">Couldn't load your trips — try again.</p>
+    <div>
+      <button type="button" class="rt-btn rt-btn--sm" (click)="load()">Try again</button>
+    </div>
+  } @else if (!loading() && tripsService.trips().length === 0) {
+    <p class="empty">
+      No trips yet. Select some favorites on the <a routerLink="/favorites">Favorites</a> page and choose "Plan a trip"
+      to create one.
+    </p>
+  }
+  @if (deleteError()) {
+    <p class="rt-message rt-message--error">Couldn't delete this trip — try again.</p>
+  }
+  <div class="postcards">
+    @for (trip of tripsService.trips(); track trip.id) {
+      <article class="postcard">
+        <a class="postcard-header" [routerLink]="['/trips', trip.id]">
+          <span class="greetings">Greetings from</span>
+          <span class="trip-name">{{ trip.name }}</span>
+        </a>
+        @if (stops().get(trip.id); as tripStops) {
+          <div class="postcard-body">
+            <div class="stop-count">{{ tripStops.length }} {{ tripStops.length === 1 ? 'stop' : 'stops' }}</div>
+            @if (tripStops.length > 0) {
+              <div class="route">{{ route(trip.id) }}</div>
+            }
+          </div>
+        }
+        <div class="postcard-footer">
+          @if (confirmingId() === trip.id) {
+            <span>Delete this trip? This cannot be undone.</span>
+            <button type="button" class="rt-btn rt-btn--sm" (click)="confirmingId.set(null)">Cancel</button>
+            <button
+              type="button"
+              class="rt-btn rt-btn--sm rt-btn--cherry"
+              [disabled]="deleting()"
+              (click)="deleteTrip(trip.id)"
+            >
+              Yes, delete this trip
+            </button>
+          } @else {
+            <span>Created {{ trip.createdAt | date }}</span>
+            <a class="rt-btn rt-btn--sm rt-btn--mustard open" [routerLink]="['/trips', trip.id]">Open</a>
+            <button type="button" class="rt-btn rt-btn--sm rt-btn--danger-outline" (click)="confirmingId.set(trip.id)">
+              Delete
+            </button>
+          }
+        </div>
+      </article>
+    }
+  </div>
+</div>
