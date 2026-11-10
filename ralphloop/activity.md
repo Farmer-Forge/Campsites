@@ -95,3 +95,6 @@ TASK 3 COMPLETE
 
 ## Task 5, call 4
 - Step 4: added shared/ui/favorite-toggle (`app-favorite-toggle`, input `campgroundId`). Renders only when signed in; `rt-icon-btn favorite-button`, heart SVG filled when in `favoriteIds`, title/aria-pressed, `stopPropagation()` on click. It only reads `favoriteIds` (no per-heart load, change #1). Toggle errors are swallowed. `ng lint` and `ng build` pass.
+
+## Task 5, call 5
+- Step 5: added shared/ui/add-to-trip (`app-add-to-trip`, input `campgroundId`, output `done`). On init it loads trips and the trips containing the campground; one button per trip (disabled with " (added)"), "New trip name" input + "Create & Add" (or Enter, blank does nothing); the three spec error texts; emits `done` after a successful add/create. Inline styles verbatim. No stopPropagation on the panel (lint forbids a click handler on a div), so the card in Step 6 must stop clicks in the panel from toggling the card. `ng lint` and `ng build` pass.

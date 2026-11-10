@@ -1169,7 +1169,7 @@ Read spec 3 in full. This task builds the services and the five shared component
   color: var(--rt-cherry);
 }
     ```
-- [ ] **Step 5: `app-add-to-trip`** (spec 3, with its exact texts).
+- [x] **Step 5: `app-add-to-trip`** (spec 3, with its exact texts).
   - **Structure:**
     - `<div class="add-to-trip-panel">` with `<div class="rt-label">ADD TO TRIP</div>`;
     - `<div class="trip-options">` of `rt-btn rt-btn--sm trip-option` buttons;
