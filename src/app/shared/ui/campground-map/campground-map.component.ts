@@ -36,6 +36,7 @@ export class CampgroundMapComponent implements AfterViewInit, OnDestroy {
   readonly campgrounds = input.required<Campground[]>();
   readonly selectedId = input<string | null>(null);
   readonly ordered = input(false);
+  readonly fitToCampgrounds = input(false);
   readonly searchLocation = input<Coordinates | null>(null);
   readonly allowLocationPick = input(false);
 
@@ -58,10 +59,11 @@ export class CampgroundMapComponent implements AfterViewInit, OnDestroy {
     effect(() => {
       const list = this.campgrounds();
       const ordered = this.ordered();
+      const fit = this.fitToCampgrounds();
       if (!this.ready) {
         return;
       }
-      untracked(() => this.renderMarkers(list, ordered));
+      untracked(() => this.renderMarkers(list, ordered, fit));
     });
 
     effect(() => {
@@ -100,7 +102,7 @@ export class CampgroundMapComponent implements AfterViewInit, OnDestroy {
     this.resizeObserver.observe(this.mapEl().nativeElement);
 
     this.ready = true;
-    this.renderMarkers(this.campgrounds(), this.ordered());
+    this.renderMarkers(this.campgrounds(), this.ordered(), this.fitToCampgrounds());
     this.renderSearchLocation(this.searchLocation());
     const id = this.selectedId();
     if (id) {
@@ -114,7 +116,7 @@ export class CampgroundMapComponent implements AfterViewInit, OnDestroy {
     this.map = null;
   }
 
-  private renderMarkers(list: Campground[], ordered: boolean): void {
+  private renderMarkers(list: Campground[], ordered: boolean, fit: boolean): void {
     const map = this.map;
     const cluster = this.cluster;
     if (!map || !cluster) {
@@ -155,9 +157,9 @@ export class CampgroundMapComponent implements AfterViewInit, OnDestroy {
       if (points.length >= 2) {
         this.route = L.polyline(points).addTo(map);
       }
-      if (points.length > 0) {
-        map.fitBounds(L.latLngBounds(points), { padding: [32, 32] });
-      }
+    }
+    if ((ordered || fit) && points.length > 0) {
+      map.fitBounds(L.latLngBounds(points), { padding: [32, 32] });
     }
   }
 
