@@ -83,3 +83,32 @@ TASK 4 COMPLETE
 - Step 6: `ng lint` passes and `ng build` succeeds. Pat password login returns an access_token (count 1); Sam `users.suspended` is `t`. Re-read spec 4 and grepped every exact text (headings, buttons, notices, reset states, errors): all present. Gaps: none.
 
 TASK 3 COMPLETE
+
+## Task 5, call 1
+- Step 1: added campground.model.ts, trip.model.ts and CampgroundsService (getNearest pages with `.range()` and sends no `result_limit`; getByIds, getParkCodes (paged, distinct, sorted), getParkNames, searchByName with `\`, `%`, `_` escaped). `Coordinates` exported. `ng lint` and `ng build` pass (budget warning pre-existing).
+
+## Task 5, call 2
+- Step 2: wrote FavoritesService (signals, loadFavoriteIds, toggleFavorite, updateNote with `.select()` and "No matching favorite to update", onSignOut reset) and TripsService (all spec 7 methods; createTrip deletes the new trip if the stops insert fails; reorderStops calls `reorder_trip_stops`; onSignOut clears `trips`). app.ts session effect also calls `loadFavoriteIds()` (errors swallowed so the effect never throws). `ng lint` and `ng build` pass.
+
+## Task 5, call 3
+- Step 3: added `hasLocation(c)` to campground.model.ts and `app-campground-detail-panel` (input `campground`; description via `[innerHTML]`; Reserve only when `reservationUrl` set; Directions hidden when no location, falls back to the Google Maps dir URL). Inline styles verbatim. No raw colors; `ng lint` and `ng build` pass (budget warning pre-existing).
+
+## Task 5, call 4
+- Step 4: added shared/ui/favorite-toggle (`app-favorite-toggle`, input `campgroundId`). Renders only when signed in; `rt-icon-btn favorite-button`, heart SVG filled when in `favoriteIds`, title/aria-pressed, `stopPropagation()` on click. It only reads `favoriteIds` (no per-heart load, change #1). Toggle errors are swallowed. `ng lint` and `ng build` pass.
+
+## Task 5, call 5
+- Step 5: added shared/ui/add-to-trip (`app-add-to-trip`, input `campgroundId`, output `done`). On init it loads trips and the trips containing the campground; one button per trip (disabled with " (added)"), "New trip name" input + "Create & Add" (or Enter, blank does nothing); the three spec error texts; emits `done` after a successful add/create. Inline styles verbatim. No stopPropagation on the panel (lint forbids a click handler on a div), so the card in Step 6 must stop clicks in the panel from toggling the card. `ng lint` and `ng build` pass.
+
+## Task 5, call 6
+- Step 6: added shared/ui/campground-table (`app-campground-table`; inputs campgrounds, selected, showDistance, showNotes, notes, planMode, planSelected; outputs selectedChange, noteChange, planToggle). Plain `rt-scroll-list` with `@for`, `content-visibility: auto` on cards, no CDK virtual scroll; `npm uninstall @angular/cdk-experimental` done. External `selected` expands the card and scrolls it in via `afterNextRender`. Only one add-to-trip panel open at a time (`pickerId` signal); the panel sits outside `.card-main`, so its clicks don't toggle the card. Notes keep a draft while typing and emit on blur (blank → null). No extra :host height rule needed. Step 7 must add the `openPickerFor` input (set `pickerId`) to this component. `ng lint`, `ng build` and `ngc --noEmit` pass.
+
+## Task 5, call 7
+- Step 7: added shared/ui/campground-map (`app-campground-map`; inputs campgrounds, selectedId, ordered, searchLocation, allowLocationPick; outputs viewDetails, addToTrip, locationPick) with the verbatim scss. Cluster uses `chunkedLoading`; popups are plain DOM ("View details ▸", and "Add to trip…" only when signed in); right-click (`contextmenu`) pick popup with "Search from here"; no-location campgrounds get no marker/route point and keep stop numbers from the full list; marker click and selection use max(12, current zoom) plus `zoomToShowLayer`. Added `openPickerFor` input to `app-campground-table`. `ng lint`, `ng build` and `ngc --noEmit` pass (map isn't imported by any page yet, so it isn't in the bundle). Not exercised in a browser.
+
+## Task 5, call 8
+- Step 8: `ng lint` passes; `ng build` succeeds (initial-bundle budget warning only, no error). Paging check prints 1000. grep for cdk-virtual/scrollToIndex/cdk-experimental finds nothing; `contextmenu` found in campground-map.component.ts:93. Re-read spec 3 Changes #1–#4 against the implementation: all covered.
+
+## Task 5, call 9
+- Step 9: worktree clean; nothing to commit. Confirmed the services, models and shared components appear in `git log main..HEAD --stat` via checkpoint commits. Step treated as done.
+
+TASK 5 COMPLETE
