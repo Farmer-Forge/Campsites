@@ -148,3 +148,19 @@ TASK 6 COMPLETE
 - Step 5: worktree clean; favorites files appear in `git log main..HEAD --stat` via checkpoint commits. Treated as done.
 
 TASK 7 COMPLETE
+
+## Task 8, call 1
+- Step 1: added `TripsService.loadAllStops(tripIds)`: one `trip_stops` select (`in trip_id`, `order by position`), one `getByIds` for the distinct campgrounds; returns a Map with an entry (possibly empty) per trip id. `ng lint` and `ng build` pass.
+- Note: Step 2 is ticked but `src/app/features/trips/` doesn't exist, so the Trips list component isn't in the tree. Step 3 (or a later call) must create `trips-list.component.ts/.html` with Step 2's structure and styles, as happened in Tasks 6 and 7.
+
+## Task 8, call 2
+- Step 3: created `features/trips/trips-list.component.ts/.html` (missing from call 1's Step 2: postcards, inline delete confirmation, load error + Try again, delete error) and `trip-detail.component.ts/.html` (not found vs load error, ordered map, rename with Cancel, inline delete confirm, optimistic move via `reorderStops` with re-read on failure, remove, add from favorites not in the trip). Styles verbatim, inline.
+- Also routed `trips` and `trips/:id` to the real components with `authGuard` in `app.routes.ts` (Step 4's work), so ticked Step 4 too. `ng lint` and `ng build` pass; no `confirm(` in src/app. Not exercised in a browser.
+
+## Task 8, call 3
+- Step 5: `ng lint` and `ng build` pass (leaflet.markercluster non-ESM warning only); `grep "confirm("` in src/app finds nothing. Re-read spec 7 and changes #3, #5–#8, #10 against trips-list and trip-detail: all texts, inline delete confirmation, rename Cancel, reorder via `reorderStops`, load error + Try again present. Not exercised in a browser.
+
+## Task 8, call 4
+- Step 6: worktree clean; trips list and detail components, `trips.service.ts` and routes appear in `git log main..HEAD --stat` via checkpoint commits. Treated as done.
+
+TASK 8 COMPLETE
