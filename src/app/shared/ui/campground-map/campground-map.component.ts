@@ -89,7 +89,9 @@ export class CampgroundMapComponent implements AfterViewInit, OnDestroy {
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors',
     }).addTo(map);
-    this.cluster = L.markerClusterGroup({ chunkedLoading: true });
+    // leaflet.markercluster attaches markerClusterGroup to the global Leaflet object (window.L).
+    // In production builds the bundler's `import * as L` copy is taken before that, so call it there.
+    this.cluster = (window as unknown as { L: typeof L }).L.markerClusterGroup({ chunkedLoading: true });
     map.addLayer(this.cluster);
 
     map.on('contextmenu', (e: L.LeafletMouseEvent) => {
