@@ -1,0 +1,7 @@
+{
+  "buildCommand": "node scripts/write-env.mjs && npm run build",
+  "outputDirectory": "dist/campsite-finder/browser",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
