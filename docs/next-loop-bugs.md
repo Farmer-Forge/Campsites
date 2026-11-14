@@ -105,6 +105,8 @@ The code check that followed also found that the map's right-click doesn't work 
   - **B: a closer placeholder height.** Measure the real collapsed card height and set `contain-intrinsic-size` to it. That cuts the error but doesn't remove it (names wrap, so heights vary). Best used together with A.
   - **C: drop `content-visibility` from the list.** Every card is laid out for real, so the scroll position is exact. The cost is "Show all" layout time on ~4,700 cards; check it before choosing.
 
+**Status (2026-11-14): logged, not fixed.** Next: Shawn picks Part 2 (A recommended), then the spec 3 wording (`block: 'start'`; V1 and the spec may say `nearest`) and `task.md`.
+
 **Spec:** 3 (Finder), "Campground card list" and change #2. `task.md` Task 5 Step 6 and its QC line. Add a QC check: with Miles **All**, click "View details ▸" in the bubble of a campground far down the list. Its card opens with its **top** (name, heart, **+**) at the top of the list pane. Repeat from "Add to trip…".
 
 ## 6. Where filter lets in campgrounds from other states (Shawn, 2026-11-14)
@@ -131,3 +133,5 @@ The code check that followed also found that the map's right-click doesn't work 
 **Picked: option C (Shawn, 2026-11-14): B now, A later.**
 - **Now (hotfix, like #38/#39):** a new migration `0022` that re-creates `nearest_campgrounds` exactly as in 0021, minus `c.state is null or`, plus a pgTAP test. Only this function has the rule. With Where on **All states**, the app sends no state filter, so all 4,688 campgrounds still show. The 422 with no state drop out only when some states are picked.
 - **Later:** option A (state from location, backfill, sync fallback) goes through the normal spec → `task.md` route. Until then, the 422 can't be found with a region filter on.
+
+**Part B done and live (2026-11-14):** #40 merged; Lisa pushed 0022 to production. Midwest only: 897 → **475** (0 with no state, 0 from other states). All states: still 4,688. Migration history 22/22; `anon` and `authenticated` still have EXECUTE. **Part A: not started.** It needs a spec 3 change (and the sync functions) before it goes into `task.md`.
