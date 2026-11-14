@@ -85,3 +85,49 @@ The code check that followed also found that the map's right-click doesn't work 
 **Spec:** 3 (Finder), "Changes from V1" #2, and "Campground card list". `task.md` Task 5 Step 6. 
 
 **Folded in (Shawn, 2026-11-09):** spec 3 change #2 rewritten (with a "Revised" note), the roadmap spec and CLAUDE.md wording, and `task.md` and its template (Tech Stack, Task 2's install line, Task 5 Steps 6 and 8, and Task 6's QC lines).
+
+## 5. Picking a campground still misbehaves when the list is long (Shawn, 2026-11-14)
+
+**What happens:** clicking a campground still has a problem with the list when the list is long. This is the same area as bug 4, and its fix (option A) hasn't cured it. Short lists seem fine.
+
+**Symptom (Shawn, 2026-11-14):** on the **live site**, **Finder**, clicking **"View details ▸" in a map bubble**. The list does move, but not far enough. And when it stops, what's in view is the **bottom** of the opened card (Reserve / Directions), not its **top** (the name, the heart and the **+** add-to-trip button), which is where it should land.
+
+**Likely cause (diagnosis from the code, not yet tested in the browser):** bug 4's fix gives every card `content-visibility: auto; contain-intrinsic-size: auto 80px` and scrolls with `scrollIntoView({ behavior: 'smooth', block: 'nearest' })` in `afterNextRender` ([campground-table.component.ts:135](../src/app/shared/ui/campground-table/campground-table.component.ts#L135), [:267-281](../src/app/shared/ui/campground-table/campground-table.component.ts#L267-L281)).
+- Cards that have never been drawn count as the 80px placeholder, not their real height. The smooth scroll works out its target from those guesses. As it passes, the cards get drawn at their real height and the target moves, so it stops in the wrong place.
+- The error adds up with every undrawn card above the target, which explains "only when the list is long."
+- The open card is taller still (the detail panel), which adds to the miss.
+- **Why it shows the bottom of the card: `block: 'nearest'`.** For a card below the visible area, `nearest` scrolls just far enough to bring the card's **bottom** edge into view. An open card with its detail panel is about as tall as the list pane, so its top (name, heart, **+**) ends up above the visible area. This part happens even with no height error. The spec should say the card's **top** lands at the top of the list: `block: 'start'`.
+
+**Fix options (two parts):**
+- **Part 1, required in every option: land on the card's top.** Use `scrollIntoView({ block: 'start' })` instead of `'nearest'`, so the card's name, heart and **+** sit at the top of the list pane.
+- **Part 2, pick one for the distance:**
+  - **A (recommended): scroll, then correct.** Jump with `behavior: 'auto'` (instant), wait a frame or two for the cards around it to draw, then `scrollIntoView` again. Repeat until the card's top stops moving (cap it at a few tries). Small change, keeps `content-visibility`.
+  - **B: a closer placeholder height.** Measure the real collapsed card height and set `contain-intrinsic-size` to it. That cuts the error but doesn't remove it (names wrap, so heights vary). Best used together with A.
+  - **C: drop `content-visibility` from the list.** Every card is laid out for real, so the scroll position is exact. The cost is "Show all" layout time on ~4,700 cards; check it before choosing.
+
+**Spec:** 3 (Finder), "Campground card list" and change #2. `task.md` Task 5 Step 6 and its QC line. Add a QC check: with Miles **All**, click "View details ▸" in the bubble of a campground far down the list. Its card opens with its **top** (name, heart, **+**) at the top of the list pane. Repeat from "Add to trip…".
+
+## 6. Where filter lets in campgrounds from other states (Shawn, 2026-11-14)
+
+**What happens:** on production, with Where set to just the Midwest (12 states), the list says 897 campgrounds, and the map shows clusters in California, Arizona, the Northeast and the Southeast. Adding or removing states does change the count, so the filter is doing something.
+
+**The map isn't the problem.** The map and the list both draw from the same `results()` ([finder.component.html:153-199](../src/app/features/finder/finder.component.html#L153-L199)), and the map's clusters add up to the list's count. The search results themselves include campgrounds from outside the selected states.
+
+**Why (confirmed against the 2026-11-14 nightly backup):**
+- `nearest_campgrounds` (latest version in [0021_skip_zero_locations.sql:41](../supabase/migrations/0021_skip_zero_locations.sql#L41)) filters with `c.state is null or c.state = any(state_filter)`. [0014](../supabase/migrations/0014_nearest_campgrounds_null_state.sql) added the `is null` on purpose, so that campgrounds with no state recorded don't disappear. So **every campground with no state passes every Where filter.**
+- **422 of the 4,688 searchable campgrounds have no state** (457 of 4,900 in the table, counting the 0,0 rows the search skips). By agency: USFS 243, NPS 163, BLM 43, USACE 8. By source: ridb 294, nps 163. About 265 of them are in the West.
+- The numbers match exactly: 475 Midwest campgrounds + 422 with no state = **897**, the count in the screenshot.
+- Where the nulls come from: `ridb-sync` and `nps-sync` take the state from the source's address record (the Physical address first, otherwise the first one listed). When the source has no address, or an empty state code, the state is null ([ridb-sync/transform.ts:44-49](../supabase/functions/ridb-sync/transform.ts#L44-L49), [nps-sync/transform.ts:40-43](../supabase/functions/nps-sync/transform.ts#L40-L43)). Nothing ever fills it in later.
+
+**Fix options:**
+- **A (recommended): derive the state from the campground's location.** Load US state boundaries (Census cartographic boundary file, simplified) into a table once. Backfill `state` for rows where it's null with a PostGIS point-in-polygon. Both syncs use the same lookup as a fallback when the source gives no state. Then only rows truly outside every state (offshore, territories) stay null. It's an additive migration plus a sync change, which ForgeDB's additive-only rule allows.
+- **B: stop letting null states through.** Drop `c.state is null or` from the filter. One-line migration, but with any Where filter on, those 422 campgrounds can never be found by region.
+- **C: B now, A later.** Ship the one-liner first so the filter is honest, then backfill.
+
+**Also worth checking under A:** the source's address can be a mailing or headquarters address in a different state from the campground. A spot check comparing source state to location state would show whether to trust location over the source everywhere, not just as a fallback.
+
+**Spec:** 3 (Finder), "Filter bar" (Where); the `nearest_campgrounds` migrations (0014 / 0021); both sync functions. This is a data and DB fix, not only a loop `task.md` change. QC check: Where = Midwest only, the map shows no campgrounds outside the Midwest, and the count equals the Midwest-only count.
+
+**Picked: option C (Shawn, 2026-11-14): B now, A later.**
+- **Now (hotfix, like #38/#39):** a new migration `0022` that re-creates `nearest_campgrounds` exactly as in 0021, minus `c.state is null or`, plus a pgTAP test. Only this function has the rule. With Where on **All states**, the app sends no state filter, so all 4,688 campgrounds still show. The 422 with no state drop out only when some states are picked.
+- **Later:** option A (state from location, backfill, sync fallback) goes through the normal spec → `task.md` route. Until then, the 422 can't be found with a region filter on.
