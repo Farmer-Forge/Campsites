@@ -411,3 +411,11 @@ enabled = true
 # declarative_schema_path = "./schemas"
 # JSON string passed through to pg-delta SQL formatting.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":80,\"commaStyle\":\"trailing\"}"
+
+# nps-sync and ridb-sync check their caller themselves (supabase/functions/_shared/service-role.ts),
+# because the platform's JWT check can't read Supabase's new sb_secret_ keys (Shawn, 2026-11-14).
+[functions.nps-sync]
+verify_jwt = false
+
+[functions.ridb-sync]
+verify_jwt = false
