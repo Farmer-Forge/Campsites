@@ -1,16 +1,16 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { toCampgroundRow, toParkRow } from "./transform.ts";
-import { isServiceRoleRequest } from "../_shared/service-role.ts";
+import { adminKeyFromEnv, isServiceRoleRequest, secretKeysFromEnv } from "../_shared/service-role.ts";
 
 const NPS_API_BASE = "https://developer.nps.gov/api/v1";
 
 Deno.serve(async (req) => {
   const npsApiKey = Deno.env.get("NPS_API_KEY");
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const serviceRoleKey = adminKeyFromEnv(Deno.env);
 
-  if (!isServiceRoleRequest(req, serviceRoleKey)) {
-    return new Response("Forbidden: run this sync with the service role key", { status: 403 });
+  if (!isServiceRoleRequest(req, secretKeysFromEnv(Deno.env))) {
+    return new Response("Forbidden: run this sync with a secret key", { status: 403 });
   }
 
   if (!npsApiKey || !supabaseUrl || !serviceRoleKey) {

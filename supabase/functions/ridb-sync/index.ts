@@ -1,7 +1,7 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { toCampgroundRow } from "./transform.ts";
 import { resolveAgency } from "./agency.ts";
-import { isServiceRoleRequest } from "../_shared/service-role.ts";
+import { adminKeyFromEnv, isServiceRoleRequest, secretKeysFromEnv } from "../_shared/service-role.ts";
 
 const RIDB_API_BASE = "https://ridb.recreation.gov/api/v1";
 const CAMPING_ACTIVITY_ID = "9";
@@ -9,10 +9,10 @@ const CAMPING_ACTIVITY_ID = "9";
 Deno.serve(async (req) => {
   const ridbApiKey = Deno.env.get("RIDB_API_KEY");
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const serviceRoleKey = adminKeyFromEnv(Deno.env);
 
-  if (!isServiceRoleRequest(req, serviceRoleKey)) {
-    return new Response("Forbidden: run this sync with the service role key", { status: 403 });
+  if (!isServiceRoleRequest(req, secretKeysFromEnv(Deno.env))) {
+    return new Response("Forbidden: run this sync with a secret key", { status: 403 });
   }
 
   if (!ridbApiKey || !supabaseUrl || !serviceRoleKey) {
