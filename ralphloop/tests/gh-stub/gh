@@ -5,6 +5,7 @@
 # each call prints what the real call's -q expression would.
 #
 # PRs live in $RALPH_GH_STUB_DIR/prs, one per line: "<number> <head> <state> <title…>".
+# Drafts are tracked in $RALPH_GH_STUB_DIR/prs.drafts (PR numbers, one per line).
 # `pr diff N --name-only` lists the files the PR's branch changes vs main.
 # RALPH_GH_STUB_FAIL_ONCE=pr_merge (or pr_list, pr_diff) makes that call fail
 # the first time only, like a transient GitHub error.
@@ -24,13 +25,15 @@ if [ "${RALPH_GH_STUB_FAIL_ONCE:-}" = "${SUB// /_}" ] && [ ! -e "${DB}.failed-on
     echo "gh stub: simulated transient failure of $SUB" >&2
     exit 1
 fi
-HEAD_REF="" TITLE="" POS=""
+HEAD_REF="" TITLE="" POS="" DRAFT=0 UNDO=0
 while [ $# -gt 0 ]; do
     case "$1" in
         --head)  HEAD_REF="$2"; shift 2 ;;
         --title) TITLE="$2"; shift 2 ;;
         --repo|--base|--body|--json|-q|--state|--limit) shift 2 ;;
         --squash|--name-only) shift ;;
+        --draft) DRAFT=1; shift ;;
+        --undo)  UNDO=1; shift ;;
         *) POS="$1"; shift ;;
     esac
 done
@@ -39,6 +42,7 @@ case "$SUB" in
     "pr create")
         N=$(( $(wc -l < "$DB") + 1 ))
         echo "$N $HEAD_REF open $TITLE" >> "$DB"
+        if [ "$DRAFT" = "1" ]; then echo "$N" >> "$DB.drafts"; fi
         echo "https://github.com/stub/repo/pull/$N"
         ;;
     "pr list")
@@ -47,6 +51,19 @@ case "$SUB" in
         else                          # chain.sh: "<number> <head>" per open ralph-loop PR
             awk '$3 == "open" && $2 ~ /^ralph-loop\/task-/ { print $1 " " $2 }' "$DB"
         fi
+        ;;
+    "pr ready")  # doloop.sh: mark a reused PR ready for review, or (--undo) back to a draft
+        N="${POS##*/}"
+        touch "$DB.drafts"
+        sed -i "/^$N\$/d" "$DB.drafts"
+        if [ "$UNDO" = "1" ]; then echo "$N" >> "$DB.drafts"; fi
+        ;;
+    "pr view")   # chain.sh: the title of PR $POS
+        awk -v n="$POS" '$1 == n { sub(/^[^ ]+ [^ ]+ [^ ]+ /, ""); print }' "$DB"
+        ;;
+    "pr edit")   # doloop.sh: bring a reused PR's title up to date
+        N="${POS##*/}"
+        sed -i -E "s|^($N [^ ]+ [^ ]+ ).*|\\1$TITLE|" "$DB"
         ;;
     "pr diff")
         HEAD_REF=$(awk -v n="$POS" '$1 == n { print $2 }' "$DB")

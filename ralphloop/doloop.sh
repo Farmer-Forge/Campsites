@@ -55,7 +55,36 @@
 # Model: every worker call uses claude-sonnet-5-5 unless RALPH_MODEL is set,
 # e.g. RALPH_MODEL=claude-opus-5-5 ./ralphloop/doloop.sh
 #
+# Database gate: after every step that ticks a box, this script runs
+# `supabase db reset` then `supabase test db` from the task's worktree, on the
+# host (workers have neither the Supabase CLI nor Docker). Only that result
+# counts. A failed gate unticks the step and the worker retries it with the
+# output; after 3 failed attempts at one step the task's PR is opened flagged
+# as failing and this script exits 1, so chain.sh stops. The gate does no lint
+# or build: there is no app. It runs only if the base branch has
+# supabase/config.toml. RALPH_GATE_TIMEOUT (seconds, default 900) limits one run.
+#
+# Ratify: once every step is checked off and the gate has passed (also on the
+# resume path, where every step was already checked off), one more `claude -p`
+# call runs in the worker container on claude-opus-5-5 (RALPH_RATIFY_MODEL)
+# with ralphloop/ratify-prompt.md. It re-runs the task's verification, tries to
+# break each acceptance criterion and reads the diff for unrequested code, then
+# writes its write-up and exactly one line, RATIFIED: Task N or REJECTED: Task N:
+# <why>, to /ratify-output/verdict.md. This script judges that file and appends
+# the details and the line to activity.md itself. The ratifier is given the
+# diff, the task's section, the Review Focus items that name the task and the
+# Global Constraints (read-only, in /ratify-input). The worker's activity.md is
+# hidden by a mount: an empty read-only file is bind-mounted over it, so the
+# real log is never touched during the call (a crash can't truncate it).
+# Rejected, no verdict line, or anything in the repository changed: stop with
+# exit 1 like BLOCKED (no final push, no PR, worktree kept). The verdict file
+# starts empty for every call, so an old line can't count. The call is limited to RATIFY_TIMEOUT
+# (default 45m; seconds, or a number with s/m/h): on a timeout the container is
+# killed and the run stops with a "RATIFY TIMEOUT: Task N" line. Usage limits
+# use the same waiting as worker calls.
+#
 # Test-only overrides (all default to the real values): RALPH_WORKER_STUB,
+# RALPH_RATIFY_STUB, RALPH_RATIFY_MODEL,
 # RALPH_WAIT_SCALE, RALPH_PUSH_URL, RALPH_SKIP_PR, RALPH_MAX_STEPS,
 # RALPH_LIMIT_BUDGET_SECONDS, RALPH_CLAUDE_AUTH_ENV, RALPH_SUPABASE_ENV.
 
@@ -77,11 +106,20 @@ SUPABASE_ENV="${RALPH_SUPABASE_ENV:-$HOME/.secrets/campsites-supabase.env}"
 # Usage limits and throttling are waited out, up to this much total waiting
 # per run (8h — longer than any 5-hour reset; a weekly limit stops instead).
 LIMIT_BUDGET_SECONDS="${RALPH_LIMIT_BUDGET_SECONDS:-28800}"
+GATE_TIMEOUT_SECONDS="${RALPH_GATE_TIMEOUT:-900}"
+MAX_GATE_ATTEMPTS=3
+RATIFY_MODEL="${RALPH_RATIFY_MODEL:-claude-opus-5-5}"
+RATIFY_PROMPT_FILE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/ratify-prompt.md"   # from this checkout, never the worktree
 THROTTLE_WAIT_SECONDS=120
 MAX_THROTTLE_RETRIES=5
 MAX_NO_PROGRESS_CALLS=3
 
 source "$(dirname "${BASH_SOURCE[0]}")/loop-lib.sh"
+
+if ! RATIFY_TIMEOUT_SECONDS=$(duration_seconds "${RATIFY_TIMEOUT:-45m}"); then
+    echo -e "\033[31m[Error] RATIFY_TIMEOUT='${RATIFY_TIMEOUT:-}' is not a duration. Use seconds, or a number with s, m or h (default 45m).\033[0m"
+    exit 1
+fi
 
 if [ -z "${RALPH_GH_TOKEN:-}" ]; then
     echo -e "\033[31m[Error] RALPH_GH_TOKEN is not set. Export the fine-grained PAT before running.\033[0m"
@@ -228,6 +266,15 @@ else
 fi
 touch "$WORKTREE_LOG"
 
+GATE_ON=0
+if gate_enabled "$BASE_BRANCH"; then
+    GATE_ON=1
+    echo "🧪 Database gate: on (supabase db reset + supabase test db after every step)."
+else
+    echo "🧪 Database gate: off (no supabase/config.toml on ${BASE_BRANCH})."
+fi
+GATE_FLAGGED=0
+
 git -C "$WORKTREE_DIR" config user.name "Ralph Loop"
 git -C "$WORKTREE_DIR" config user.email "ralph-loop@users.noreply.github.com"
 
@@ -275,6 +322,7 @@ WAITED=0               # seconds spent waiting on limits/throttling this run
 LIMIT_STREAK=0
 THROTTLE_STREAK=0
 NO_PROGRESS_STREAK=0
+GATE_ATTEMPTS_FILE="${CALLS_DIR}/gate-attempts"
 
 # wait_or_stop <seconds> <reason> — sleep before retrying the same step,
 # unless that would push this run past LIMIT_BUDGET_SECONDS; then stop cleanly.
@@ -299,6 +347,16 @@ if [ "$(count_unchecked "$WT_TASK_FILE" "$TASK_NUM")" -eq 0 ]; then
     SKIP_WORKERS=1
 fi
 
+# refuse_changed_config — the gate resets the database named by the worktree's
+# own supabase/config.toml, so it won't run if that file differs from the base
+# branch's. Stops like BLOCKED: exit 1, no push, no PR, worktree kept.
+refuse_changed_config() {
+    if gate_config_unchanged "$WORKTREE_DIR_ABS" "$BASE_BRANCH"; then return 0; fi
+    printf '\nGATE REFUSED: supabase/config.toml differs from %s (Task %s, call %s)\n' "$BASE_BRANCH" "$TASK_NUM" "$CALL" >> "$WORKTREE_LOG"
+    echo -e "\n\033[31m🛑 STOPPED: the worktree's supabase/config.toml differs from ${BASE_BRANCH}. The gate resets the database named by that file's project_id and ports, so it won't run (another project shares this host). Nothing was pushed and no PR was opened; the worktree is kept at ${WORKTREE_DIR}. Look at \`git -C ${WORKTREE_DIR} diff ${BASE_BRANCH} -- supabase/config.toml\`, undo the change there (a real config change belongs on ${BASE_BRANCH}, made by hand), remove the GATE REFUSED line from ${LOG_FILE}, then re-run this script.\033[0m"
+    exit 1
+}
+
 # run_worker <prompt> <call_log> — one worker call; returns its exit code.
 # All output (stream-json, one JSON object per line) goes to <call_log>.
 run_worker() {
@@ -317,6 +375,34 @@ run_worker() {
         --env-file "$SUPABASE_ENV" \
         "$CLAUDE_WORKER_IMAGE" \
         claude -p "$1" --model "$WORKER_MODEL" --dangerously-skip-permissions --output-format stream-json --verbose \
+        > "$2" 2>&1
+}
+
+# run_ratify <prompt> <call_log> <container_name> — the ratify call, limited to
+# RATIFY_TIMEOUT_SECONDS; returns its exit code (124 or 137 = timed out). The
+# container gets a name so a timeout can `docker kill` it: killing the
+# `docker run` client alone leaves the container running.
+run_ratify() {
+    if [ -n "${RALPH_RATIFY_STUB:-}" ]; then
+        # No container here: RALPH_RATIFY_ACTIVITY_VIEW is what activity.md
+        # would look like from inside one (the empty file), for the stub to read.
+        (cd "$WORKTREE_DIR_ABS" && RALPH_RATIFY_MODEL="$RATIFY_MODEL" RALPH_RATIFY_INPUT_DIR="$RAT_DIR" \
+            RALPH_RATIFY_OUTPUT_DIR="$RAT_OUT" RALPH_RATIFY_ACTIVITY_VIEW="$RAT_EMPTY" \
+            timeout -k 5 "$RATIFY_TIMEOUT_SECONDS" bash "$RALPH_RATIFY_STUB" "$1") > "$2" 2>&1
+        return
+    fi
+    local mounts
+    mapfile -t mounts < <(ratify_mounts "$CANONICAL_ROOT" "$WORKTREE_DIR_ABS" "$LOG_FILE" "$RAT_EMPTY" "$RAT_DIR" "$RAT_OUT")
+    timeout -k 5 "$RATIFY_TIMEOUT_SECONDS" docker run --rm --name "$3" \
+        --network host \
+        --user "$(id -u):$(id -g)" \
+        -e HOME=/tmp \
+        "${mounts[@]}" \
+        -w "${WORKTREE_DIR_ABS}" \
+        --env-file "$CLAUDE_AUTH_ENV" \
+        --env-file "$SUPABASE_ENV" \
+        "$CLAUDE_WORKER_IMAGE" \
+        claude -p "$1" --model "$RATIFY_MODEL" --dangerously-skip-permissions --output-format stream-json --verbose \
         > "$2" 2>&1
 }
 
@@ -396,6 +482,15 @@ CORE OBJECTIVES:
     do, treat the Commit step as done (check it off as in rule 9). Do not
     create an empty commit, and do not amend, squash or rewrite the
     checkpoint commits.
+12. The database gate: after each step you tick, this loop runs
+    \`supabase db reset\` and then \`supabase test db\` on the host. If either
+    fails, your step is undone (unticked) and the next call gets the output.
+    You can't run those two commands yourself (no Supabase CLI or Docker
+    here); check your work with psql "\$DATABASE_URL" (apply a migration
+    with psql -v ON_ERROR_STOP=1 -1 -f) and pg_prove against \$DATABASE_URL.
+    Never edit or remove an existing test to get a pass. Never edit
+    supabase/config.toml: the gate refuses to run if it differs from
+    ${BASE_BRANCH}, and the loop stops.
 EOF
 )
     if [ -n "$RESUME_NOTE" ]; then
@@ -406,17 +501,59 @@ EOF
 
     BEFORE_UNCHECKED=$(count_unchecked "$WT_TASK_FILE" "$TASK_NUM")
     BEFORE_TITLE=$(first_unchecked_title "$WT_TASK_FILE" "$TASK_NUM")
+    cp "$WT_TASK_FILE" "${CALLS_DIR}/task-before-${CALL}.md"   # to undo ticks if the gate fails
     CALL_LOG="${CALLS_DIR}/call-${CALL}.jsonl"
 
     RC=0
     run_worker "$RALPH_PROMPT" "$CALL_LOG" || RC=$?
     print_call_result "$CALL_LOG"
 
+    # The worker may change task.md only inside this task's own section. Put
+    # back anything else (e.g. a tick that matched another task's identical
+    # step line) before progress is counted, the gate runs or anything commits.
+    OUTSIDE=$(restore_outside_task "${CALLS_DIR}/task-before-${CALL}.md" "$WT_TASK_FILE" "$TASK_NUM")
+    if [ "$OUTSIDE" -gt 0 ]; then
+        printf '\nRESTORED: Task %s, call %s changed %s line(s) of task.md outside its own section; they were put back.\n' \
+            "$TASK_NUM" "$CALL" "$OUTSIDE" >> "$WORKTREE_LOG"
+        echo -e "\033[33m⚠️  The worker changed task.md outside Task ${TASK_NUM}'s section; put back ${OUTSIDE} line(s).\033[0m"
+    fi
+
     # Checkpoint whatever this call completed, whatever else happened to it —
     # a call can finish its step and still end on a usage limit.
     AFTER_UNCHECKED=$(count_unchecked "$WT_TASK_FILE" "$TASK_NUM")
     PROGRESSED=0
     if [ "$AFTER_UNCHECKED" -lt "$BEFORE_UNCHECKED" ]; then
+        if [ "$GATE_ON" = "1" ]; then
+            refuse_changed_config
+            GATE_LOG="${CALLS_DIR}/gate-${CALL}.log"
+            echo "🧪 Gate: supabase db reset, then supabase test db…"
+            GATE_RC=0
+            run_gate "$WORKTREE_DIR_ABS" "$GATE_LOG" "$GATE_TIMEOUT_SECONDS" || GATE_RC=$?
+            if [ "$GATE_RC" -eq 0 ]; then
+                gate_attempts_clear "$GATE_ATTEMPTS_FILE"
+                echo "✔ Gate passed."
+            else
+                GATE_TRIES=$(( $(gate_attempts_get "$GATE_ATTEMPTS_FILE" "$BEFORE_TITLE") + 1 ))
+                gate_attempts_set "$GATE_ATTEMPTS_FILE" "$BEFORE_TITLE" "$GATE_TRIES"
+                printf '\n## Task %s, call %s — GATE FAILED: %s (attempt %s/%s)\n~~~\n%s\n~~~\n' \
+                    "$TASK_NUM" "$CALL" "$BEFORE_TITLE" "$GATE_TRIES" "$MAX_GATE_ATTEMPTS" "$(gate_log_tail "$GATE_LOG" 30)" >> "$WORKTREE_LOG"
+                # Unticks every box this call ticked: the step isn't done.
+                cp "${CALLS_DIR}/task-before-${CALL}.md" "$WT_TASK_FILE"
+                AFTER_UNCHECKED=$BEFORE_UNCHECKED
+                if [ "$GATE_TRIES" -lt "$MAX_GATE_ATTEMPTS" ]; then
+                    echo -e "\033[33m⚠️  Gate failed (attempt ${GATE_TRIES} of ${MAX_GATE_ATTEMPTS}) — step undone, retrying. Log: ${GATE_LOG}\033[0m"
+                    # Not counted toward MAX_STEPS_PER_TASK or the no-progress streak.
+                    RESUME_NOTE=$(gate_note "$BEFORE_TITLE" "$GATE_TRIES" "$MAX_GATE_ATTEMPTS" "$GATE_LOG")
+                    continue
+                fi
+                echo -e "\033[31m🛑 Gate failed ${MAX_GATE_ATTEMPTS} times on '${BEFORE_TITLE}' — committing the work as it stands and opening a PR flagged as failing. Log: ${GATE_LOG}\033[0m"
+                checkpoint_commit "$WORKTREE_DIR" "Checkpoint (GATE FAILED): Task ${TASK_NUM} — ${BEFORE_TITLE}"
+                push_branch_quietly "$WORKTREE_DIR" "$PUSH_URL" "$BRANCH_NAME"
+                gate_attempts_clear "$GATE_ATTEMPTS_FILE"   # a rerun after a human fix gets fresh attempts
+                GATE_FLAGGED=1
+                break
+            fi
+        fi
         PROGRESSED=1
         CHECKPOINT_MSG="Checkpoint: Task ${TASK_NUM} — ${BEFORE_TITLE}"
         if [ $(( BEFORE_UNCHECKED - AFTER_UNCHECKED )) -gt 1 ]; then
@@ -494,10 +631,132 @@ if [ "$SKIP_WORKERS" = "0" ] && [ "$STEP" -gt "$MAX_STEPS_PER_TASK" ]; then
 fi
 
 # ------------------------------------------------------------------------------
+# Ratify: an independent Opus call judges the finished task before anything is
+# pushed for review. Skipped when the gate gave up on this task (its PR is
+# opened flagged as failing instead).
+# ------------------------------------------------------------------------------
+if [ "$GATE_FLAGGED" != "1" ]; then
+    stop_ratify() {   # <reason for activity.md> <message for the terminal>
+        printf '\nRATIFY STOPPED: Task %s: %s\n' "$TASK_NUM" "$1" >> "$WORKTREE_LOG"
+        echo -e "\n\033[31m🛑 STOPPED: ${2} Nothing further was pushed and no PR was opened; the worktree is kept at ${WORKTREE_DIR}. Ratify log: ${RAT_LOG:-n/a}\033[0m"
+        exit 1
+    }
+
+    # On the resume path no step ran in this process, so the local database may
+    # not be this branch's: put it there (and prove it) before ratify looks.
+    if [ "$SKIP_WORKERS" = "1" ] && [ "$GATE_ON" = "1" ]; then
+        refuse_changed_config
+        echo "🧪 Gate before ratify (resume path): supabase db reset, then supabase test db…"
+        RESUME_GATE_LOG="${CALLS_DIR}/gate-resume.log"
+        if ! run_gate "$WORKTREE_DIR_ABS" "$RESUME_GATE_LOG" "$GATE_TIMEOUT_SECONDS"; then
+            printf '\n## Task %s — GATE FAILED before ratify (resume path)\n~~~\n%s\n~~~\n' "$TASK_NUM" "$(gate_log_tail "$RESUME_GATE_LOG" 30)" >> "$WORKTREE_LOG"
+            echo -e "\n\033[31m🛑 STOPPED: the database gate fails on this branch as it stands (log: ${RESUME_GATE_LOG}). Nothing was pushed and no PR was opened; the worktree is kept at ${WORKTREE_DIR}.\033[0m"
+            exit 1
+        fi
+    fi
+
+    echo -e "\033[34m🔎 Ratify: ${RATIFY_MODEL} judges Task ${TASK_NUM} (limit $(fmt_duration "$RATIFY_TIMEOUT_SECONDS")).\033[0m"
+    RAT_DIR="${CALLS_DIR}/ratify-input"
+    RAT_OUT="${CALLS_DIR}/ratify-output"
+    RAT_EMPTY="${CALLS_DIR}/ratify-empty-activity.md"
+    rm -rf "$RAT_DIR" "$RAT_OUT"
+    mkdir -p "$RAT_OUT"
+    : > "$RAT_EMPTY"
+    ratify_inputs "$WT_TASK_FILE" "$TASK_NUM" "$RAT_DIR" "$BASE_BRANCH" "$WORKTREE_DIR_ABS"
+    RAT_NAME="campsites-ratify-${TASK_NUM}-$(date -u '+%Y%m%d-%H%M%S')"
+    shopt -u patsub_replacement 2>/dev/null || true   # a task name with & is not a match reference
+    RAT_PROMPT=$(<"$RATIFY_PROMPT_FILE")
+    RAT_PROMPT=${RAT_PROMPT//@TASK_NUM@/$TASK_NUM}
+    RAT_PROMPT=${RAT_PROMPT//@TASK_NAME@/$TASK_NAME}
+    RAT_PROMPT=${RAT_PROMPT//@TASK_FILE@/$TASK_FILE}
+    RAT_PROMPT=${RAT_PROMPT//@LOG_FILE@/$LOG_FILE}
+    RAT_PROMPT=${RAT_PROMPT//@BASE_BRANCH@/$BASE_BRANCH}
+
+    RAT_LIMIT_STREAK=0
+    RAT_THROTTLE_STREAK=0
+    RAT_LOG=""
+    while true; do
+        # Not a worker step: it doesn't count toward MAX_STEPS_PER_TASK.
+        CALL=$((CALL + 1))
+        RAT_LOG="${CALLS_DIR}/ratify-${CALL}.jsonl"
+        # A fresh, empty verdict file for every call, so nothing old can count
+        # (retro M3). The real log isn't touched while the ratifier runs.
+        rm -f "$RAT_OUT/verdict.md"
+        RAT_STATE_BEFORE=$(ratify_tree_state "$WORKTREE_DIR_ABS")
+        RAT_RC=0
+        run_ratify "$RAT_PROMPT" "$RAT_LOG" "$RAT_NAME" || RAT_RC=$?
+
+        if [ "$RAT_RC" -eq 124 ] || [ "$RAT_RC" -eq 137 ]; then
+            if [ -z "${RALPH_RATIFY_STUB:-}" ]; then
+                docker kill "$RAT_NAME" >/dev/null 2>&1 || true
+                docker rm -f "$RAT_NAME" >/dev/null 2>&1 || true
+            fi
+            printf '\nRATIFY TIMEOUT: Task %s\n' "$TASK_NUM" >> "$WORKTREE_LOG"
+            echo -e "\n\033[31m🛑 STOPPED: ratify ran past its $(fmt_duration "$RATIFY_TIMEOUT_SECONDS") limit (RATIFY_TIMEOUT) and was killed, container ${RAT_NAME} included. This is a timeout, not a rejection. Nothing further was pushed and no PR was opened; the worktree is kept at ${WORKTREE_DIR}. Log: ${RAT_LOG}. Re-run this script to ratify again.\033[0m"
+            exit 1
+        fi
+
+        if [ "$(ratify_tree_state "$WORKTREE_DIR_ABS")" != "$RAT_STATE_BEFORE" ]; then
+            stop_ratify "it changed files in the repository" "ratify changed files in the repository (the log is hidden from it and its verdict has its own directory, so it has no reason to), so its verdict can't be trusted. Look at \`git -C ${WORKTREE_DIR} status\`."
+        fi
+        print_call_result "$RAT_LOG"
+
+        case "$(classify_call "$RAT_LOG" "$RAT_RC")" in
+            usage_limit)
+                RAT_LIMIT_STREAK=$((RAT_LIMIT_STREAK + 1))
+                RAT_THROTTLE_STREAK=0
+                log_call_ended "$WORKTREE_LOG" "$TASK_NUM" "$CALL" "ratify: usage limit"
+                wait_or_stop "$(limit_wait_seconds "$(call_resets_at "$RAT_LOG")" "$(date +%s)" "$RAT_LIMIT_STREAK")" "Usage limit hit (ratify)"
+                continue
+                ;;
+            throttled)
+                RAT_THROTTLE_STREAK=$((RAT_THROTTLE_STREAK + 1))
+                log_call_ended "$WORKTREE_LOG" "$TASK_NUM" "$CALL" "ratify: server throttling"
+                if [ "$RAT_THROTTLE_STREAK" -gt "$MAX_THROTTLE_RETRIES" ]; then
+                    stop_ratify "the API kept throttling requests" "the API kept throttling the ratify call (${MAX_THROTTLE_RETRIES} retries in a row)."
+                fi
+                wait_or_stop "$THROTTLE_WAIT_SECONDS" "Server throttling (ratify)"
+                continue
+                ;;
+            other_failure)
+                tail -n 20 "$RAT_LOG"
+                stop_ratify "the ratify call failed (exit ${RAT_RC})" "the ratify call failed (exit code ${RAT_RC}) and it wasn't a usage limit."
+                ;;
+        esac
+        break
+    done
+
+    # The loop, not the ratifier, writes the real log: its write-up, then the line.
+    RAT_VERDICT=$(ratify_result "$RAT_OUT/verdict.md" 0 "$TASK_NUM")
+    ratify_log_details "$RAT_OUT/verdict.md" "$WORKTREE_LOG" "$TASK_NUM"
+    case "$RAT_VERDICT" in
+        RATIFIED)
+            printf 'RATIFIED: Task %s\n' "$TASK_NUM" >> "$WORKTREE_LOG"
+            echo -e "\033[32m✅ RATIFIED: Task ${TASK_NUM}.\033[0m"
+            ;;
+        REJECTED:*)
+            printf 'REJECTED: Task %s: %s\n' "$TASK_NUM" "${RAT_VERDICT#REJECTED: }" >> "$WORKTREE_LOG"
+            echo -e "\n\033[31m🛑 STOPPED: ratify REJECTED Task ${TASK_NUM}:${RAT_VERDICT#REJECTED:}\n   Details are under '## Task ${TASK_NUM}, ratify' in ${LOG_FILE} in the worktree. Nothing further was pushed and no PR was opened; the worktree is kept at ${WORKTREE_DIR}. The fix goes into task.md on ${BASE_BRANCH} (amended, then approved), the task's branch and worktree are reset, and the task reruns. Nobody hand-edits code in the worktree.\033[0m"
+            exit 1
+            ;;
+        NONE)
+            stop_ratify "no result line" "ratify wrote no RATIFIED/REJECTED line for Task ${TASK_NUM} to its verdict file."
+            ;;
+        *)
+            stop_ratify "more than one result line" "ratify wrote more than one result line for Task ${TASK_NUM}."
+            ;;
+    esac
+fi
+
+# ------------------------------------------------------------------------------
 # Task complete: push the branch and open a PR. This is the ONLY point in the
 # whole run where anything leaves the worktree — no step does this itself.
 # ------------------------------------------------------------------------------
-echo -e "\033[34m📤 Task ${TASK_NUM} complete — pushing ${BRANCH_NAME} and opening a PR.\033[0m"
+if [ "$GATE_FLAGGED" = "1" ]; then
+    echo -e "\033[31m📤 Task ${TASK_NUM} did NOT pass the database gate — pushing ${BRANCH_NAME} and opening a PR flagged as failing.\033[0m"
+else
+    echo -e "\033[34m📤 Task ${TASK_NUM} complete — pushing ${BRANCH_NAME} and opening a PR.\033[0m"
+fi
 
 # `git add` (not `git diff`) here on purpose: activity.md starts each run as
 # a brand-new untracked file, and `git diff` silently ignores untracked
@@ -520,17 +779,63 @@ if [ "${RALPH_SKIP_PR:-0}" = "1" ]; then
 else
     # A rerun after the task already finished (before its PR was merged)
     # reuses the open PR instead of failing to create a duplicate.
+    PR_TITLE="Task ${TASK_NUM}: ${TASK_NAME}"
+    PR_BODY="Autonomous Ralph Loop run for Task ${TASK_NUM} of \`ralphloop/task.md\`. Worker model: \`${WORKER_MODEL}\`. See \`${LOG_FILE}\` in this branch for the per-step activity log. Ratified by \`${RATIFY_MODEL}\` (see \`## Task ${TASK_NUM}, ratify\` in the log). Merge with **Squash and merge** — the Checkpoint commits are per-step progress, not history for main."
+    if [ "$GATE_FLAGGED" = "1" ]; then
+        PR_TITLE="⚠️ GATE FAILING — ${PR_TITLE}"
+        PR_BODY="## ⚠️ This task did NOT pass the database gate. Do not merge.
+
+\`supabase db reset\` and \`supabase test db\` failed ${MAX_GATE_ATTEMPTS} times in a row on the step **${BEFORE_TITLE}**. That step is left unchecked in \`task.md\`. The loop stopped, and \`chain.sh\` refuses to merge this PR.
+
+Last lines of the final gate run:
+
+~~~
+$(gate_log_tail "$GATE_LOG" 40)
+~~~
+
+${PR_BODY}"
+    fi
+    # A rerun after the task already finished (before its PR was merged)
+    # reuses the open PR instead of failing to create a duplicate; its title
+    # is brought up to date (a fixed task loses the failing flag).
     PR_URL=$(GH_TOKEN="$RALPH_GH_TOKEN" gh pr list --repo "$REPO" --head "$BRANCH_NAME" --state open --json url -q '.[0].url' 2>/dev/null || true)
     if [ -z "$PR_URL" ]; then
-        PR_URL=$(GH_TOKEN="$RALPH_GH_TOKEN" gh pr create \
+        # A failing task's PR is opened as a draft, so GitHub itself won't offer
+        # a merge. (If drafts aren't available for this repo, fall back to a
+        # normal PR: chain.sh still refuses it by its title.)
+        DRAFT_FLAG=()
+        if [ "$GATE_FLAGGED" = "1" ]; then DRAFT_FLAG=(--draft); fi
+        PR_URL=$(GH_TOKEN="$RALPH_GH_TOKEN" gh pr create "${DRAFT_FLAG[@]}" \
             --repo "$REPO" \
             --base "$BASE_BRANCH" \
             --head "$BRANCH_NAME" \
-            --title "Task ${TASK_NUM}: ${TASK_NAME}" \
-            --body "Autonomous Ralph Loop run for Task ${TASK_NUM} of \`ralphloop/task.md\`. Worker model: \`${WORKER_MODEL}\`. See \`${LOG_FILE}\` in this branch for the per-step activity log. Merge with **Squash and merge** — the Checkpoint commits are per-step progress, not history for main.")
+            --title "$PR_TITLE" \
+            --body "$PR_BODY" || true)
+        if [ -z "$PR_URL" ] && [ "$GATE_FLAGGED" = "1" ]; then
+            PR_URL=$(GH_TOKEN="$RALPH_GH_TOKEN" gh pr create \
+                --repo "$REPO" --base "$BASE_BRANCH" --head "$BRANCH_NAME" \
+                --title "$PR_TITLE" --body "$PR_BODY")
+        elif [ -z "$PR_URL" ]; then
+            echo -e "\033[31m[Error] Creating the PR failed. The branch is pushed; re-run this script to retry.\033[0m"; exit 1
+        fi
+    else
+        GH_TOKEN="$RALPH_GH_TOKEN" gh pr edit "$PR_URL" --repo "$REPO" --title "$PR_TITLE" --body "$PR_BODY" >/dev/null 2>&1 || true
+        # Back to a draft if it is failing now; ready for review again once fixed.
+        if [ "$GATE_FLAGGED" = "1" ]; then
+            GH_TOKEN="$RALPH_GH_TOKEN" gh pr ready "$PR_URL" --repo "$REPO" --undo >/dev/null 2>&1 || true
+        else
+            GH_TOKEN="$RALPH_GH_TOKEN" gh pr ready "$PR_URL" --repo "$REPO" >/dev/null 2>&1 || true
+        fi
     fi
     echo -e "\033[32m✅ PR: ${PR_URL}\033[0m"
-    echo "Review it, use Squash and merge, then re-run this script for the next task."
+    if [ "$GATE_FLAGGED" != "1" ]; then
+        echo "Review it, use Squash and merge, then re-run this script for the next task."
+    fi
+fi
+
+if [ "$GATE_FLAGGED" = "1" ]; then
+    echo -e "\n\033[31m🛑 STOPPED: Task ${TASK_NUM} failed the database gate. The worktree and call logs are kept at ${WORKTREE_DIR} and ${CALLS_DIR}. Look at the PR, fix the cause (the failing step is still unchecked), then re-run this script — it resumes at that step.\033[0m"
+    exit 1
 fi
 
 # --force: only ever needed here because of gitignored build/local-secret

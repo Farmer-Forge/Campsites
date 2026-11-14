@@ -16,16 +16,31 @@
 # tests (deno test supabase/functions), and NG_CLI_ANALYTICS=false, so the
 # Angular CLI never stops an unattended run to ask about analytics.
 #
+# pg_prove (from libtap-parser-sourcehandler-pgtap-perl) lets workers run the
+# pgTAP suite against $DATABASE_URL themselves. The host-side gate is what counts.
+#
 # Rebuild whenever this file changes or dependencies need bumping — it's
 # not tied to any one task's code, just the toolchain every task needs.
 
 FROM node:22-slim
 
+# postgresql-client-17 comes from the PGDG apt repo, not Debian's
+# postgresql-client (15): pg_dump 15 refuses to dump the Postgres 17 server
+# that Supabase runs ("aborting because of server version mismatch").
+# jq: ratify-prompt.md tells the ratifier it has jq (adversary finding F18).
 RUN apt-get update && apt-get install -y --no-install-recommends \
       git \
-      postgresql-client \
+      jq \
       curl \
       ca-certificates \
+      gnupg \
+    && install -d /usr/share/postgresql-common/pgdg \
+    && curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+    && . /etc/os-release \
+    && echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt ${VERSION_CODENAME}-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
+    && apt-get update && apt-get install -y --no-install-recommends \
+      postgresql-client-17 \
+      libtap-parser-sourcehandler-pgtap-perl \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=denoland/deno:bin-2.9.5 /deno /usr/local/bin/deno

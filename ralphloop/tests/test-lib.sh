@@ -175,3 +175,19 @@ test_resume_note() {
     assert_contains "lists the partial file" "$n" "partial.txt"
     assert_contains "points at git diff" "$n" "git diff HEAD"
 }
+
+test_restore_outside_task() {
+    local b a n
+    b=$(task_file); a=$(task_file)
+    sed -i 's/^- \[ \] \*\*Step 2: Modify/- [x] **Step 2: Modify/' "$a"     # own task: kept
+    sed -i 's/^- \[ \] \*\*Step 1: Something else/- [x] **Step 1: Something else/' "$a"   # Task 3: put back
+    sed -i 's/^# Plan$/# Plan (edited)/' "$a"                               # header: put back
+    n=$(restore_outside_task "$b" "$a" 2)
+    assert_eq "counts the lines it put back" "$n" "2"
+    assert_contains "keeps the tick in its own task" "$(cat "$a")" '- [x] **Step 2: Modify `src/App.jsx`**'
+    assert_contains "puts back the other task's box" "$(cat "$a")" '- [ ] **Step 1: Something else**'
+    assert_contains "puts back the header" "$(head -n 1 "$a")" '# Plan'
+    assert_not_contains "no edited header left" "$(cat "$a")" '(edited)'
+    assert_eq "nothing to do on a clean call" "$(restore_outside_task "$a" "$a" 2)" "0"
+    rm -f "$b" "$a"
+}

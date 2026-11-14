@@ -2,3 +2,19 @@
 # Fake `docker` for review.sh's tests — put this directory first on PATH.
 # Records every call (one line of args) in $RALPH_DOCKER_LOG and succeeds.
 printf '%s\n' "$*" >> "${RALPH_DOCKER_LOG:?}"
+# The ratify call is `docker run … --name campsites-ratify-… claude -p …`. Modes
+# (RALPH_DOCKER_STUB_RATIFY): "ratified" writes the verdict to the directory
+# mounted at /ratify-output, like the real ratifier; "hang" sleeps,
+# so a timeout has something to kill. `docker kill` / `rm -f` are only logged.
+if [ "${1:-}" = run ] && [[ "$*" == *"--name campsites-ratify-"* ]]; then
+    case "${RALPH_DOCKER_STUB_RATIFY:-}" in
+        hang) sleep 30 ;;
+        ratified)
+            OUT=""
+            for a in "$@"; do case "$a" in *:/ratify-output) OUT="${a%:/ratify-output}" ;; esac; done
+            printf 'Via the docker stub.\nRATIFIED: Task %s\n' "${RALPH_STUB_TASK:-2}" >> "$OUT/verdict.md"
+            echo '{"type":"result","subtype":"success","is_error":false,"api_error_status":null,"result":"Ratified."}'
+            ;;
+    esac
+fi
+exit 0

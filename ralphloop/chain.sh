@@ -233,6 +233,11 @@ ${PRS}"
         PR_BRANCH="${PRS#* }"
         CHANGED=$(retry "Reading PR #${PR_NUM}'s files" gh_ pr diff "$PR_NUM" --repo "$REPO" --name-only) \
             || stop "🛑 Chain stopped: couldn't read PR #${PR_NUM}'s changed files from GitHub."
+        PR_TITLE=$(retry "Reading PR #${PR_NUM}'s title" gh_ pr view "$PR_NUM" --repo "$REPO" --json title -q .title) \
+            || stop "🛑 Chain stopped: couldn't read PR #${PR_NUM}'s title from GitHub."
+        if [[ "$PR_TITLE" == *"GATE FAILING"* ]]; then
+            stop "🛑 Chain stopped: PR #${PR_NUM} is flagged as failing the database gate, and chain mode never merges it. Fix the cause and re-run doloop.sh by hand (it resumes at the failing step), or close the PR."
+        fi
         FORBIDDEN=$(grep -E '^(ralphloop/|\.github/|supabase/migrations/|supabase/functions/)' <<< "$CHANGED" | grep -vxE 'ralphloop/(task|activity)\.md' || true)
         # The worker can commit files itself (a task's Commit step), which skips
         # checkpoint_commit's excludes — so local settings, secrets and build
