@@ -2203,7 +2203,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
   ```
   Re-read spec 3 change #12.
 
-- [ ] **Step 3: Commit.** `git commit -m "Task 10: a card selected from the map lands with its top in view (spec 3, change #12)"`
+- [x] **Step 3: Commit.** `git commit -m "Task 10: a card selected from the map lands with its top in view (spec 3, change #12)"`
 
 **QC (for Shawn, in the browser):**
 - Finder, **Miles: All**. Zoom the map to a campground far from you (say, California), click its marker, then **"View details ▸"**: the list jumps straight to that card, and its name, heart and **+** are at the top of the list.

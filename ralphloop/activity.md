@@ -180,3 +180,8 @@ TASK 8 COMPLETE
 
 ## Task 10, call 3
 - Step 2: verified. `ng lint` clean, production build OK, `scroll-check.mjs` PASSED 5 of 5 (exit 0), one `scrollIntoView(`, all five marker strings found once, only `campground-table.component.ts` changed besides task.md/activity.md, `app-check.sh` ends "CONSOLE CHECK PASSED". Spec 3 change #12 re-read against the code: consistent.
+
+## Task 10, call 4
+- Step 3: Commit. Nothing left to commit; `campground-table.component.ts` is in checkpoint 53762f4 (`git log main..HEAD --stat`). Step treated as done.
+
+TASK 10 COMPLETE
