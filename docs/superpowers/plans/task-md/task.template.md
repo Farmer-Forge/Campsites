@@ -1,6 +1,6 @@
 # Campsite Finder V1.1 Implementation Plan
 
-> **For the loop:** `ralphloop/doloop.sh` (or `ralphloop/chain.sh`) works through this file task by task, one worker call per unchecked `- [ ]` step, one PR per task. Task 1 is manual infrastructure and stays checked. Tasks 2–9 build the app.
+> **For the loop:** `ralphloop/doloop.sh` (or `ralphloop/chain.sh`) works through this file task by task, one worker call per unchecked `- [ ]` step, one PR per task. Task 1 is manual infrastructure and stays checked. Tasks 2–9 build the app. Task 10 (added 2026-11-14) fixes bug 5 in the built app.
 >
 > **Specs (binding, all approved by Shawn):** read the one a task names before its first step.
 > - `docs/superpowers/specs/2026-10-24-schema-contract-design.md` (spec 1: the database you build on, unchanged);
@@ -66,13 +66,19 @@ mkdir -p src/environments && printf "export const environment = {\n  production:
 
 **QC lists:** each task ends with a **"QC (for Shawn, in the browser)"** list of plain bullets. `chain.sh` collects them into the end-of-run checklist.
 
+## Review Focus
+
+1. **A one-shot scroll passing for the fix** (Task 10). In Chromium a single instant `scrollIntoView({ block: 'start' })` already lands exactly (scroll anchoring holds the card while cards around it are drawn), so `scroll-check.mjs` can't tell it from spec 3 change #12's correction passes. Step 2's three `grep -c` lines are what require the passes (`requestAnimationFrame(() => requestAnimationFrame(pass))`, `MAX_SCROLL_PASSES = 10`) and the scroller lookup (`scrollAreaOf`).
+2. **Scrolling the wrong element** (Task 10). Under 900px the list isn't the scroller (`overflow: visible`); the Finder's `main.app-main` is. `scroll-check.mjs` measures against the nearest scrolling ancestor at 390px and requires, at 1400px, that the list is the scroller and the page didn't move.
+3. **Touching more than the one file** (Task 10). Step 2's `git diff --name-only origin/main -- src/ ralphloop/ supabase/` must list only `campground-table.component.ts`; the worker never edits `ralphloop/scroll-check.mjs`.
+
 ---
 
 ## Task 1: Local Supabase stack on Ralph (by hand)
 
 Done by Shawn and Claude in interactive sessions (2026-10-23 to 2026-10-25). The loop never runs this task.
 
-- [x] **Step 1: Start the stack.** `supabase start` in `~/projects/Campsites` on Ralph, from migrations `0001–0021`, on ports 54320–54329.
+- [x] **Step 1: Start the stack.** `supabase start` in `~/projects/Campsites` on Ralph, from migrations `0001–0022` (`0022` added 2026-11-14, spec 1 **Fixes** #10), on ports 54320–54329.
 - [x] **Step 2: Write the secrets file.** `~/.secrets/campsites-supabase.env` (`SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_JWT_SECRET`, `DATABASE_URL`).
 - [x] **Step 3: Seed.** `./ralphloop/seed-dev.sh`: the dev admin, 4,900 campgrounds and 117 parks from the production backup, and the sample users Pat and Sam.
 - [x] **Step 4: Local auth URLs.** `supabase/config.toml` points `site_url` and the reset redirect URLs at the review app (`http://192.168.1.188:4200`) and worker steps (`http://127.0.0.1:4201`).
@@ -374,7 +380,7 @@ Read spec 3 in full. This task builds the services and the five shared component
 - [ ] **Step 6: `app-campground-table`** (spec 3, **Campground card list**, plus change #2).
   - **The list:** a plain `div.rt-scroll-list` with `@for` over the campgrounds (`track c.id`). **No CDK virtual scroll** (spec 3, change #2): the browser skips off-screen cards because each `.campground-card` gets `content-visibility: auto; contain-intrinsic-size: auto 80px;` (add both to the `.campground-card` rule in the scss below). The list fills the side column (`.rt-scroll-list` already scrolls).
   - **Remove the unused package:** `npm uninstall @angular/cdk-experimental`. Keep `@angular/cdk` (PrimeNG needs it).
-  - **A selection from outside** expands that card, then, once it has rendered (`afterNextRender`), scrolls it into view with `element.scrollIntoView({ behavior: 'smooth', block: 'nearest' })`. Each card carries `[attr.data-id]="c.id"` so it can be found. Never `scrollToIndex`.
+  - **A selection from outside** expands that card, then, once it has rendered (`afterNextRender`), scrolls it into view with `element.scrollIntoView({ behavior: 'smooth', block: 'nearest' })` (**replaced by Task 10**, spec 3 change #12). Each card carries `[attr.data-id]="c.id"` so it can be found. Never `scrollToIndex`.
   - **Card structure:**
     - `<div class="campground-card" [class.is-open]>`, containing `<div class="card-main">`, which holds, in order:
       - in plan mode, `button.plan-check` (`is-checked`), with the check SVG `M20 6 9 17l-5-5`;
@@ -393,6 +399,7 @@ Read spec 3 in full. This task builds the services and the five shared component
     The list takes the `rt-scroll-list` class. If it needs a height rule, add it under `:host` in this block, and say so in `activity.md`.
 - [ ] **Step 7: `app-campground-map`** (spec 3, **Campground map**, plus changes #3 and #4).
   - **Markers:** Leaflet's default icons use `imagePath = ''` with `marker-icon.png`, `marker-icon-2x.png` and `marker-shadow.png`. The marker cluster gets `{ chunkedLoading: true }`.
+  - **Create the cluster through `window.L`** (hotfix #38, 2026-11-12): `(window as unknown as { L: typeof L }).L.markerClusterGroup({ chunkedLoading: true })`, never `L.markerClusterGroup` on the `import * as L` namespace. `leaflet.markercluster` attaches to the global `window.L`; in a production build the bundler's namespace copy is taken before that, so `L.markerClusterGroup is not a function` and the map shows no markers. A development build hides it.
   - **Popup buttons** are plain DOM with class `view-details-button`.
   - **The new popup action "Add to trip…"** (signed in only) emits a new output, `addToTrip(id)`. The list's parent uses it to select that card and open its add-to-trip panel. Add a matching input to `app-campground-table`: `openPickerFor: string | null`, which opens that card's panel.
   - **Map size:** a `ResizeObserver` calls `invalidateSize()`.
@@ -606,6 +613,132 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
 - Invite a test address: the invite email lands in Mailpit (http://192.168.1.188:54324).
 - Attributes tab: search "Yellowstone", pick a campground, add, edit and delete an attribute.
 
+## Task 10: A card selected from the map lands with its top in view (spec 3, change #12)
+
+> Added 2026-11-14 (Shawn; `docs/next-loop-bugs.md`, bug 5). Tasks 1–9 are done and merged; this task edits one file of the built app. Read spec 3's **Campground card list** and change #12 first.
+
+**Files:** Modify: `src/app/shared/ui/campground-table/campground-table.component.ts` (only this file).
+
+**Interfaces:** Consumes: the existing `selected` input, `host`, `injector`, `[attr.data-id]` on each card and `.rt-scroll-list` (Task 5, unchanged). Produces: nothing new; no input, output or template change.
+
+**Check script:** `ralphloop/scroll-check.mjs` (Lisa, 2026-11-14; like `console-check.mjs`, it's the loop's, so never edit it). It loads the production build in headless Chromium, opens the map popup of the campground ~75% of the way down the "Miles: All" list, clicks "View details ▸" (and, as the admin, "Add to trip…"), and measures the opened card's top against the top of whatever scrolls the list, at 1400px and 390px wide. It needs the local stack and the dev seed, which the gate restores.
+
+- [ ] **Step 1: Prove the check fails, then scroll the selected card's top into place.**
+  **First, before changing anything in `src/`,** write the local environment (Global Constraints, **Local settings**), then:
+  ```bash
+  npx ng build --configuration production,local
+  node ralphloop/scroll-check.mjs dist/campsite-finder/browser; echo "exit $?"
+  # expect: three lines starting FAIL, then "SCROLL CHECK FAILED.", then "exit 1"
+  ```
+  If it prints `SCROLL CHECK PASSED`, or exits 2, stop and write a `BLOCKED:` line (rule 6): the check or the seed isn't what this plan expects.
+
+  **Then,** in `campground-table.component.ts`, make exactly these changes and no others:
+  1. First line inside `export class CampgroundTableComponent {`, before `supabase`:
+     ```ts
+       /** Most scroll passes scrollCardToTop makes for one selection (spec 3, change #12). */
+       private static readonly MAX_SCROLL_PASSES = 10;
+
+     ```
+  2. Right after `private readonly drafts = signal<Map<string, string>>(new Map());`:
+     ```ts
+       /** Bumped on every selection, so a newer selection stops an older one's scroll passes. */
+       private scrollRun = 0;
+     ```
+  3. In the constructor's second `effect` (the one that reads `this.selected()`), replace the whole `afterNextRender(...)` call (the one with `scrollIntoView({ behavior: 'smooth', block: 'nearest' })`) with:
+     ```ts
+             afterNextRender(() => this.scrollCardToTop(sel.id), { injector: this.injector });
+     ```
+  4. Right before `protected miles(c: Campground): string {`, add:
+     ```ts
+       /**
+        * Scrolls the selected card so its top sits at the top of the list (spec 3, change #12).
+        * Off-screen cards use content-visibility: auto, so until they are drawn they count as
+        * their 80px placeholder, and one scroll lands short. So scroll instantly, let the browser
+        * draw the cards it now shows (two animation frames), measure again and scroll by what is
+        * left, until the card's top is in place, the scroller can't move further, or
+        * MAX_SCROLL_PASSES is reached. Only the element that scrolls the list moves (scrollAreaOf).
+        */
+       private scrollCardToTop(id: string): void {
+         const run = ++this.scrollRun;
+         let passes = 0;
+         const pass = (): void => {
+           if (run !== this.scrollRun) {
+             return;
+           }
+           const card = this.host.nativeElement.querySelector<HTMLElement>(`[data-id="${CSS.escape(id)}"]`);
+           const list = card?.parentElement;
+           if (!card || !list) {
+             return;
+           }
+           const area = this.scrollAreaOf(list);
+           if (!area) {
+             return;
+           }
+           const { scroller, targetTop } = area;
+           const offBy = card.getBoundingClientRect().top - targetTop;
+           if (Math.abs(offBy) < 1 || passes >= CampgroundTableComponent.MAX_SCROLL_PASSES) {
+             return;
+           }
+           const before = scroller.scrollTop;
+           scroller.scrollTop = before + offBy;
+           passes += 1;
+           if (scroller.scrollTop === before) {
+             return;
+           }
+           requestAnimationFrame(() => requestAnimationFrame(pass));
+         };
+         pass();
+       }
+
+       /**
+        * The element that scrolls the list: the list itself on a wide screen, the nearest scrolling
+        * ancestor when the list doesn't scroll on its own (under 900px it is overflow: visible), or
+        * the page. targetTop is where a card's top should land: just inside that element's top
+        * padding (0 for the page).
+        */
+       private scrollAreaOf(list: HTMLElement): { scroller: Element; targetTop: number } | null {
+         for (let el: HTMLElement | null = list; el; el = el.parentElement) {
+           const style = getComputedStyle(el);
+           if (/(auto|scroll)/.test(style.overflowY) && el.scrollHeight > el.clientHeight) {
+             return { scroller: el, targetTop: el.getBoundingClientRect().top + parseFloat(style.paddingTop) };
+           }
+         }
+         const page = document.scrollingElement;
+         return page ? { scroller: page, targetTop: 0 } : null;
+       }
+
+     ```
+  `afterNextRender` is still imported and used. Nothing in the template or styles changes: `content-visibility: auto` and `contain-intrinsic-size: auto 80px` stay (spec 3, change #2).
+
+- [ ] **Step 2: Verify.**
+  ```bash
+  F=src/app/shared/ui/campground-table/campground-table.component.ts
+  npx ng lint
+  # expect: "All files pass linting."
+  npx ng build --configuration production,local
+  # expect: "Application bundle generation complete", no errors (the existing budget and ESM warnings are fine)
+  node ralphloop/scroll-check.mjs dist/campsite-finder/browser; echo "exit $?"
+  # expect: three lines starting PASS, then "SCROLL CHECK PASSED: 3 of 3.", then "exit 0"
+  grep -c "block: 'nearest'\|behavior: 'smooth'" "$F"
+  # expect: 0
+  grep -c "requestAnimationFrame(() => requestAnimationFrame(pass))" "$F"; grep -c "MAX_SCROLL_PASSES = 10" "$F"; grep -c "private scrollAreaOf(list: HTMLElement)" "$F"
+  # expect: 1, 1, 1 (the correction passes and the scroller lookup are there, not just a one-shot scroll)
+  git diff --name-only origin/main -- src/ ralphloop/ supabase/
+  # expect: exactly src/app/shared/ui/campground-table/campground-table.component.ts
+  bash ralphloop/app-check.sh
+  # expect: ends with "CONSOLE CHECK PASSED"
+  ```
+  Re-read spec 3 change #12.
+
+- [ ] **Step 3: Commit.** `git commit -m "Task 10: a card selected from the map lands with its top in view (spec 3, change #12)"`
+
+**QC (for Shawn, in the browser):**
+- Finder, **Miles: All**. Zoom the map to a campground far from you (say, California), click its marker, then **"View details ▸"**: the list jumps straight to that card, and its name, heart and **+** are at the top of the list.
+- Signed in, the same with **"Add to trip…"**: the card opens with the trip picker, top in view.
+- A narrow window (under 900px) or a phone: the same; the card's top is at the top of the screen.
+- Clicking a card in the list itself still just opens it, as before.
+- Favorites: clicking cards in the list works as before.
+
 ---
 
 ## Out of Scope (this plan)
@@ -613,4 +746,16 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
 - V1.1's own Supabase cloud project, its Vercel site, and production settings (by hand, later, when V1.1 is ready).
 - Unit and end-to-end tests (dropped).
 - Any change to the database, edge functions or their tests.
-- V1.2 ideas: showing campground attributes to users, moderator powers, a dark palette, and a fix for the rows with no `state`.
+- V1.2 ideas: showing campground attributes to users, moderator powers, and a dark palette.
+- Filling in `state` for the campgrounds that have none (bug 6, option A): a hand-written migration, not loop work. (Bug 6's part B, `0022`, is live and in spec 1.)
+
+---
+
+## Self-Review Notes
+
+Task 10 (Lisa, 2026-11-14, ralph-architect):
+- **The code in Step 1 was run, not just read.** On a throwaway stack on Ralph (`t10`, ports 553xx, torn down after): migrations `0001–0022`, the dev seed (4,900 campgrounds), `npm ci`, then `ng lint` (all files pass) and `ng build --configuration production,local` (no errors) with Step 1's code pasted into the file from `main` at `8e654f9`. `console-check.mjs` on that build: passed, 15 page loads.
+- **The check fails when the step is wrong.** `scroll-check.mjs` on the build from `main` (before Task 10): FAIL ×3, the card landing 4,497px (View details, 1400px), 7,492px (Add to trip, admin) and 12,925px (390px) short. On Step 1's code: PASS ×3 (0px). A first draft that scrolled the page under 900px failed the 390px case (the scroller there is `main.app-main`), which is why `scrollAreaOf` exists.
+- **What the check can't tell apart:** a one-shot instant `scrollIntoView({ block: 'start' })` also passes 3 of 3 in Chromium (Review Focus 1); the `grep -c` lines in Step 2 cover that.
+- **List clicks:** a card clicked in the list goes through the same path. A trial check that a list click must *not* snap to the top failed on the code from `main` too: an open card is taller than the list's view, so `nearest` already put its top at the top. So nothing a user sees changes there, and the trial check was dropped.
+- **Parse:** `check-task-md.sh` reports Tasks 2–9 as "no unchecked steps; the loop would skip it". They're done and merged, and skipping them is the point; Task 10 has 3 open steps, 8 `# expect:` lines, a commit step and QC.

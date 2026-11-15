@@ -171,7 +171,7 @@ Used by Finder (distances on, no notes), Favorites (notes on, plan mode) and Tri
   - **The favorite heart** (below).
   - **When signed in:** a round **+** button ("Add to trip", `aria-expanded`). It toggles that card's add-to-trip panel. Only one panel is open at a time.
 - **Clicking a card** expands it, collapsing any other card, and emits `selectedChange(campground)`. Clicking it again collapses it and emits `null`.
-- **When `selected` changes from outside** (the map popup), that card expands and scrolls into view smoothly (`block: 'nearest'`).
+- **When `selected` changes from outside** (the map popup), that card expands and scrolls so its **top** (name, tags, heart, **+**) sits at the top of the list (change #12).
 - **The expanded detail:**
   - the description, rendered as HTML (`innerHTML`; NPS descriptions contain markup), indented past the badge when distances are on;
   - **"Reserve on recreation.gov"** (cherry button, new tab), only when `reservationUrl` isn't empty;
@@ -252,7 +252,7 @@ Shawn reviewed V1's behaviors and asked for them addressed. He handed the detail
    That removes V1's one-request-per-card storm, and the previous user's hearts showing after a sign-out.
 2. **Off-screen cards aren't drawn.** Each card has CSS `content-visibility: auto` (with `contain-intrinsic-size: auto` and the collapsed card's height), so the browser skips laying out and painting cards outside the list's view, and "Show all" stays smooth. The list itself is a plain `@for`.
    - **Variable heights** (expanded cards, open add-to-trip panels, note rows) just work.
-   - **Scrolling to a selection:** a card selected from the map scrolls into view with `scrollIntoView({ behavior: 'smooth', block: 'nearest' })`, as in V1.
+   - **Scrolling to a selection:** see change #12. (Before it: `scrollIntoView({ behavior: 'smooth', block: 'nearest' })`, as in V1.)
    - **Revised 2026-11-09 (Shawn):** this change first used the CDK's virtual scroll with the autosize strategy, which doesn't support `scrollToIndex`, so "View details ▸" couldn't scroll to its card (`docs/next-loop-bugs.md`, bug 4). Virtual scrolling was dropped; `@angular/cdk-experimental` isn't used.
    - **Everything else is unchanged:** the card's look, the clicks, plan mode and notes. Favorites and Trips use the same list.
 3. **The map loads markers in chunks.** The marker cluster uses `chunkedLoading: true`, so adding thousands of markers doesn't freeze the page. Clustering and the map's look are unchanged.
@@ -292,6 +292,13 @@ Shawn reviewed V1's behaviors and asked for them addressed. He handed the detail
    - MILES FROM ME: All, with the remembered radius back to 50.
 
    It keeps the current search location: resetting doesn't ask for your location again or move you back to it. As with any filter change, nothing is searched if there's no location yet. It's disabled, not hidden, when the filters are already at those starting values. The saved state is written after the search succeeds, as for any other filter change.
+
+12. **A card selected from the map lands with its top in view** (Shawn, 2026-11-14; `docs/next-loop-bugs.md`, bug 5). On a long list, "View details ▸" or "Add to trip…" in a map popup scrolled the list short, and what showed was the **bottom** of the opened card (Reserve, Directions), not its name, heart and **+**. Two causes: `block: 'nearest'` only scrolls far enough to show a card's bottom edge, and cards that haven't been drawn count as their placeholder height (change #2), so a single scroll aims at the wrong place. In V1.1:
+   - **The card's top lands at the top of the list's scroll area** (just inside the list's top padding). Under 900px the list doesn't scroll on its own (`overflow: visible`); whatever scrolls it instead (the nearest scrolling ancestor, on the Finder the app's `main` area, else the page) is the one that moves, and the card lands at its top.
+   - **Scroll, then correct:** scroll there instantly (no smooth animation), let the browser draw the cards now in view (two animation frames), measure again and scroll by what's left. Stop when the card's top is within 1px of its place, when the scroller can't move further (a card near the end of the list), or after 10 passes. A newer selection stops an older one's passes.
+   - **Only the list moves** on a wide screen; the page itself doesn't scroll.
+   - **Clicking a card in the list** goes through the same path (the page sends the selection back down). An open card is taller than the list's view, so V1's `nearest` already put its top at the top; nothing a user sees changes there.
+   - Same component, so the same holds on Favorites. Nothing else changes: change #2's `content-visibility` and its placeholder height stay.
 
 ## Out of scope
 
