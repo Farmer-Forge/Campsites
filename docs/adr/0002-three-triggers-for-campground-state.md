@@ -1,0 +1,3 @@
+# Campground state uses three triggers, not one
+
+The syncs write through PostgREST upserts (`insert … on conflict do update`), and Postgres fires `before insert` triggers even for rows that turn into updates. A single `before insert or update` trigger would therefore log phantom changes on every sync and put its own computed State into `excluded.state`, so the Source's value would never reach the update. So: `before insert` only records the Source state, `before update` decides the State and writes the State log, and an `after insert` statement trigger re-runs the decision for rows that were really inserted. Don't merge them into one.

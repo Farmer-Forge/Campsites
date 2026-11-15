@@ -134,4 +134,21 @@ The code check that followed also found that the map's right-click doesn't work 
 - **Now (hotfix, like #38/#39):** a new migration `0022` that re-creates `nearest_campgrounds` exactly as in 0021, minus `c.state is null or`, plus a pgTAP test. Only this function has the rule. With Where on **All states**, the app sends no state filter, so all 4,688 campgrounds still show. The 422 with no state drop out only when some states are picked.
 - **Later:** option A (state from location, backfill, sync fallback) goes through the normal spec → `task.md` route. Until then, the 422 can't be found with a region filter on.
 
-**Part B done and live (2026-11-14):** #40 merged; Lisa pushed 0022 to production. Midwest only: 897 → **475** (0 with no state, 0 from other states). All states: still 4,688. Migration history 22/22; `anon` and `authenticated` still have EXECUTE. **Part A: not started.** It needs a spec 3 change (and the sync functions) before it goes into `task.md`.
+**Part B done and live (2026-11-14):** #40 merged; Lisa pushed 0022 to production. Midwest only: 897 → **475** (0 with no state, 0 from other states). All states: still 4,688. Migration history 22/22; `anon` and `authenticated` still have EXECUTE. **Part A: built, not yet live (2026-11-15).** Done as a hand-written migration, not a loop task, and without touching the sync functions. Spec `~/plans/2026-11-15-state-backfill-design.md` (on Lisa).
+- **Root cause (checked 2026-11-15):** the source records have no address. In the four parks with the most nulls, NPS's API returns `addresses: []` for exactly as many campgrounds as we have nulls.
+- **The fix:** `0023` (ForgeGeo v0.1.0's US state boundaries) and `0024`. A campground's state is an admin's override, else the state its location is in, else the source's. The source's state is kept within 1 km of that state, and every change is logged (spec 1, **Fixes** #11).
+- **The Where filter needs no change:** filled-in campgrounds simply match their state.
+- **Before it goes live:** a dry run on a restored nightly, with a report for Shawn, then `db push` and a one-time boundary load and recompute by hand from Lisa.
+
+## 7. Admin: state log and state override (Lisa, 2026-11-15; for later)
+
+**What:** a way for admins to see why a campground has the state it has, and fix it when it's wrong. Bug 6 part A (`0024`) logs every state change and lets an admin override a campground's state, but only through SQL so far.
+
+**Ready for the loop:** the database side shipped with `0024`, so this needs **no migration**:
+- `admin_campground_state_log(campground_id = null, result_limit = 100)`;
+- `admin_set_campground_state_override(campground_id, state_code)` (null clears it);
+- `campgrounds.state_reason` and `source_state`.
+
+Likely home: the Admin page's campground tools (spec 8), next to the campground notes.
+
+**Spec:** 8 (Admin), as a new change. It goes through spec → `task.md` like any loop task. Not scheduled.
