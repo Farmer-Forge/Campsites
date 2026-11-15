@@ -19,6 +19,12 @@
 # pg_prove (from libtap-parser-sourcehandler-pgtap-perl) lets workers run the
 # pgTAP suite against $DATABASE_URL themselves. The host-side gate is what counts.
 #
+# Playwright (pinned) and its headless Chromium run the gate's console check
+# (ralphloop/console-check.mjs, via app-check.sh): the production build in a
+# real browser. Installed globally and found through NODE_PATH; the browser
+# lives in /ms-playwright so any --user can use it. This is the loop's check,
+# not app tests (those stay dropped, roadmap 2026-10-19).
+#
 # Rebuild whenever this file changes or dependencies need bumping — it's
 # not tied to any one task's code, just the toolchain every task needs.
 
@@ -46,6 +52,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=denoland/deno:bin-2.9.5 /deno /usr/local/bin/deno
 
 RUN npm install -g @anthropic-ai/claude-code
+
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
+    NODE_PATH=/usr/local/lib/node_modules
+RUN npm install -g playwright@1.64.1 \
+    && playwright install --with-deps --only-shell chromium \
+    && chmod -R a+rX /ms-playwright \
+    && rm -rf /var/lib/apt/lists/*
 
 ENV NG_CLI_ANALYTICS=false
 
