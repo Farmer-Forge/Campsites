@@ -41,6 +41,8 @@ run_chain() {
         RALPH_GH_STUB_ORIGIN="$SB/origin.git" \
         RALPH_GH_TOKEN=dummy \
         RALPH_WORKER_STUB="$HERE/stub-worker.sh" \
+        RALPH_RATIFY_STUB="$HERE/ratify-stub.sh" \
+        RALPH_STUB_RATIFY_ACTIONS="$SB/ratify-actions" \
         RALPH_STUB_ACTIONS="$SB/actions" \
         RALPH_STUB_PROMPTS_DIR="$SB/prompts" \
         RALPH_PUSH_URL="$SB/origin.git" \

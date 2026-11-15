@@ -38,7 +38,10 @@ test_review_starts_app_for_the_lan() {
     assert_eq "environment.local.ts is private" "$(stat -c %a "$envf" 2>/dev/null)" 600
     assert_contains "installs packages" "$(docker_calls)" "npm install"
     assert_contains "starts the container, surviving reboots" "$(docker_calls)" "run -d --name campsites-dev --restart unless-stopped"
-    assert_contains "serves Angular on all interfaces" "$(docker_calls)" "npx ng serve --host 0.0.0.0 --port 4200"
+    assert_contains "builds the production bundle against the local stack" "$(docker_calls)" "npx ng build --configuration production,local"
+    assert_contains "serves the build on all interfaces" "$(docker_calls)" "node ralphloop/serve-spa.mjs dist/campsite-finder/browser 4200 0.0.0.0"
+    assert_not_contains "no dev server" "$(docker_calls)" "ng serve"
+    assert_contains "says which build" "$OUT" "Review app running (production build)"
     assert_contains "prints the app URL" "$OUT" "http://10.9.8.7:4200"
     assert_contains "prints the dev login" "$OUT" "admin@campsites.test / campsites-admin"
     assert_contains "prints the Studio URL" "$OUT" "http://10.9.8.7:54333"
@@ -48,7 +51,7 @@ test_review_starts_app_for_the_lan() {
 test_review_replaces_the_old_container() {
     review_sandbox; run_review
     local calls; calls=$(docker_calls)
-    assert_contains "removes any old container first" "$(head -n 2 <<< "$calls")" "rm -f campsites-dev"
+    assert_contains "removes any old container first" "$(grep -E 'rm -f campsites-dev|run -d' <<< "$calls" | head -n 1)" "rm -f campsites-dev"
 }
 
 test_review_skips_install_when_packages_unchanged() {
@@ -81,4 +84,24 @@ test_review_seed_failure_only_warns() {
     review_sandbox; EXTRA_ENV="RALPH_SEED_STUB_FAIL=1" run_review
     assert_eq "still starts the app" "$RC" 0
     assert_contains "warns" "$OUT" "seed failed"
+}
+
+test_review_dev_mode_serves_ng_serve() {
+    review_sandbox; RC=0
+    OUT=$(cd "$SB/Campsites" && env PATH="$HERE/docker-stub:$PATH" RALPH_DOCKER_LOG="$SB/docker.log" \
+        RALPH_SUPABASE_ENV="$SB/supabase.env" RALPH_REVIEW_HOST=10.9.8.7 RALPH_REVIEW_WAIT_SECONDS=0 \
+        RALPH_SEED_SCRIPT="$HERE/seed-stub.sh" bash "$LOOP_DIR/review.sh" --dev 2>&1) || RC=$?
+    assert_eq "exits 0" "$RC" 0
+    assert_contains "serves Angular's dev server on all interfaces" "$(docker_calls)" "npx ng serve --host 0.0.0.0 --port 4200"
+    assert_not_contains "no production build" "$(docker_calls)" "ng build"
+    assert_contains "says which build" "$OUT" "Review app running (dev build)"
+}
+
+test_review_rejects_unknown_options() {
+    review_sandbox; RC=0
+    OUT=$(cd "$SB/Campsites" && env PATH="$HERE/docker-stub:$PATH" RALPH_DOCKER_LOG="$SB/docker.log" \
+        RALPH_SUPABASE_ENV="$SB/supabase.env" bash "$LOOP_DIR/review.sh" --prod 2>&1) || RC=$?
+    assert_eq "stops" "$RC" 1
+    assert_contains "explains" "$OUT" "Usage: ./ralphloop/review.sh [--dev]"
+    assert_eq "no docker calls" "$(docker_calls)" ""
 }

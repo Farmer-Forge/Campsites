@@ -53,6 +53,8 @@ run_loop() {
     OUT=$(cd "$SB/Campsites" && env \
         RALPH_GH_TOKEN=dummy \
         RALPH_WORKER_STUB="$HERE/stub-worker.sh" \
+        RALPH_RATIFY_STUB="$HERE/ratify-stub.sh" \
+        RALPH_STUB_RATIFY_ACTIONS="$SB/ratify-actions" \
         RALPH_STUB_ACTIONS="$SB/actions" \
         RALPH_STUB_PROMPTS_DIR="$SB/prompts" \
         RALPH_STUB_TASK=2 \
@@ -272,4 +274,15 @@ test_worker_model_can_be_overridden() {
 
 test_real_worker_command_passes_the_model() {
     assert_contains "docker's claude call has --model" "$(grep -n 'claude -p' "$LOOP_DIR/doloop.sh")" '--model "$WORKER_MODEL"'
+}
+
+test_loop_restores_ticks_outside_the_task() {
+    sandbox
+    run_loop tick-other tick tick
+    assert_eq "exits 0" "$RC" "0"
+    assert_contains "says it put the line back" "$OUT" "outside Task 2's section; put back 1 line(s)"
+    assert_contains "logs it" "$(branch_file ralphloop/activity.md)" "RESTORED: Task 2, call 1 changed 1 line(s)"
+    assert_contains "task 3's box is unticked on the branch" "$(branch_file ralphloop/task.md)" '- [ ] **Step 1: Not reached in these tests**'
+    assert_contains "task 2 still completed" "$(branch_file ralphloop/task.md)" '- [x] **Step 3: Commit**'
+    rm -rf "$SB"
 }

@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Fake `supabase` for the database gate's tests — put this directory first on
+# PATH. Records "<worktree dir name> <args>" per call in $RALPH_SUPABASE_LOG.
+# Each `db reset` pops one result from $RALPH_SUPABASE_RESULTS (default: pass):
+#   pass        reset and test db both succeed
+#   fail-reset  reset fails (test db is then not run, because the gate uses &&)
+#   fail-test   reset passes, test db fails
+#   hang        reset sleeps past any sane time limit
+# `test db` reports the result popped by the reset before it.
+set -euo pipefail
+LOG="${RALPH_SUPABASE_LOG:?}"
+RES="${RALPH_SUPABASE_RESULTS:?}"
+STATE="$RES.current"
+echo "$(basename "$PWD") $*" >> "$LOG"
+case "${1:-} ${2:-}" in
+    "db reset")
+        NEXT=$(head -n 1 "$RES" 2>/dev/null || true)
+        sed -i 1d "$RES" 2>/dev/null || true
+        echo "${NEXT:-pass}" > "$STATE"
+        case "${NEXT:-pass}" in
+            fail-reset) echo "reset exploded: migration 0001 failed"; exit 1 ;;
+            hang)       sleep 20; exit 0 ;;
+        esac
+        echo "Finished supabase db reset."
+        ;;
+    "test db")
+        if [ "$(cat "$STATE" 2>/dev/null)" = "fail-test" ]; then
+            echo "not ok 1 - the attack test"
+            echo "Result: FAIL"
+            exit 1
+        fi
+        echo "Result: PASS"
+        ;;
+    *)
+        echo "supabase stub: unsupported call: $*" >&2
+        exit 1
+        ;;
+esac

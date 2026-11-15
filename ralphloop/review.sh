@@ -2,19 +2,29 @@
 # ==============================================================================
 # REVIEW — start (or refresh) the app on this server for browser QC.
 # ==============================================================================
-# Serves the canonical clone's current main with Angular's dev server
-# (ng serve) at http://<this server's LAN IP>:4200, so the app can be checked from a browser anywhere on the home
-# network (e.g. Bart) — no SSH tunnels. GitHub stays the source of truth for
-# the code; this is only for looking at it running.
+# Serves the canonical clone's current main at http://<this server's LAN IP>:4200,
+# so the app can be checked from a browser anywhere on the home network (e.g.
+# Bart) — no SSH tunnels. GitHub stays the source of truth for the code; this
+# is only for looking at it running.
+#
+# By default it serves the PRODUCTION build (ng build --configuration
+# production,local: the optimized bundle users get, pointed at the local
+# stack) with ralphloop/serve-spa.mjs, so QC sees what users see. A crash that
+# only happens in the optimized bundle (the #38 map crash) used to get past QC,
+# which only ever ran the dev server. The production build does not follow main
+# by itself: re-run this after merges (chain.sh does, as its last step).
+#
+#   ./ralphloop/review.sh         # production build (default)
+#   ./ralphloop/review.sh --dev   # Angular's dev server (ng serve), which
+#                                 # rebuilds by itself as main moves
 #
 # Idempotent — run it any time: it rewrites
 # src/environments/environment.local.ts (the app's local settings; the
 # development configuration swaps it in for environment.ts), installs packages only
 # when package.json/package-lock.json changed, and (re)starts the review
-# container. The container restarts on its own after a reboot, and the dev
-# server picks up new code by itself as main moves (e.g. as chain.sh merges
-# tasks); re-run this after a task adds packages. chain.sh runs it as its
-# last step.
+# container. The container restarts on its own after a reboot. In --dev
+# mode the dev server picks up new code by itself as main moves; re-run this
+# after a task adds packages. chain.sh runs it as its last step.
 #
 # Run ON the server, as the claude account, from the repo root:
 #   ./ralphloop/review.sh
@@ -33,6 +43,14 @@ SUPABASE_ENV="${RALPH_SUPABASE_ENV:-$HOME/.secrets/campsites-supabase.env}"
 WAIT_SECONDS="${RALPH_REVIEW_WAIT_SECONDS:-60}"
 
 fail() { echo -e "\033[31m[Error] $*\033[0m" >&2; exit 1; }
+
+MODE=production
+case "${1:-}" in
+    "") ;;
+    --dev) MODE=dev ;;
+    *) fail "Unknown option '$1'. Usage: ./ralphloop/review.sh [--dev]" ;;
+esac
+BUILD_DIR="dist/campsite-finder/browser"
 
 [ -f ralphloop/task.md ] && [ -e .git ] || fail "Run this from the repo root, e.g. ./ralphloop/review.sh"
 [ -f package.json ] || { echo "Nothing to review yet — there's no package.json on this branch (the app's scaffold task hasn't been merged)."; exit 1; }
@@ -75,11 +93,21 @@ if [ ! -f "$STAMP" ] || [ package.json -nt "$STAMP" ] \
     touch "$STAMP"
 fi
 
-# (Re)start the dev server. --restart unless-stopped brings it back after a reboot.
+if [ "$MODE" = production ]; then
+    echo "🏗️  Building the production bundle (ng build --configuration production,local)…"
+    docker run --rm --network host --user "$(id -u):$(id -g)" -e HOME=/tmp \
+        -v "$PWD:$PWD" -w "$PWD" "$IMAGE" npx ng build --configuration production,local \
+        || fail "The production build failed — see the output above. (./ralphloop/review.sh --dev serves the dev build instead.)"
+    SERVE=(node ralphloop/serve-spa.mjs "$BUILD_DIR" "$PORT" 0.0.0.0)
+else
+    SERVE=(npx ng serve --host 0.0.0.0 --port "$PORT")
+fi
+
+# (Re)start the server. --restart unless-stopped brings it back after a reboot.
 docker rm -f "$CONTAINER" >/dev/null 2>&1 || true
 docker run -d --name "$CONTAINER" --restart unless-stopped --network host \
     --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD:$PWD" -w "$PWD" \
-    "$IMAGE" npx ng serve --host 0.0.0.0 --port "$PORT" >/dev/null
+    "$IMAGE" "${SERVE[@]}" >/dev/null
 
 if [ "$WAIT_SECONDS" -gt 0 ]; then
     READY=0
@@ -94,7 +122,7 @@ if [ "$WAIT_SECONDS" -gt 0 ]; then
 fi
 
 STUDIO_PORT=$(awk '/^\[studio\]/ { s = 1; next } /^\[/ { s = 0 } s && /^port *=/ { print $3; exit }' supabase/config.toml 2>/dev/null || true)
-echo -e "\033[32m✅ Review app running: http://${HOST}:${PORT}\033[0m"
+echo -e "\033[32m✅ Review app running (${MODE} build): http://${HOST}:${PORT}\033[0m"
 echo "   Dev login: admin@campsites.test / campsites-admin"
 if [ -n "$STUDIO_PORT" ]; then
     echo "   Supabase Studio (database): http://${HOST}:${STUDIO_PORT}"

@@ -51,6 +51,10 @@ echo '{"type":"system","subtype":"init"}'
 case "$ACTION" in
     tick)          tick; result false null "Did a step."; exit 0 ;;
     tick2)         tick; tick; result false null "Did two steps."; exit 0 ;;
+    tick-other)    tick; o=$(grep -n "^## Task $((T + 1)):" "$TASK_FILE" | cut -d: -f1)
+                   l=$(awk -v s="$o" 'NR > s && /^- \[ \]/ { print NR; exit }' "$TASK_FILE")
+                   sed -i "${l}s/^- \[ \]/- [x]/" "$TASK_FILE"
+                   result false null "Did a step (and ticked a box in the next task)."; exit 0 ;;
     tick-loopfile) tick; echo 'echo pwned' > ralphloop/sneaky.sh
                    result false null "Did a step (and touched the loop)."; exit 0 ;;
     tick-schemafile) tick; mkdir -p supabase/migrations supabase/functions/sneaky
@@ -64,6 +68,16 @@ case "$ACTION" in
     tick-limit)    tick; rejected 3600; result true 429 "Usage limit reached"; exit 1 ;;
     noop)          result false null "Looked around, did nothing."; exit 0 ;;
     blocked)       echo "BLOCKED: stub needs Shawn" >> "$LOG"; result false null "Blocked."; exit 0 ;;
+    tick-editconfig) tick; sed -i 's/project_id = "Campsites"/project_id = "Elsewhere"/' supabase/config.toml
+                   result false null "Did a step (and changed supabase/config.toml, uncommitted)."; exit 0 ;;
+    tick-commitconfig) tick; sed -i 's/project_id = "Campsites"/project_id = "Elsewhere"/' supabase/config.toml
+                   git add supabase/config.toml && git commit -q -m "worker's own commit"
+                   result false null "Did a step (and committed a config.toml change)."; exit 0 ;;
+    tick-rmconfig) tick; rm -rf supabase
+                   result false null "Did a step (and deleted supabase/)."; exit 0 ;;
+    tick-commit-env) tick; echo "SECRET=1" > .env.local
+                   git add -f .env.local && git commit -q -m "worker's own commit"
+                   result false null "Did a step (and committed a local env file itself)."; exit 0 ;;
     secret-tick)   echo "SECRET=1" > .env.local
                    mkdir -p node_modules/x; echo x > node_modules/x/i.js
                    tick; result false null "Did a step."; exit 0 ;;

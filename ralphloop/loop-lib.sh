@@ -21,6 +21,55 @@ task_section_range() {
     echo "$start $end"
 }
 
+# restore_outside_task <before> <after> <task> — the worker may change
+# task.md only inside its own task's section. Rebuilds <after> from
+# <before> everywhere else (header, other tasks, notes), keeping <after>'s
+# own section, and prints how many lines it had to put back (0 = none).
+# Why: in ForgeDB's first chain run, ticking Task 3's "Step 9: Commit" also
+# ticked Task 5's identical line; ratify caught it only at the end of the task.
+restore_outside_task() {
+    local before="$1" after="$2" num="$3" bs be as ae tmp n
+    if ! read -r bs be < <(task_section_range "$before" "$num"); then echo 0; return; fi
+    tmp=$(mktemp)
+    if read -r as ae < <(task_section_range "$after" "$num"); then
+        { sed -n "1,$((bs - 1))p" "$before"; sed -n "${as},${ae}p" "$after"; sed -n "$((be + 1)),\$p" "$before"; } > "$tmp"
+    else
+        cp "$before" "$tmp"   # the worker removed its own heading: put the whole file back
+    fi
+    n=$(diff "$tmp" "$after" | grep -c '^>' || true)
+    if [ "$n" -gt 0 ]; then cat "$tmp" > "$after"; fi
+    rm -f "$tmp"
+    echo "$n"
+}
+
+# strip_fenced — stdin to stdout without code-fence lines or anything inside a
+# fence (``` or ~~~, indented or not). A step is a "- [ ]" line in the plan's
+# own text; a plan that quotes a checkbox line in a code block (a snippet for
+# another file) must not create a step that can never be checked off.
+strip_fenced() {
+    awk '
+        /^[ \t]*(```|~~~)/ {
+            m = substr($0, match($0, /(```|~~~)/), 3)
+            if (fence == "") { fence = m; next }
+            if (m == fence) { fence = ""; next }
+        }
+        fence == "" { print }
+    '
+}
+
+# count_unchecked_lines <task_file> <start> <end> — "- [ ]" steps in that line
+# range, outside code fences.
+count_unchecked_lines() {
+    # grep -c, not -q — see find_current_task() in doloop.sh for the
+    # pipefail/SIGPIPE reason.
+    sed -n "${2},${3}p" "$1" | strip_fenced | grep -c '^- \[ \]' || true
+}
+
+# count_unchecked_all <task_file> — "- [ ]" steps left anywhere in the plan.
+count_unchecked_all() {
+    strip_fenced < "$1" | grep -c '^- \[ \]' || true
+}
+
 # count_unchecked <task_file> <task_num> — "- [ ]" steps left in that task.
 count_unchecked() {
     local range
@@ -187,4 +236,195 @@ resume_note() {
         return 0
     fi
     printf 'NOTE FROM THE LOOP: the previous call on this step was interrupted (%s). Since the last checkpoint commit, the worktree has these uncommitted changes:\n%s\nInspect them first (git diff HEAD, and read any new untracked files), then either finish the step from where they leave off or redo it cleanly. Do not assume they are complete or correct.\n' "$2" "$changes"
+}
+
+# ------------------------------------------------------------------------------
+# The gate. After every step that ticks a box, doloop.sh runs
+# `supabase db reset` then `supabase test db` from the task's worktree, on the
+# host, then the dev seed and the app check (run_full_gate in doloop.sh). Only
+# that result counts; the worker has no Supabase CLI and no Docker.
+# ------------------------------------------------------------------------------
+
+# gate_enabled <base_branch> — the gate runs only when the BASE branch has
+# supabase/config.toml. It is read from git, not the worktree, so a worker
+# can't switch the gate off by deleting the file.
+gate_enabled() {
+    git cat-file -e "$1:supabase/config.toml" 2>/dev/null
+}
+
+# gate_config_unchanged <worktree> <base_branch> — true if supabase/config.toml
+# in the worktree (committed or not) is identical to the base branch's.
+# `supabase db reset` acts on the containers named by the worktree's own
+# project_id and ports, so a worker edit there could point the gate at another
+# project's database (Campsites runs on the same host). The gate refuses to run
+# if this is false.
+gate_config_unchanged() {
+    git -C "$1" diff --quiet "$2" -- supabase/config.toml
+}
+
+# run_gate <worktree> <logfile> <timeout_seconds> — returns 0 only if both
+# commands pass within the time limit. Output (stdout and stderr) goes to
+# <logfile>; a timeout is noted in it and returns 124.
+run_gate() {
+    local wt="$1" log="$2" secs="$3" rc=0
+    # `supabase test db` creates a missing supabase/tests as root (it runs in
+    # Docker), which the worker could then not write to. Create it ourselves.
+    mkdir -p "$wt/supabase/tests"
+    ( cd "$wt" && timeout "$secs" bash -c 'supabase db reset && supabase test db' ) < /dev/null > "$log" 2>&1 || rc=$?
+    if [ "$rc" -eq 124 ]; then
+        printf '\nGATE TIMEOUT: supabase db reset + supabase test db did not finish within %s seconds.\n' "$secs" >> "$log"
+    fi
+    return "$rc"
+}
+
+# gate_log_tail <logfile> [lines] — the end of a gate log, ANSI colours stripped.
+gate_log_tail() {
+    tail -n "${2:-30}" "$1" | sed -E 's/\x1b\[[0-9;]*[a-zA-Z]//g'
+}
+
+# The per-step retry counter lives in one small file (only one step is ever in
+# flight): "<count><TAB><step title>". It survives a resume.
+gate_attempts_get() {   # <file> <title> — prints the count so far (0 if none or another step)
+    local n t
+    if [ -f "$1" ] && IFS=$'\t' read -r n t < "$1" && [ "$t" = "$2" ]; then echo "$n"; else echo 0; fi
+}
+gate_attempts_set() { printf '%s\t%s\n' "$3" "$2" > "$1"; }   # <file> <title> <count>
+gate_attempts_clear() { rm -f "$1"; }
+
+# gate_note <step> <attempt> <max> <logfile> — paragraph added to the next
+# worker prompt after a failed gate.
+gate_note() {
+    printf 'NOTE FROM THE LOOP: your previous attempt at "%s" was undone because the gate failed (attempt %s of %s). The gate is `supabase db reset` + `supabase test db` (on the host, from your worktree), the dev seed, then ralphloop/app-check.sh (lint, production build, headless console check). Output (last lines):\n%s\nYour work is still uncommitted in the worktree. Fix the cause, run your own checks again (bash ralphloop/app-check.sh for the app part), then tick the step. Never edit or remove an existing test, or silence a console error, to make it pass; if you believe a test is wrong, log BLOCKED instead.\n' \
+        "$1" "$2" "$3" "$(gate_log_tail "$4" 30)"
+}
+
+# ------------------------------------------------------------------------------
+# Ratify: one independent Opus call per task, after the last step and the gate,
+# before the PR. See ratify-prompt.md and doloop.sh.
+# ------------------------------------------------------------------------------
+
+# duration_seconds <value> — "2700", "45m", "1h" or "30s" as seconds. Returns 1
+# for anything else (or zero).
+duration_seconds() {
+    local v="$1" n
+    [[ "$v" =~ ^([0-9]+)([smh]?)$ ]] || return 1
+    n="${BASH_REMATCH[1]}"
+    case "${BASH_REMATCH[2]}" in
+        h) n=$(( n * 3600 )) ;;
+        m) n=$(( n * 60 )) ;;
+    esac
+    [ "$n" -gt 0 ] || return 1
+    echo "$n"
+}
+
+# md_section <file> <heading text> — the markdown section whose heading
+# contains <heading text>, up to the next heading of the same or a higher
+# level. Headings inside code fences don't count.
+md_section() {
+    awk -v pat="$2" '
+        /^[ \t]*(```|~~~)/ { fence = !fence }
+        !fence && /^#+[ \t]/ {
+            match($0, /^#+/); lvl = RLENGTH
+            if (on && lvl <= startlvl) on = 0
+            if (!on && index($0, pat) > 0) { on = 1; startlvl = lvl }
+        }
+        on { print }
+    ' "$1"
+}
+
+# review_focus_for_task <task_file> <task_num> — the Review Focus section, cut
+# down to the list items that name this task ("Task N"). Plain text around the
+# list is kept. Prints nothing if there is no such section.
+review_focus_for_task() {
+    local sec out
+    sec=$(md_section "$1" "Review Focus")
+    [ -n "$sec" ] || return 0
+    out=$(awk -v n="$2" '
+        function flush() { if (item != "" && item ~ pat) print item; item = "" }
+        BEGIN { pat = "Task " n "([^0-9]|$)" }
+        NR == 1 { print; next }
+        /^([0-9]+[.)]|[-*]) / { flush(); item = $0; next }
+        { if (item != "") item = item "\n" $0; else print }
+        END { flush() }
+    ' <<< "$sec")
+    if [ "$(wc -l <<< "$out")" -le 1 ]; then
+        out+=$'\n'"(No Review Focus item names Task $2.)"
+    fi
+    echo "$out"
+}
+
+# ratify_inputs <task_file> <task_num> <dir> <base_branch> <worktree> — writes
+# what the ratifier is given into <dir>: task-section.md, review-focus.md,
+# global-constraints.md and diff.patch (git diff <base>..HEAD, without
+# activity.md: the worker's own log is deliberately withheld).
+ratify_inputs() {
+    local file="$1" num="$2" dir="$3" base="$4" wt="$5" range
+    mkdir -p "$dir"
+    range=$(task_section_range "$file" "$num") || range="1 0"
+    sed -n "${range% *},${range#* }p" "$file" > "$dir/task-section.md"
+    review_focus_for_task "$file" "$num" > "$dir/review-focus.md"
+    [ -s "$dir/review-focus.md" ] || echo "(task.md has no Review Focus section.)" > "$dir/review-focus.md"
+    md_section "$file" "Global Constraints" > "$dir/global-constraints.md"
+    [ -s "$dir/global-constraints.md" ] || echo "(task.md has no Global Constraints section.)" > "$dir/global-constraints.md"
+    git -C "$wt" diff "${base}..HEAD" -- . ':(exclude)ralphloop/activity.md' > "$dir/diff.patch"
+}
+
+# ratify_tree_state <worktree> — HEAD plus every changed or untracked path,
+# as one string. The ratifier must change nothing in the repository (activity.md
+# included: it sees an empty read-only file there, and its verdict goes to a
+# separate output directory), so this must be identical before and after.
+ratify_tree_state() {
+    git -C "$1" rev-parse HEAD
+    git -C "$1" status --porcelain
+}
+
+# ratify_mounts <canonical_root> <worktree> <log_file_relpath> <empty_file> <input_dir> <output_dir>
+# The `-v` arguments of the ratify container, one per line (use mapfile):
+#   - .git and the worktree, as for the worker;
+#   - an EMPTY file mounted read-only over the worktree's activity.md, so the
+#     worker's log is hidden by the filesystem, not by an instruction (a nested
+#     file mount over the worktree mount; the real file must already exist);
+#   - the inputs, read-only, at /ratify-input;
+#   - an output directory at /ratify-output, the only place it can write.
+ratify_mounts() {
+    printf '%s\n' \
+        "-v" "$1/.git:$1/.git" \
+        "-v" "$2:$2" \
+        "-v" "$4:$2/$3:ro" \
+        "-v" "$5:/ratify-input:ro" \
+        "-v" "$6:/ratify-output"
+}
+
+# ratify_log_details <verdict_file> <activity_log> <task_num> — appends the
+# ratifier's write-up from its verdict file to the real log under
+# "## Task N, ratify", without any result line (doloop.sh writes that itself,
+# after judging the verdict). Capped, and a line the loop would read as a
+# BLOCKED signal is defused, because this is text from a model.
+ratify_log_details() {
+    {
+        printf '\n## Task %s, ratify\n' "$3"
+        head -c 20000 "$1" 2>/dev/null \
+            | grep -vE '^(RATIFIED|REJECTED): Task [0-9]+' \
+            | sed 's/^BLOCKED:/BLOCKED (quoted):/' || true
+    } >> "$2"
+}
+
+# ratify_result <activity_log> <lines_before> <task_num> — judges only the lines
+# written after the call started (the log's line count was taken first), so a
+# stale RATIFIED line from an earlier run can't pass. Prints one of:
+#   RATIFIED | REJECTED: <reason> | NONE | AMBIGUOUS
+ratify_result() {
+    local new ok no
+    new=$(tail -n +"$(( $2 + 1 ))" "$1" 2>/dev/null || true)
+    ok=$(grep -cE "^RATIFIED: Task $3[[:space:]]*$" <<< "$new" || true)
+    no=$(grep -cE "^REJECTED: Task $3: .+" <<< "$new" || true)
+    if [ "$ok" -eq 1 ] && [ "$no" -eq 0 ]; then
+        echo "RATIFIED"
+    elif [ "$no" -eq 1 ] && [ "$ok" -eq 0 ]; then
+        echo "REJECTED: $(grep -E "^REJECTED: Task $3: .+" <<< "$new" | sed -E "s/^REJECTED: Task $3: //")"
+    elif [ "$ok" -eq 0 ] && [ "$no" -eq 0 ]; then
+        echo "NONE"
+    else
+        echo "AMBIGUOUS"
+    fi
 }
