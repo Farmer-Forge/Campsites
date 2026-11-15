@@ -25,7 +25,12 @@ Campsites is **CampsiteFinder V1.1**: a rebuild of the live CampsiteFinder site 
 3. **The schema is a fixed contract.** `supabase/migrations/0001–0018` and `supabase/functions/` are copied unchanged from V1 (`v1.0` tag), because production data depends on them. `0019_function_search_path.sql` (2026-10-24, approved by Shawn) adds the one thing production has that `0001–0018` lack (see below). `0020_security_fixes.sql`, and the caller check in `nps-sync`/`ridb-sync` (`supabase/functions/_shared/service-role.ts`), are the fixes Shawn asked for (2026-10-24, spec 1). The caller check was widened on 2026-11-14 for Supabase's new `sb_secret_` keys: it accepts any key in `SUPABASE_SECRET_KEYS` or `SUPABASE_SERVICE_ROLE_KEY`, and `config.toml` sets `verify_jwt = false` for the two sync functions, because the platform's JWT check can't read the new keys. `0021_skip_zero_locations.sql` (search leaves out the 212 campgrounds at 0,0) and the Priest Rock correction in `nps-sync/transform.ts` are two more (2026-10-27, spec 1, **Fixes** #8–9). Don't edit any of them. Their tests: `supabase test db` (pgTAP, `supabase/tests/`) and `deno test supabase/functions`. If V1.1 truly needs a schema change, write it up as an additive migration for Shawn to review and apply by hand. The loop never writes or applies migrations.
 4. **Spec first.** Shawn approves a spec, then a checkbox plan, before any code is written. Plans list what's out of scope.
 5. **Loops belong to this project and run on the Ralph server** (in Docker, as MyGear's do). No shared, cross-project loop scripts.
-6. **Every step is checked before it's ticked.** As in MyGear today, `task.md` gives each step its own checks (`ng build`, `deno test`, `psql` queries), and the worker runs them before ticking the box. An extra check run by the loop script itself, MyGear's "verification gate" (spec on MyGear's unmerged `loop-verification-gate` branch, no code yet), is **deferred** (Shawn, 2026-10-20). The loop moves over as it works today. The gate can be added to both projects later as its own spec. The scaffold adds `angular-eslint`, so each step's checks include lint.
+6. **Every step is checked before it's ticked, by the worker and then by the loop.** `task.md` gives each step its own checks (`ng build`, `deno test`, `psql` queries), and the worker runs them before ticking the box. Since 2026-11-14 (Lisa, with Shawn's go-ahead; spec `~/plans/2026-11-14-campsites-loop-update.md` on Lisa) **the loop's own gate** then checks every ticked step:
+   - `supabase db reset` + `supabase test db` on this project's local stack;
+   - the dev seed again;
+   - `ralphloop/app-check.sh`: lint, the production build (`ng build -c production,local`), and `console-check.mjs`, which loads that build in headless Chromium and fails on any console error.
+
+   A failed gate unticks the step. Three failures open a draft PR titled `GATE FAILING`, and the chain stops. The gate came over from ForgeDB's loop, together with **ratify**: an independent Opus call that judges each finished task before its PR.
 
 ## The V1 reference
 
@@ -39,9 +44,17 @@ Campsites is **CampsiteFinder V1.1**: a rebuild of the live CampsiteFinder site 
 
 ## The loop and the local stack (Phase 1, done 2026-10-23)
 
-- **`ralphloop/`** is MyGear's loop (from `dfeb147`), adapted for Angular. Its own tests run on Ralph with `bash ralphloop/tests/run-on-ralph.sh`. The worker image is `campsites-claude-worker:latest` (Node 22, Deno 2.9.5, psql, Claude Code), built on Ralph from `ralphloop/worker.Dockerfile`. **Every worker call runs on Sonnet** (`claude-sonnet-5-5`, Shawn, 2026-10-26). `RALPH_MODEL=<model>` overrides it for one run of `doloop.sh` or `chain.sh`.
+- **`ralphloop/`** is MyGear's loop (from `dfeb147`), adapted for Angular, and merged with ForgeDB's loop on 2026-11-14:
+  - the gate (hard rule 6);
+  - ratify (`ratify-prompt.md`, Opus, `RALPH_RATIFY_MODEL`);
+  - the guard that puts back `task.md` changes outside the current task;
+  - draft PRs when the gate fails;
+  - the code-fence fix.
+
+  Its own tests run on Ralph with `bash ralphloop/tests/run-on-ralph.sh`. The worker image is `campsites-claude-worker:latest`, built on Ralph from `ralphloop/worker.Dockerfile`. It holds Node 22, Deno 2.9.5, psql 17 + pg_prove, jq, Playwright 1.64.1 with headless Chromium, and Claude Code. **Every worker call runs on Sonnet** (`claude-sonnet-5-5`, Shawn, 2026-10-26). `RALPH_MODEL=<model>` overrides it for one run of `doloop.sh` or `chain.sh`.
+- **The review app** (`ralphloop/review.sh`, port 4200) serves the **production** build (`ng build -c production,local`, then `serve-spa.mjs`), so QC sees what users get; `--dev` serves `ng serve` instead. Re-run it after merges (`chain.sh` does). `angular.json`'s `local` configuration only swaps in `environment.local.ts`; Vercel's build doesn't use it.
 - **The local Supabase stack** runs on Ralph from `~/projects/Campsites` (as `claude`), with ports 54321 (API) and 54322 (DB). Its values are in `~/.secrets/campsites-supabase.env`.
-- **Dev login:** `admin@campsites.test` / `campsites-admin`, from `ralphloop/seed-dev.sh`. Re-run the seed after any `supabase db reset`.
+- **Dev login:** `admin@campsites.test` / `campsites-admin`, from `ralphloop/seed-dev.sh`. Re-run the seed after any `supabase db reset` (the loop's gate does this itself).
 - **Local app settings:** `src/environments/environment.local.ts` (gitignored), the same shape as V1's `environment.ts`, swapped in by the `development` configuration. It's never committed: checkpoints skip it, and chain mode refuses a PR that contains it.
 
 ## Production backup (taken by Shawn, 2026-10-18)
@@ -79,7 +92,7 @@ The full version, with checkboxes, is in the roadmap spec.
 
 1. **Specs.** Write V1.1 specs in `docs/superpowers/specs/` from V1's code, one per area. Include a "do not change" spec for the schema covering tables, RPCs, RLS policies and edge functions. Shawn reviews each and marks what's intended and what's accidental. Not started.
    - **Schema contract checked against production (2026-10-24).** The local stack's schema (`pg_dump --schema-only --schema=public` in `supabase_db_Campsites` on Ralph) was diffed on Lisa against the backup's `schema.sql`, plus the `auth.users` triggers and the extensions (from `full.dump`'s table of contents only). Everything matched except one thing: production pins `search_path = public, pg_temp` on `get_campgrounds_by_ids`, `is_admin` and `nearest_campgrounds`, and `0001–0018` didn't. That was most likely applied from Supabase's security advisor, outside the migrations. `0019_function_search_path.sql` adds it, so `0001–0019` now equal production's `public` schema. V1's own repo still has the gap; V1 is frozen, so it's only noted.
-2. **Tests.** Playwright and app unit tests are **dropped** (Shawn, 2026-10-19). V1 has no database tests. V1's Deno tests for the edge functions (`ridb-sync`, `nps-sync`) are part of the copied `supabase/functions/` and run as a step check.
+2. **Tests.** Playwright and app unit tests are **dropped** (Shawn, 2026-10-19). The loop's console check (2026-11-14) uses Playwright to judge the app, but it lives in `ralphloop/`; it's not an app test suite. V1 has no database tests. V1's Deno tests for the edge functions (`ridb-sync`, `nps-sync`) are part of the copied `supabase/functions/` and run as a step check.
 3. **Loop setup: the main goal.** Follow `create-new-project.md`. Copy `ralphloop/` from MyGear, which works as it is today, and make Angular versions of its React-specific parts: worker prompt rule 8, `review.sh`'s dev-server command and port, the worker image (add Deno), and the seed scripts. Skip the parts of `create-new-project.md` that assume Forge's core plan and Tailwind.
 4. **`task.md`,** written from the approved specs. Task 1 (local Supabase stack, migrations, seed) is done by hand. The seed uses the campground data from the production backup and fake users, so the loop never calls the live RIDB or NPS APIs (V1 calls no others). Migration `0007_set_shawnpfarmer_admin.sql` promotes Shawn's real email, so the local dev admin comes from the seed instead.
 5. **Run the loop,** one task per PR, reviewed by Shawn.
