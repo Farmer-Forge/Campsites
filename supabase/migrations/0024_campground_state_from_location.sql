@@ -77,6 +77,7 @@ declare
   c_border_margin_m constant double precision := 1000;  -- spec section 5: keep the source's state within 1 km of it
   c_logged constant text[] := array['manual', 'no_boundary', 'location_filled', 'near_border', 'location_overrode'];
   v_src text;
+  v_src_code text;
   v_loc text;
   v_dist double precision;
   v_has_geo boolean := exists (select 1 from geo.us_states);
@@ -92,6 +93,14 @@ begin
   end if;
   new.source_state := v_src;
 
+  -- Some sources send the state's name, not its code ("OREGON", "Tennessee"):
+  -- read either as the code. source_state keeps what was sent.
+  v_src_code := coalesce(
+    (select s.code from geo.us_states s
+     where s.code = upper(btrim(v_src)) or upper(s.name) = upper(btrim(v_src))
+     order by s.code limit 1),
+    v_src);
+
   if v_has_geo and not v_zero then
     v_loc := geo.state_at(new.location);
   end if;
@@ -100,24 +109,24 @@ begin
     new.state := new.state_override;
     new.state_reason := 'manual';
   elsif not v_has_geo then
-    new.state := v_src;
+    new.state := v_src_code;
     new.state_reason := 'no_geo_data';
   elsif v_zero then
-    new.state := v_src;
+    new.state := v_src_code;
     new.state_reason := 'no_location';
   elsif v_loc is null then
-    new.state := v_src;
+    new.state := v_src_code;
     new.state_reason := 'no_boundary';
-  elsif v_src is null then
+  elsif v_src_code is null then
     new.state := v_loc;
     new.state_reason := 'location_filled';
-  elsif v_loc = v_src then
-    new.state := v_src;
+  elsif v_loc = v_src_code then
+    new.state := v_src_code;
     new.state_reason := 'source';
   else
-    v_dist := geo.distance_to_state_m(new.location, v_src);  -- null if v_src isn't a known code
+    v_dist := geo.distance_to_state_m(new.location, v_src_code);  -- null if it isn't a known state
     if v_dist is not null and v_dist <= c_border_margin_m then
-      new.state := v_src;
+      new.state := v_src_code;
       new.state_reason := 'near_border';
     else
       new.state := v_loc;

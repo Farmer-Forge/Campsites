@@ -7,7 +7,7 @@
 -- lng = -92), never the real boundaries, so they don't depend on the dev seed.
 -- Run on ralph from the repo root: supabase test db. Rolled back at the end.
 begin;
-select plan(52);
+select plan(55);
 
 -- One plain user and one admin. The sign-up trigger makes their public.users rows.
 insert into auth.users (instance_id, id, aud, role, email, raw_user_meta_data) values
@@ -25,8 +25,8 @@ $$;
 create function pg_temp.load_squares() returns void language sql as $$
   delete from geo.us_states;
   insert into geo.us_states (code, name, fips, boundary) values
-    ('MN', 'Test MN', '27', st_multi(st_makeenvelope(-97, 43, -92, 49, 4326))),
-    ('WI', 'Test WI', '55', st_multi(st_makeenvelope(-92, 42, -87, 47, 4326)));
+    ('MN', 'Minnesota', '27', st_multi(st_makeenvelope(-97, 43, -92, 49, 4326))),
+    ('WI', 'Wisconsin', '55', st_multi(st_makeenvelope(-92, 42, -87, 47, 4326)));
 $$;
 
 -- sync(id, lng, lat, state): the shape of nps-sync/ridb-sync's PostgREST upsert.
@@ -186,6 +186,18 @@ insert into public.campgrounds (id, name, location, agency, source, state, sourc
 values ('test:copied', 'Copied', 'SRID=4326;POINT(-92.05 45)', 'USFS', 'ridb', 'MN', 'WI');
 select is((select source_state from public.campgrounds where id = 'test:copied') || '/' || pg_temp.got('test:copied'),
   'WI/MN/location_overrode', 'T20: a supplied source_state is kept, not replaced by state');
+
+-- T21: a source that sends the state's name instead of its code (RIDB does:
+-- "OREGON", "Tennessee"; found in the dry run) is read as that state.
+select pg_temp.sync('test:named', -89.5, 44.5, 'WISCONSIN');
+select is(pg_temp.got('test:named'), 'WI/source', 'T21: a source state given by name matches its code');
+select pg_temp.sync('test:named-near', -92.005, 45, 'Wisconsin');
+select is((select source_state from public.campgrounds where id = 'test:named-near') || '/' || pg_temp.got('test:named-near'),
+  'Wisconsin/WI/near_border', 'T21: ... gets the border margin, stores the code and keeps the raw source_state');
+delete from geo.us_states;
+select pg_temp.sync('test:named-nogeo', -89.5, 44.5, 'Wisconsin');
+select is(pg_temp.got('test:named-nogeo'), 'Wisconsin/no_geo_data', 'T21: with no boundaries loaded, the source''s value is kept as sent');
+select pg_temp.load_squares();
 
 -- T17: moving a campground re-resolves its state and keeps source_state.
 update public.campgrounds set location = 'SRID=4326;POINT(-89.5 44.5)' where id = 'test:fill';
