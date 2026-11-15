@@ -105,7 +105,7 @@ The code check that followed also found that the map's right-click doesn't work 
   - **B: a closer placeholder height.** Measure the real collapsed card height and set `contain-intrinsic-size` to it. That cuts the error but doesn't remove it (names wrap, so heights vary). Best used together with A.
   - **C: drop `content-visibility` from the list.** Every card is laid out for real, so the scroll position is exact. The cost is "Show all" layout time on ~4,700 cards; check it before choosing.
 
-**Status (2026-11-14): logged, not fixed.** Next: Shawn picks Part 2 (A recommended), then the spec 3 wording (`block: 'start'`; V1 and the spec may say `nearest`) and `task.md`.
+**Fixed and live (2026-11-15).** Picked: scroll-then-correct (Shawn, 2026-11-14). Folded into spec 3 as change #12 and `task.md` Task 10 (plan PR #43, with `ralphloop/scroll-check.mjs`). The loop ran Task 10 with `doloop.sh`: red check 4/5 FAIL, then 5/5 PASS, gate passed every step, ratify RATIFIED. Shawn QC'd and merged #44 (`8b5d7d9`); Vercel deployed it. List clicks keep the old scroll (spec 3 change #12). Not covered by the check: a map still zooming while the passes run (QC item).
 
 **Spec:** 3 (Finder), "Campground card list" and change #2. `task.md` Task 5 Step 6 and its QC line. Add a QC check: with Miles **All**, click "View details ▸" in the bubble of a campground far down the list. Its card opens with its **top** (name, heart, **+**) at the top of the list pane. Repeat from "Add to trip…".
 
