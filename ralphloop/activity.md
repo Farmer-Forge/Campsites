@@ -172,3 +172,8 @@ TASK 8 COMPLETE
 ## Task 9, call 2
 - Step 3: created `features/admin/admin.component.ts/.html` (stats pills, role=tab Users / Campground Attributes, invite form, users table with "You" row, role select, suspend, edit, inline delete confirm, attributes autocomplete + table + add row; styles verbatim inline; plain-English errors for "last admin" / "not authorized"; stats refresh after delete; search uses `CampgroundsService.searchByName`, which escapes `%`/`_`). Routed `admin` → `AdminComponent` with `adminGuard` and removed the placeholder helper from `app.routes.ts`. `ng lint` and `ng build` pass; no raw colors. Not exercised in a browser.
 - Note: `features/placeholder/` still exists on disk; Step 4 says to delete it (it's ticked already, so check that in the next call).
+
+## Task 10, call 1 — ended without completing a step (worker failed, exit code 0) at 2026-11-15 02:17 UTC
+
+## Task 10, call 2
+- Step 1: red check ran first (FAIL 1–4, PASS 5, exit 1). Then made the five edits in `campground-table.component.ts` only (MAX_SCROLL_PASSES, scrollRun/clickedId, second effect, toggleCard, revealCard/scrollCardToTop/scrollAreaOf). Verified: `ng lint` clean, production build OK, `scroll-check.mjs` PASSED 5 of 5, `app-check.sh` passed.

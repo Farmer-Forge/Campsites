@@ -2052,7 +2052,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
 
 **Check script:** `ralphloop/scroll-check.mjs` (Lisa, 2026-11-14; like `console-check.mjs`, it's the loop's, so never edit it). It loads the production build in headless Chromium on the Finder with "Miles: All" and checks five cases: "View details ▸" for the campground ~75% down the list at 1400px and 390px, "Add to trip…" as the admin (the trip picker opens), the **last** campground, and a click on the 4th card in the list itself (which must keep today's scroll). Exit 0 all pass, 1 a case fails, 2 the check couldn't run. It needs the local stack and the dev seed, which the gate restores.
 
-- [ ] **Step 1: Prove the check fails, then scroll the selected card's top into place.**
+- [x] **Step 1: Prove the check fails, then scroll the selected card's top into place.**
   **First, the red check.** Write the local environment (Global Constraints, **Local settings**). Then, **only if the component still matches `main`** (on a retry or a resumed step it's already changed, so skip to "Then"):
   ```bash
   F=src/app/shared/ui/campground-table/campground-table.component.ts

@@ -235,6 +235,9 @@ import { FavoriteToggleComponent } from '../favorite-toggle/favorite-toggle.comp
   `,
 })
 export class CampgroundTableComponent {
+  /** Most scroll passes scrollCardToTop makes for one selection (spec 3, change #12). */
+  private static readonly MAX_SCROLL_PASSES = 10;
+
   protected readonly supabase = inject(SupabaseService);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly injector = inject(Injector);
@@ -255,6 +258,10 @@ export class CampgroundTableComponent {
   protected readonly expandedId = signal<string | null>(null);
   protected readonly pickerId = signal<string | null>(null);
   private readonly drafts = signal<Map<string, string>>(new Map());
+  /** Bumped on every selection, so a newer selection stops an older one's scroll passes. */
+  private scrollRun = 0;
+  /** The card just clicked in this list: its echoed selection keeps today's scroll (revealCard). */
+  private clickedId: string | null = null;
 
   constructor() {
     effect(() => {
@@ -267,20 +274,85 @@ export class CampgroundTableComponent {
     effect(() => {
       const sel = this.selected();
       untracked(() => {
+        const fromList = sel !== null && sel.id === this.clickedId;
+        this.clickedId = null;
         if (!sel) {
           return;
         }
         this.expandedId.set(sel.id);
-        afterNextRender(
-          () => {
-            this.host.nativeElement
-              .querySelector(`[data-id="${CSS.escape(sel.id)}"]`)
-              ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-          },
-          { injector: this.injector },
-        );
+        afterNextRender(() => (fromList ? this.revealCard(sel.id) : this.scrollCardToTop(sel.id)), {
+          injector: this.injector,
+        });
       });
     });
+  }
+
+  /** A card clicked in the list itself: unchanged, scroll only as far as needed to show it. */
+  private revealCard(id: string): void {
+    this.scrollRun += 1; // stops an earlier selection's scroll passes
+    this.host.nativeElement
+      .querySelector(`[data-id="${CSS.escape(id)}"]`)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  /**
+   * Scrolls a card selected from outside the list (the map popup) so its top sits at the top
+   * of the list (spec 3, change #12).
+   * Off-screen cards use content-visibility: auto, so until they are drawn they count as
+   * their 80px placeholder, and one scroll lands short. So scroll instantly, let the browser
+   * draw the cards it now shows (two animation frames), measure again and scroll by what is
+   * left. Stop after two passes in a row that moved nothing (the card is in place, or the
+   * scroller can't go further even with the newly drawn cards), or after MAX_SCROLL_PASSES.
+   * Only the element that scrolls the list moves (scrollAreaOf).
+   */
+  private scrollCardToTop(id: string): void {
+    const run = ++this.scrollRun;
+    let passes = 0;
+    let calm = 0;
+    const pass = (): void => {
+      if (run !== this.scrollRun) {
+        return;
+      }
+      const card = this.host.nativeElement.querySelector<HTMLElement>(`[data-id="${CSS.escape(id)}"]`);
+      const list = card?.parentElement;
+      if (!card || !list) {
+        return;
+      }
+      const area = this.scrollAreaOf(list);
+      if (!area) {
+        return;
+      }
+      const { scroller, targetTop } = area;
+      const offBy = card.getBoundingClientRect().top - targetTop;
+      const before = scroller.scrollTop;
+      if (Math.abs(offBy) >= 1) {
+        scroller.scrollTop = before + offBy;
+      }
+      calm = scroller.scrollTop === before ? calm + 1 : 0;
+      passes += 1;
+      if (calm >= 2 || passes >= CampgroundTableComponent.MAX_SCROLL_PASSES) {
+        return;
+      }
+      requestAnimationFrame(() => requestAnimationFrame(pass));
+    };
+    pass();
+  }
+
+  /**
+   * The element that scrolls the list: the list itself on a wide screen, the nearest scrolling
+   * ancestor when the list doesn't scroll on its own (under 900px it is overflow: visible), or
+   * the page. targetTop is where a card's top should land: just inside that element's top
+   * padding (0 for the page).
+   */
+  private scrollAreaOf(list: HTMLElement): { scroller: Element; targetTop: number } | null {
+    for (let el: HTMLElement | null = list; el; el = el.parentElement) {
+      const style = getComputedStyle(el);
+      if (/(auto|scroll)/.test(style.overflowY) && el.scrollHeight > el.clientHeight) {
+        return { scroller: el, targetTop: el.getBoundingClientRect().top + parseFloat(style.paddingTop) };
+      }
+    }
+    const page = document.scrollingElement;
+    return page ? { scroller: page, targetTop: 0 } : null;
   }
 
   protected miles(c: Campground): string {
@@ -294,6 +366,7 @@ export class CampgroundTableComponent {
       this.selectedChange.emit(null);
     } else {
       this.expandedId.set(c.id);
+      this.clickedId = c.id;
       this.selectedChange.emit(c);
     }
   }
