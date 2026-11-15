@@ -2183,7 +2183,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
      ```
   `afterNextRender` is still imported and used. Nothing in the template or styles changes: `content-visibility: auto` and `contain-intrinsic-size: auto 80px` stay (spec 3, change #2).
 
-- [ ] **Step 2: Verify.**
+- [x] **Step 2: Verify.**
   ```bash
   F=src/app/shared/ui/campground-table/campground-table.component.ts
   npx ng lint

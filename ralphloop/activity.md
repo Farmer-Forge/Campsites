@@ -177,3 +177,6 @@ TASK 8 COMPLETE
 
 ## Task 10, call 2
 - Step 1: red check ran first (FAIL 1–4, PASS 5, exit 1). Then made the five edits in `campground-table.component.ts` only (MAX_SCROLL_PASSES, scrollRun/clickedId, second effect, toggleCard, revealCard/scrollCardToTop/scrollAreaOf). Verified: `ng lint` clean, production build OK, `scroll-check.mjs` PASSED 5 of 5, `app-check.sh` passed.
+
+## Task 10, call 3
+- Step 2: verified. `ng lint` clean, production build OK, `scroll-check.mjs` PASSED 5 of 5 (exit 0), one `scrollIntoView(`, all five marker strings found once, only `campground-table.component.ts` changed besides task.md/activity.md, `app-check.sh` ends "CONSOLE CHECK PASSED". Spec 3 change #12 re-read against the code: consistent.
