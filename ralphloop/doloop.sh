@@ -285,6 +285,14 @@ else
     echo "🧪 Gate: off (no supabase/config.toml on ${BASE_BRANCH})."
 fi
 GATE_FLAGGED=0
+# The gate's app check needs Playwright in the worker image. An image built
+# before 2026-11-14 doesn't have it, and every step would fail the gate; stop
+# now with the fix instead.
+if [ "$GATE_ON" = "1" ] && [ -z "${RALPH_APP_CHECK_STUB:-}" ] \
+    && ! docker run --rm "$CLAUDE_WORKER_IMAGE" node -e "require('playwright')" >/dev/null 2>&1; then
+    echo -e "\033[31m[Error] ${CLAUDE_WORKER_IMAGE} has no Playwright, which the gate's app check needs. Rebuild it from the repo root: docker build -t ${CLAUDE_WORKER_IMAGE} - < ralphloop/worker.Dockerfile\033[0m"
+    exit 1
+fi
 
 git -C "$WORKTREE_DIR" config user.name "Ralph Loop"
 git -C "$WORKTREE_DIR" config user.email "ralph-loop@users.noreply.github.com"

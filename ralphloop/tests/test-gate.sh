@@ -227,3 +227,15 @@ test_worker_prompt_describes_the_gate() {
     assert_contains "names the production build" "$(prompt 1)" "ng build --configuration production,local"
     assert_contains "never silence a console error" "$(prompt 1)" "never silence a"
 }
+
+test_gate_stops_early_when_the_image_has_no_playwright() {
+    gate_sandbox
+    # The real app check (no stub), with a fake docker whose `run` fails.
+    local fake="$SB/fakedocker"; mkdir -p "$fake"
+    printf '#!/usr/bin/env bash\nexit 1\n' > "$fake/docker"; chmod +x "$fake/docker"
+    EXTRA_ENV="${GATE_ENV/RALPH_APP_CHECK_STUB=$HERE\/app-check-stub.sh /} PATH=$fake:$HERE/supabase-stub:$HERE/gh-stub:$PATH" run_loop tick tick tick
+    assert_eq "exits 1" "$RC" 1
+    assert_contains "says to rebuild the image" "$OUT" "has no Playwright, which the gate's app check needs"
+    assert_eq "no worker ran" "$(exists "$SB/prompts/prompt-1.txt")" no
+    assert_eq "supabase never called" "$(supabase_calls)" ""
+}
