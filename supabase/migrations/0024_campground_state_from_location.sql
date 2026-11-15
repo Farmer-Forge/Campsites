@@ -53,13 +53,15 @@ revoke all on sequence public.campground_state_log_id_seq from anon, authenticat
 
 -- (a) BEFORE INSERT: only remember what the source sent. It must not change
 -- state or log anything: on an upsert it also runs for rows that become updates.
+-- An insert that already carries source_state (a copy of rows written after
+-- 0024) keeps it.
 create function public.campground_state_capture_source()
 returns trigger
 language plpgsql
 set search_path = public, pg_temp
 as $$
 begin
-  new.source_state := new.state;
+  new.source_state := coalesce(new.source_state, new.state);
   return new;
 end;
 $$;
@@ -123,8 +125,11 @@ begin
     end if;
   end if;
 
+  -- Log a change of state, a move into a logged reason, and the end of an
+  -- override (an admin action is always on record, even when the state stays).
   if new.state is distinct from old.state
-     or (new.state_reason is distinct from old.state_reason and new.state_reason = any (c_logged)) then
+     or (new.state_reason is distinct from old.state_reason
+         and (new.state_reason = any (c_logged) or old.state_reason = 'manual')) then
     insert into public.campground_state_log
       (campground_id, old_state, new_state, source_state, location_state, override_state, reason, distance_m, changed_by)
     values

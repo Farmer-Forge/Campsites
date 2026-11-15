@@ -7,7 +7,7 @@
 -- lng = -92), never the real boundaries, so they don't depend on the dev seed.
 -- Run on ralph from the repo root: supabase test db. Rolled back at the end.
 begin;
-select plan(47);
+select plan(52);
 
 -- One plain user and one admin. The sign-up trigger makes their public.users rows.
 insert into auth.users (instance_id, id, aud, role, email, raw_user_meta_data) values
@@ -31,6 +31,7 @@ $$;
 
 -- sync(id, lng, lat, state): the shape of nps-sync/ridb-sync's PostgREST upsert.
 create function pg_temp.sync(p_id text, p_lng float8, p_lat float8, p_state text) returns void language sql as $$
+  select set_config('request.jwt.claims', '', true);
   insert into public.campgrounds (id, name, location, agency, source, state)
   values (p_id, 'Test ' || p_id, st_setsrid(st_point(p_lng, p_lat), 4326)::geography, 'USFS', 'ridb', p_state)
   on conflict (id) do update set name = excluded.name, location = excluded.location,
@@ -126,6 +127,9 @@ select throws_ok($$ select * from public.admin_set_campground_state_override('te
 select is((select state || '/' || state_reason from public.admin_set_campground_state_override('test:agree', ' wi')), 'WI/manual', 'T11: the code is trimmed and upper-cased');
 select lives_ok($$ select * from public.admin_set_campground_state_override('test:agree', null) $$, 'T11: ... and the override can be cleared again');
 reset role;
+select ok(exists (select 1 from public.campground_state_log where campground_id = 'test:agree' and reason = 'source'
+  and changed_by = '22222222-2222-2222-2222-222222222222'),
+  'T11: clearing an override is logged even when the state doesn''t change');
 
 -- T12: the log is readable only through the admin RPC.
 set local role anon;
@@ -141,10 +145,10 @@ select pg_temp.act_as('11111111-1111-1111-1111-111111111111');
 select throws_ok($$ select * from public.admin_campground_state_log() $$, '42501', null, 'T12: a non-admin cannot call the log RPC');
 reset role;
 
--- T13: the same sync twice writes nothing new (test:agree has one row, from T11's override).
+-- T13: the same sync twice writes nothing new (test:agree has two rows, from T11's override and its clearing).
 select pg_temp.sync('test:agree', -89.5, 44.5, 'WI');
 select pg_temp.sync('test:agree', -89.5, 44.5, 'WI');
-select is(pg_temp.logs('test:agree'), 1, 'T13: repeating a sync with the same values writes no log rows');
+select is(pg_temp.logs('test:agree'), 2, 'T13: repeating a sync with the same values writes no log rows');
 
 -- T14: a filled-in row now matches its state in the Where filter.
 select ok(exists (select 1 from public.nearest_campgrounds(46, -94.5, 50, null, 20038000, array['MN'], null) where id = 'test:fill'),
@@ -163,6 +167,25 @@ on conflict (id) do update set name = excluded.name, location = excluded.locatio
 select is(pg_temp.got('test:new1'), 'MN/location_filled', 'T16: a new row with no source state is filled in by the same statement');
 select is(pg_temp.got('test:new2'), 'WI/source', 'T16: a new row whose source agrees is kept');
 select is(pg_temp.logs('test:new1') + pg_temp.logs('test:new2'), 1, 'T16: ... with exactly one log row between them');
+
+select ok((select changed_by from public.campground_state_log where campground_id = 'test:new1') is null,
+  'T16: a sync''s log row has no changed_by');
+
+-- T19: one sync statement holding an existing row and a new one: only the new one is resolved by (c).
+select set_config('request.jwt.claims', '', true);
+insert into public.campgrounds (id, name, location, agency, source, state) values
+  ('test:agree', 'Test test:agree', 'SRID=4326;POINT(-89.5 44.5)', 'USFS', 'ridb', 'WI'),
+  ('test:new3', 'New three', 'SRID=4326;POINT(-94.5 46)', 'USFS', 'ridb', null)
+on conflict (id) do update set name = excluded.name, location = excluded.location,
+  agency = excluded.agency, source = excluded.source, state = excluded.state;
+select is(pg_temp.got('test:new3'), 'MN/location_filled', 'T19: in a mixed upsert, the new row is resolved');
+select is(pg_temp.logs('test:agree'), 2, 'T19: ... and the existing, unchanged row writes no log row');
+
+-- T20: an insert that supplies source_state itself keeps it (e.g. a data copy taken after 0024).
+insert into public.campgrounds (id, name, location, agency, source, state, source_state)
+values ('test:copied', 'Copied', 'SRID=4326;POINT(-92.05 45)', 'USFS', 'ridb', 'MN', 'WI');
+select is((select source_state from public.campgrounds where id = 'test:copied') || '/' || pg_temp.got('test:copied'),
+  'WI/MN/location_overrode', 'T20: a supplied source_state is kept, not replaced by state');
 
 -- T17: moving a campground re-resolves its state and keeps source_state.
 update public.campgrounds set location = 'SRID=4326;POINT(-89.5 44.5)' where id = 'test:fill';
