@@ -239,9 +239,10 @@ resume_note() {
 }
 
 # ------------------------------------------------------------------------------
-# The database gate. After every step that ticks a box, doloop.sh runs
+# The gate. After every step that ticks a box, doloop.sh runs
 # `supabase db reset` then `supabase test db` from the task's worktree, on the
-# host. Only that result counts; the worker has no Supabase CLI and no Docker.
+# host, then the dev seed and the app check (run_full_gate in doloop.sh). Only
+# that result counts; the worker has no Supabase CLI and no Docker.
 # ------------------------------------------------------------------------------
 
 # gate_enabled <base_branch> — the gate runs only when the BASE branch has
@@ -293,7 +294,7 @@ gate_attempts_clear() { rm -f "$1"; }
 # gate_note <step> <attempt> <max> <logfile> — paragraph added to the next
 # worker prompt after a failed gate.
 gate_note() {
-    printf 'NOTE FROM THE LOOP: your previous attempt at "%s" was undone because the database gate failed (attempt %s of %s). The gate is `supabase db reset` followed by `supabase test db`, run on the host from your worktree. Output (last lines):\n%s\nYour work is still uncommitted in the worktree. Fix the cause, run your own checks again, then tick the step. Never edit or remove an existing test to make it pass; if you believe a test is wrong, log BLOCKED instead.\n' \
+    printf 'NOTE FROM THE LOOP: your previous attempt at "%s" was undone because the gate failed (attempt %s of %s). The gate is `supabase db reset` + `supabase test db` (on the host, from your worktree), the dev seed, then ralphloop/app-check.sh (lint, production build, headless console check). Output (last lines):\n%s\nYour work is still uncommitted in the worktree. Fix the cause, run your own checks again (bash ralphloop/app-check.sh for the app part), then tick the step. Never edit or remove an existing test, or silence a console error, to make it pass; if you believe a test is wrong, log BLOCKED instead.\n' \
         "$1" "$2" "$3" "$(gate_log_tail "$4" 30)"
 }
 

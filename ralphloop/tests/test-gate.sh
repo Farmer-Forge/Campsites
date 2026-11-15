@@ -13,9 +13,13 @@ gate_sandbox() {
     git -C "$SB/Campsites" add -A
     git -C "$SB/Campsites" commit -q -m "supabase config"
     git -C "$SB/Campsites" push -q origin main
-    : > "$SB/results"
-    GATE_ENV="PATH=$HERE/supabase-stub:$HERE/gh-stub:$PATH RALPH_SUPABASE_LOG=$SB/supabase.log RALPH_SUPABASE_RESULTS=$SB/results RALPH_SKIP_PR=0 RALPH_GH_STUB_DIR=$SB/gh RALPH_GH_STUB_ORIGIN=$SB/origin.git"
+    : > "$SB/results"; : > "$SB/appcheck-results"
+    GATE_ENV="PATH=$HERE/supabase-stub:$HERE/gh-stub:$PATH RALPH_SUPABASE_LOG=$SB/supabase.log RALPH_SUPABASE_RESULTS=$SB/results RALPH_SEED_SCRIPT=$HERE/seed-stub.sh RALPH_APP_CHECK_STUB=$HERE/app-check-stub.sh RALPH_APP_CHECK_LOG=$SB/appcheck.log RALPH_APP_CHECK_RESULTS=$SB/appcheck-results RALPH_SKIP_PR=0 RALPH_GH_STUB_DIR=$SB/gh RALPH_GH_STUB_ORIGIN=$SB/origin.git"
 }
+
+# app_check_results RESULT... — script the next app-check results (pass|fail).
+app_check_results() { printf '%s\n' "$@" > "$SB/appcheck-results"; }
+app_check_calls() { cat "$SB/appcheck.log" 2>/dev/null; }
 
 # gate_results RESULT... — script the next `db reset` results.
 gate_results() { printf '%s\n' "$@" > "$SB/results"; }
@@ -27,7 +31,7 @@ pr_lines()       { cat "$SB/gh/prs" 2>/dev/null; }
 test_gate_runs_reset_then_test_from_the_worktree_after_each_step() {
     gate_sandbox; EXTRA_ENV="$GATE_ENV" run_loop tick tick tick
     assert_eq "exits 0" "$RC" 0
-    assert_contains "says the gate is on" "$OUT" "Database gate: on"
+    assert_contains "says the gate is on" "$OUT" "Gate: on"
     assert_eq "reset ran after every step" "$(count_calls 'task-2 db reset')" 3
     assert_eq "test db ran after every step" "$(count_calls 'task-2 test db')" 3
     assert_eq "reset first, then test db" "$(supabase_calls | head -n 2 | tr '\n' '|')" "task-2 db reset|task-2 test db|"
@@ -40,7 +44,7 @@ test_gate_is_off_without_a_supabase_config_on_main() {
     sandbox; mkdir -p "$SB/gh"; : > "$SB/results"
     EXTRA_ENV="PATH=$HERE/supabase-stub:$PATH RALPH_SUPABASE_LOG=$SB/supabase.log RALPH_SUPABASE_RESULTS=$SB/results" run_loop tick tick tick
     assert_eq "exits 0" "$RC" 0
-    assert_contains "says the gate is off" "$OUT" "Database gate: off"
+    assert_contains "says the gate is off" "$OUT" "Gate: off"
     assert_eq "supabase never called" "$(supabase_calls)" ""
 }
 
@@ -50,7 +54,7 @@ test_gate_failing_once_undoes_the_step_and_retries_with_the_output() {
     assert_eq "exits 0" "$RC" 0
     assert_contains "logs the failed attempt" "$(branch_file ralphloop/activity.md)" "GATE FAILED: Step 1: Write \`first.txt\` (attempt 1/3)"
     assert_contains "logs the gate's output" "$(branch_file ralphloop/activity.md)" "not ok 1 - the attack test"
-    assert_contains "next prompt carries the gate note" "$(prompt 2)" "database gate failed (attempt 1 of 3)"
+    assert_contains "next prompt carries the gate note" "$(prompt 2)" "the gate failed (attempt 1 of 3)"
     assert_contains "next prompt carries the output" "$(prompt 2)" "not ok 1 - the attack test"
     assert_eq "step 1 checkpointed once, after it passed" "$(branch_subjects | grep -c 'Step 1: Write')" 1
     assert_not_contains "no failed-gate checkpoint" "$(branch_subjects)" "GATE FAILED"
@@ -63,7 +67,7 @@ test_gate_failing_three_times_opens_a_flagged_pr_and_stops() {
     EXTRA_ENV="$GATE_ENV" run_loop tick tick tick tick
     assert_eq "stops with exit 1" "$RC" 1
     assert_contains "says why" "$OUT" "Gate failed 3 times"
-    assert_contains "says it stopped" "$OUT" "STOPPED: Task 2 failed the database gate"
+    assert_contains "says it stopped" "$OUT" "STOPPED: Task 2 failed the gate"
     assert_contains "PR is flagged in its title" "$(pr_lines)" "open ⚠️ GATE FAILING — Task 2: Practice task"
     assert_eq "and opened as a draft" "$(cat "$SB/gh/prs.drafts" 2>/dev/null)" 1
     assert_contains "work is committed as a failed checkpoint" "$(branch_subjects)" 'Checkpoint (GATE FAILED): Task 2 — Step 1: Write `first.txt`'
@@ -174,6 +178,52 @@ test_gate_failure_stops_the_chain_and_it_never_merges_the_flagged_pr() {
     assert_not_contains "merged nothing" "$(main_subjects)" "(#"
     EXTRA_ENV="$GATE_ENV" run_chain
     assert_eq "a second chain run also stops" "$RC" 1
-    assert_contains "refuses the flagged PR" "$OUT" "flagged as failing the database gate"
+    assert_contains "refuses the flagged PR" "$OUT" "flagged as failing the gate"
     assert_not_contains "still merged nothing" "$(main_subjects)" "(#"
+}
+
+# --- Campsites: the dev seed and the app check run after the database part ---
+
+test_gate_runs_seed_and_app_check_after_the_database_part() {
+    gate_sandbox; EXTRA_ENV="$GATE_ENV" run_loop tick tick tick
+    assert_eq "exits 0" "$RC" 0
+    assert_eq "app check ran after every step, in the worktree" "$(app_check_calls | tr '\n' ' ')" "task-2 task-2 task-2 "
+    assert_eq "order: database, seed (from the loop checkout), app (in the worktree)" "$(supabase_calls | head -n 4 | tr '\n' '|')" "task-2 db reset|task-2 test db|Campsites seed|task-2 app-check|"
+}
+
+test_gate_app_check_failing_once_undoes_the_step_and_retries() {
+    gate_sandbox; app_check_results fail pass
+    EXTRA_ENV="$GATE_ENV" run_loop tick tick tick tick
+    assert_eq "exits 0" "$RC" 0
+    assert_contains "logs the failed attempt" "$(branch_file ralphloop/activity.md)" "GATE FAILED: Step 1: Write \`first.txt\` (attempt 1/3)"
+    assert_contains "next prompt carries the console error" "$(prompt 2)" "L.markerClusterGroup is not a function"
+    assert_contains "next prompt names app-check.sh" "$(prompt 2)" "bash ralphloop/app-check.sh"
+    assert_contains "task 2 fully checked on the branch" "$(branch_file ralphloop/task.md)" '- [x] **Step 3: Commit**'
+}
+
+test_gate_failing_database_part_skips_seed_and_app_check() {
+    gate_sandbox; gate_results fail-reset pass
+    EXTRA_ENV="$GATE_ENV" run_loop tick tick tick tick
+    assert_eq "exits 0" "$RC" 0
+    assert_eq "app check ran only for the 3 passing gates" "$(app_check_calls | wc -l | tr -d ' ')" 3
+}
+
+test_gate_seed_failure_fails_the_gate() {
+    gate_sandbox
+    EXTRA_ENV="$GATE_ENV RALPH_SEED_STUB_FAIL=1" run_loop tick tick tick tick
+    assert_eq "exits 1 after 3 tries" "$RC" 1
+    assert_contains "flagged PR" "$(pr_lines)" "GATE FAILING"
+    assert_eq "app check never ran" "$(app_check_calls)" ""
+}
+
+test_gate_scripts_come_from_the_loop_checkout() {
+    assert_contains "app check mounted read-only from LOOP_DIR" "$(grep -n 'ralph-loop' "$LOOP_DIR/doloop.sh")" '-v "${LOOP_DIR}:/ralph-loop:ro"'
+    assert_contains "runs the mounted copy" "$(grep -n 'app-check.sh' "$LOOP_DIR/doloop.sh")" 'bash /ralph-loop/app-check.sh'
+    assert_contains "seed from LOOP_DIR" "$(grep -n '^SEED_SCRIPT=' "$LOOP_DIR/doloop.sh")" '${LOOP_DIR}/seed-dev.sh'
+}
+
+test_worker_prompt_describes_the_gate() {
+    gate_sandbox; EXTRA_ENV="$GATE_ENV" run_loop tick tick tick
+    assert_contains "names the production build" "$(prompt 1)" "ng build --configuration production,local"
+    assert_contains "never silence a console error" "$(prompt 1)" "never silence a"
 }

@@ -55,14 +55,23 @@
 # Model: every worker call uses claude-sonnet-5-5 unless RALPH_MODEL is set,
 # e.g. RALPH_MODEL=claude-opus-5-5 ./ralphloop/doloop.sh
 #
-# Database gate: after every step that ticks a box, this script runs
-# `supabase db reset` then `supabase test db` from the task's worktree, on the
-# host (workers have neither the Supabase CLI nor Docker). Only that result
-# counts. A failed gate unticks the step and the worker retries it with the
-# output; after 3 failed attempts at one step the task's PR is opened flagged
-# as failing and this script exits 1, so chain.sh stops. The gate does no lint
-# or build: there is no app. It runs only if the base branch has
-# supabase/config.toml. RALPH_GATE_TIMEOUT (seconds, default 900) limits one run.
+# Gate: after every step that ticks a box, this script checks the worktree
+# itself, in three parts, stopping at the first that fails (run_full_gate):
+#   1. database: `supabase db reset` then `supabase test db` from the task's
+#      worktree, on the host (workers have neither the Supabase CLI nor
+#      Docker). This resets Campsites' own local stack (54321-54327);
+#   2. the dev seed again (seed-dev.sh): the reset emptied the data the review
+#      app on 4200 and the app check log in with;
+#   3. app: ralphloop/app-check.sh in the worker image: lint, the production
+#      build (ng build -c production,local) and console-check.mjs, which
+#      loads that build in headless Chromium and fails on any console error.
+#      (Closes the QC gap behind #38: QC had only ever run a dev build.)
+# The gate's scripts come from this checkout, never the worktree. Only the
+# gate's result counts. A failed gate unticks the step and the worker retries
+# it with the output; after 3 failed attempts at one step the task's PR is
+# opened as a draft flagged as failing and this script exits 1, so chain.sh
+# stops. It runs only if the base branch has supabase/config.toml.
+# RALPH_GATE_TIMEOUT (seconds, default 900) limits each part.
 #
 # Ratify: once every step is checked off and the gate has passed (also on the
 # resume path, where every step was already checked off), one more `claude -p`
@@ -84,7 +93,7 @@
 # use the same waiting as worker calls.
 #
 # Test-only overrides (all default to the real values): RALPH_WORKER_STUB,
-# RALPH_RATIFY_STUB, RALPH_RATIFY_MODEL,
+# RALPH_RATIFY_STUB, RALPH_RATIFY_MODEL, RALPH_APP_CHECK_STUB, RALPH_SEED_SCRIPT,
 # RALPH_WAIT_SCALE, RALPH_PUSH_URL, RALPH_SKIP_PR, RALPH_MAX_STEPS,
 # RALPH_LIMIT_BUDGET_SECONDS, RALPH_CLAUDE_AUTH_ENV, RALPH_SUPABASE_ENV.
 
@@ -109,7 +118,9 @@ LIMIT_BUDGET_SECONDS="${RALPH_LIMIT_BUDGET_SECONDS:-28800}"
 GATE_TIMEOUT_SECONDS="${RALPH_GATE_TIMEOUT:-900}"
 MAX_GATE_ATTEMPTS=3
 RATIFY_MODEL="${RALPH_RATIFY_MODEL:-claude-opus-5-5}"
-RATIFY_PROMPT_FILE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/ratify-prompt.md"   # from this checkout, never the worktree
+LOOP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"   # this checkout's ralphloop/, never the worktree's
+RATIFY_PROMPT_FILE="${LOOP_DIR}/ratify-prompt.md"
+SEED_SCRIPT="${RALPH_SEED_SCRIPT:-${LOOP_DIR}/seed-dev.sh}"
 THROTTLE_WAIT_SECONDS=120
 MAX_THROTTLE_RETRIES=5
 MAX_NO_PROGRESS_CALLS=3
@@ -269,9 +280,9 @@ touch "$WORKTREE_LOG"
 GATE_ON=0
 if gate_enabled "$BASE_BRANCH"; then
     GATE_ON=1
-    echo "🧪 Database gate: on (supabase db reset + supabase test db after every step)."
+    echo "🧪 Gate: on (db reset + test db, dev seed, then lint, production build and console check, after every step)."
 else
-    echo "🧪 Database gate: off (no supabase/config.toml on ${BASE_BRANCH})."
+    echo "🧪 Gate: off (no supabase/config.toml on ${BASE_BRANCH})."
 fi
 GATE_FLAGGED=0
 
@@ -355,6 +366,49 @@ refuse_changed_config() {
     printf '\nGATE REFUSED: supabase/config.toml differs from %s (Task %s, call %s)\n' "$BASE_BRANCH" "$TASK_NUM" "$CALL" >> "$WORKTREE_LOG"
     echo -e "\n\033[31m🛑 STOPPED: the worktree's supabase/config.toml differs from ${BASE_BRANCH}. The gate resets the database named by that file's project_id and ports, so it won't run (another project shares this host). Nothing was pushed and no PR was opened; the worktree is kept at ${WORKTREE_DIR}. Look at \`git -C ${WORKTREE_DIR} diff ${BASE_BRANCH} -- supabase/config.toml\`, undo the change there (a real config change belongs on ${BASE_BRANCH}, made by hand), remove the GATE REFUSED line from ${LOG_FILE}, then re-run this script.\033[0m"
     exit 1
+}
+
+# run_app_check <worktree> <log> <secs> — the gate's app part: this checkout's
+# app-check.sh in the worker image (mounted read-only at /ralph-loop), in the
+# worktree, appending to <log>. Named, so a timeout can remove the container.
+run_app_check() {
+    if [ -n "${RALPH_APP_CHECK_STUB:-}" ]; then
+        ( cd "$1" && timeout "$3" bash "$RALPH_APP_CHECK_STUB" ) < /dev/null >> "$2" 2>&1
+        return
+    fi
+    local name rc=0
+    name="campsites-appcheck-${TASK_NUM}-$(date -u '+%Y%m%d-%H%M%S')"
+    timeout -k 5 "$3" docker run --rm --name "$name" \
+        --network host \
+        --user "$(id -u):$(id -g)" \
+        -e HOME=/tmp \
+        -v "${1}:${1}" \
+        -v "${LOOP_DIR}:/ralph-loop:ro" \
+        -w "$1" \
+        --env-file "$SUPABASE_ENV" \
+        "$CLAUDE_WORKER_IMAGE" \
+        bash /ralph-loop/app-check.sh < /dev/null >> "$2" 2>&1 || rc=$?
+    if [ "$rc" -eq 124 ] || [ "$rc" -eq 137 ]; then
+        docker rm -f "$name" >/dev/null 2>&1 || true
+        printf '\nGATE TIMEOUT: the app check did not finish within %s seconds.\n' "$3" >> "$2"
+    fi
+    return "$rc"
+}
+
+# run_full_gate <worktree> <log> <secs> — the whole gate (see the header):
+# database, dev seed, app; stops at the first part that fails. All output goes
+# to <log>; returns the failing part's exit code.
+run_full_gate() {
+    local rc=0
+    run_gate "$1" "$2" "$3" || return $?
+    printf '\n== gate: dev seed (seed-dev.sh)\n' >> "$2"
+    ( cd "$CANONICAL_ROOT" && RALPH_SUPABASE_ENV="$SUPABASE_ENV" timeout "$3" bash "$SEED_SCRIPT" ) < /dev/null >> "$2" 2>&1 || rc=$?
+    if [ "$rc" -ne 0 ]; then
+        printf '\nGATE: the dev seed failed (exit %s).\n' "$rc" >> "$2"
+        return "$rc"
+    fi
+    printf '\n== gate: app check (lint, production build, console check)\n' >> "$2"
+    run_app_check "$1" "$2" "$3"
 }
 
 # run_worker <prompt> <call_log> — one worker call; returns its exit code.
@@ -482,13 +536,17 @@ CORE OBJECTIVES:
     do, treat the Commit step as done (check it off as in rule 9). Do not
     create an empty commit, and do not amend, squash or rewrite the
     checkpoint commits.
-12. The database gate: after each step you tick, this loop runs
-    \`supabase db reset\` and then \`supabase test db\` on the host. If either
+12. The gate: after each step you tick, this loop checks your worktree
+    itself: \`supabase db reset\` and \`supabase test db\` on the host, the
+    dev seed again, then ralphloop/app-check.sh (lint, the production build
+    \`ng build --configuration production,local\`, and a headless Chromium
+    check that loads that build and fails on ANY console error). If any part
     fails, your step is undone (unticked) and the next call gets the output.
-    You can't run those two commands yourself (no Supabase CLI or Docker
-    here); check your work with psql "\$DATABASE_URL" (apply a migration
-    with psql -v ON_ERROR_STOP=1 -1 -f) and pg_prove against \$DATABASE_URL.
-    Never edit or remove an existing test to get a pass. Never edit
+    You can't run the two supabase commands (no Supabase CLI or Docker
+    here), but run \`bash ralphloop/app-check.sh\` yourself before you tick
+    a step that changes the app; pg_prove against \$DATABASE_URL runs the
+    pgTAP tests. Never edit or remove an existing test, and never silence a
+    console error, to get a pass: fix the cause. Never edit
     supabase/config.toml: the gate refuses to run if it differs from
     ${BASE_BRANCH}, and the loop stops.
 EOF
@@ -526,9 +584,9 @@ EOF
         if [ "$GATE_ON" = "1" ]; then
             refuse_changed_config
             GATE_LOG="${CALLS_DIR}/gate-${CALL}.log"
-            echo "🧪 Gate: supabase db reset, then supabase test db…"
+            echo "🧪 Gate: db reset + test db, dev seed, then lint, production build and console check…"
             GATE_RC=0
-            run_gate "$WORKTREE_DIR_ABS" "$GATE_LOG" "$GATE_TIMEOUT_SECONDS" || GATE_RC=$?
+            run_full_gate "$WORKTREE_DIR_ABS" "$GATE_LOG" "$GATE_TIMEOUT_SECONDS" || GATE_RC=$?
             if [ "$GATE_RC" -eq 0 ]; then
                 gate_attempts_clear "$GATE_ATTEMPTS_FILE"
                 echo "✔ Gate passed."
@@ -646,11 +704,11 @@ if [ "$GATE_FLAGGED" != "1" ]; then
     # not be this branch's: put it there (and prove it) before ratify looks.
     if [ "$SKIP_WORKERS" = "1" ] && [ "$GATE_ON" = "1" ]; then
         refuse_changed_config
-        echo "🧪 Gate before ratify (resume path): supabase db reset, then supabase test db…"
+        echo "🧪 Gate before ratify (resume path): db reset + test db, dev seed, app check…"
         RESUME_GATE_LOG="${CALLS_DIR}/gate-resume.log"
-        if ! run_gate "$WORKTREE_DIR_ABS" "$RESUME_GATE_LOG" "$GATE_TIMEOUT_SECONDS"; then
+        if ! run_full_gate "$WORKTREE_DIR_ABS" "$RESUME_GATE_LOG" "$GATE_TIMEOUT_SECONDS"; then
             printf '\n## Task %s — GATE FAILED before ratify (resume path)\n~~~\n%s\n~~~\n' "$TASK_NUM" "$(gate_log_tail "$RESUME_GATE_LOG" 30)" >> "$WORKTREE_LOG"
-            echo -e "\n\033[31m🛑 STOPPED: the database gate fails on this branch as it stands (log: ${RESUME_GATE_LOG}). Nothing was pushed and no PR was opened; the worktree is kept at ${WORKTREE_DIR}.\033[0m"
+            echo -e "\n\033[31m🛑 STOPPED: the gate fails on this branch as it stands (log: ${RESUME_GATE_LOG}). Nothing was pushed and no PR was opened; the worktree is kept at ${WORKTREE_DIR}.\033[0m"
             exit 1
         fi
     fi
@@ -753,7 +811,7 @@ fi
 # whole run where anything leaves the worktree — no step does this itself.
 # ------------------------------------------------------------------------------
 if [ "$GATE_FLAGGED" = "1" ]; then
-    echo -e "\033[31m📤 Task ${TASK_NUM} did NOT pass the database gate — pushing ${BRANCH_NAME} and opening a PR flagged as failing.\033[0m"
+    echo -e "\033[31m📤 Task ${TASK_NUM} did NOT pass the gate — pushing ${BRANCH_NAME} and opening a PR flagged as failing.\033[0m"
 else
     echo -e "\033[34m📤 Task ${TASK_NUM} complete — pushing ${BRANCH_NAME} and opening a PR.\033[0m"
 fi
@@ -783,9 +841,9 @@ else
     PR_BODY="Autonomous Ralph Loop run for Task ${TASK_NUM} of \`ralphloop/task.md\`. Worker model: \`${WORKER_MODEL}\`. See \`${LOG_FILE}\` in this branch for the per-step activity log. Ratified by \`${RATIFY_MODEL}\` (see \`## Task ${TASK_NUM}, ratify\` in the log). Merge with **Squash and merge** — the Checkpoint commits are per-step progress, not history for main."
     if [ "$GATE_FLAGGED" = "1" ]; then
         PR_TITLE="⚠️ GATE FAILING — ${PR_TITLE}"
-        PR_BODY="## ⚠️ This task did NOT pass the database gate. Do not merge.
+        PR_BODY="## ⚠️ This task did NOT pass the gate. Do not merge.
 
-\`supabase db reset\` and \`supabase test db\` failed ${MAX_GATE_ATTEMPTS} times in a row on the step **${BEFORE_TITLE}**. That step is left unchecked in \`task.md\`. The loop stopped, and \`chain.sh\` refuses to merge this PR.
+The gate (\`supabase db reset\` + \`supabase test db\`, the dev seed, then \`app-check.sh\`: lint, production build, console check) failed ${MAX_GATE_ATTEMPTS} times in a row on the step **${BEFORE_TITLE}**. That step is left unchecked in \`task.md\`. The loop stopped, and \`chain.sh\` refuses to merge this PR.
 
 Last lines of the final gate run:
 
@@ -834,7 +892,7 @@ ${PR_BODY}"
 fi
 
 if [ "$GATE_FLAGGED" = "1" ]; then
-    echo -e "\n\033[31m🛑 STOPPED: Task ${TASK_NUM} failed the database gate. The worktree and call logs are kept at ${WORKTREE_DIR} and ${CALLS_DIR}. Look at the PR, fix the cause (the failing step is still unchecked), then re-run this script — it resumes at that step.\033[0m"
+    echo -e "\n\033[31m🛑 STOPPED: Task ${TASK_NUM} failed the gate. The worktree and call logs are kept at ${WORKTREE_DIR} and ${CALLS_DIR}. Look at the PR, fix the cause (the failing step is still unchecked), then re-run this script — it resumes at that step.\033[0m"
     exit 1
 fi
 
