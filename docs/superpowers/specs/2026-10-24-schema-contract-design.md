@@ -15,7 +15,10 @@ The contract is these files:
 - `supabase/functions/`: V1's six edge functions, plus a caller check added to `nps-sync` and `ridb-sync` (`_shared/service-role.ts`, see **Fixes**) and the Priest Rock correction in `nps-sync/transform.ts` (**Fixes** #9);
 - `supabase/migrations/0021_skip_zero_locations.sql`: search leaves out campgrounds at 0,0 (Shawn, 2026-10-27; see **Fixes** #8);
 - `supabase/migrations/0022_state_filter_excludes_unknown_state.sql`: a state filter no longer lets in campgrounds with no state (Shawn, 2026-11-14; see **Fixes** #10);
-- `supabase/tests/security_fixes_test.sql`, `zero_location_test.sql` and `state_filter_test.sql`: pgTAP tests for `0020`, `0021` and `0022` (`supabase test db`, on Ralph);
+- `supabase/migrations/0023_forgegeo_v0_1_0.sql`: a byte-for-byte copy of ForgeGeo v0.1.0's `20261115000000_create_geo.sql` (the `geo` schema; sha256 `8f242e32c503055a0dfb3eb15709150df1ec53ebae068b79030b73050313ff26`). Never edited here: a new ForgeGeo release is a new migration;
+- `supabase/geo/us_states_cb_2025_500k.sql`: ForgeGeo v0.1.0's boundary data file, also a byte copy (sha256 `e2b41736fef54c817bdd5876d4c8e1e5ea17528e4be735d181d6625ff888ecae`). It's data, not a migration: `ralphloop/seed-dev.sh` loads it locally, and production loads it once by hand with `psql`;
+- `supabase/migrations/0024_campground_state_from_location.sql`: a campground's state comes from its location (Shawn, 2026-11-15; see **Fixes** #11);
+- `supabase/tests/security_fixes_test.sql`, `zero_location_test.sql`, `state_filter_test.sql` and `state_from_location_test.sql`: pgTAP tests for `0020`, `0021`, `0022` and `0024` (`supabase test db`, on Ralph);
 - `deno.lock`, unchanged from V1.
 
 Rules (CLAUDE.md hard rule 3, worker prompt rule 4):
@@ -55,7 +58,7 @@ Where this spec and the files disagree, the files win, and this spec gets fixed.
 
 ## Tables
 
-All seven tables have RLS on. Supabase's default grants give `anon` and `authenticated` all table privileges, so RLS policies are what actually decide access. There's one column-level exception, on `users`.
+All seven of V1's tables, and `campground_state_log` (`0024`), have RLS on. Supabase's default grants give `anon` and `authenticated` all table privileges, so RLS policies are what actually decide access. There's one column-level exception, on `users`.
 
 ### `campgrounds`: synced reference data
 
@@ -70,12 +73,23 @@ All seven tables have RLS on. Supabase's default grants give `anon` and `authent
 | `reservation_url`, `directions_url` | text | can be `''` (see the reserve/directions plan in V1) |
 | `agency` | text, not null, default `'NPS'` | btree index; e.g. `NPS`, `USFS`, `BLM`, `USACE` |
 | `source` | text, not null, default `'nps'` | `nps` or `ridb` |
-| `state` | text, nullable | two-letter state; btree index. **Null means unknown, and state filters always include it.** In production, 463 of the 4,900 rows have no `state`: 163 NPS, 243 USFS, 43 BLM and 8 USACE (counted from the seed, 2026-10-25). *(An earlier draft said every NPS row lacked a state; the data says otherwise.)* |
+| `state` | text, nullable | two-letter state; btree index. **Null means unknown, and state filters always include it.** In production, 463 of the 4,900 rows have no `state`: 163 NPS, 243 USFS, 43 BLM and 8 USACE (counted from the seed, 2026-10-25). *(An earlier draft said every NPS row lacked a state; the data says otherwise.)* **Since `0024`** (**Fixes** #11) it's set by trigger on every insert and update: the override, else the location's state, else the source's (see `state_reason`). Since `0022`, state filters leave out nulls. |
+| `source_state` | text, nullable (`0024`) | the state the source's address gave, as the sync sent it |
+| `state_override` | text, nullable (`0024`) | an admin's state for this campground; outranks location and source until cleared (`admin_set_campground_state_override`) |
+| `state_reason` | text, nullable, check (`0024`) | why `state` has its value: `manual`, `no_geo_data`, `no_location`, `no_boundary`, `location_filled`, `source`, `near_border` or `location_overrode` |
 | `updated_at` | timestamptz, not null, default `now()` | |
 
 - **Policy:** "anyone can read campgrounds" (select, everyone).
-- **Writes:** none from the app. Only `nps-sync` and `ridb-sync` write, with the service role, upserting on `id`.
+- **Writes:** none from the app. Only `nps-sync` and `ridb-sync` write, with the service role, upserting on `id`. **Since `0024`,** three triggers decide `state` on every write (see **Fixes** #11 and `docs/adr/0002-three-triggers-for-campground-state.md`).
 - **App use:** the `nearest_campgrounds` and `get_campgrounds_by_ids` RPCs; `select park_code where park_code is not null` (the Finder's park filter); and `select id, name ilike %q% limit 20` (search by name, for add-a-stop).
+
+### `campground_state_log`: every change to a campground's state (`0024`)
+
+`id` (identity), `campground_id` (FK, cascade), `at`, `old_state`, `new_state`, `source_state`, `location_state`, `override_state`, `reason`, `distance_m` (to the source's state, for `near_border` and `location_overrode`), `changed_by` (`auth.uid()`, null for syncs). Written only by the `campground_state_resolve` trigger. RLS on with no policies; `anon` and `authenticated` have no privileges. Admins read it through `admin_campground_state_log`.
+
+### `geo.us_states` and `geo.dataset`: ForgeGeo v0.1.0 (`0023`)
+
+Reference geography from ForgeGeo (its README is the contract): the 56 Census state-level areas with their boundaries, and which data vintage is loaded. `geo` isn't in `[api] schemas`; `anon` has nothing, `authenticated` and `service_role` may read. Functions: `geo.state_at(geography)` and `geo.distance_to_state_m(geography, text)`.
 
 ### `parks`: synced reference data
 
@@ -167,9 +181,14 @@ All are owned by `postgres` and pin `search_path`. "Admin-guarded" means the fun
 | `admin_set_user_suspended(target_user_id, is_suspended)` | plpgsql, security definer, admin-guarded | authenticated | Sets `suspended`. Refuses your own id (`'cannot modify your own suspension'`). |
 | `admin_update_user_display_name(target_user_id, new_display_name)` | plpgsql, security definer, admin-guarded | authenticated | Sets `display_name`, including your own. |
 | `get_admin_stats()` | plpgsql, security definer, admin-guarded | authenticated | One row: `favorites_count`, `trips_count` across all users. |
+| `recompute_campground_states()` | plpgsql, security definer | service_role | **`0024`.** Re-runs the state rules on every campground (the first backfill, and after a boundary reload); returns `(state_reason, n)`. |
+| `admin_set_campground_state_override(campground_id, state_code)` | plpgsql, security definer, admin-guarded (`42501`) | authenticated | **`0024`.** Sets (null clears) `state_override`. The code is trimmed and upper-cased; one not in `geo.us_states` raises `22023`, an unknown campground `P0002`. Returns the row's new `state, state_reason`. For the later Admin UI. |
+| `admin_campground_state_log(campground_id = null, result_limit = 100)` | plpgsql, stable, security definer, admin-guarded (`42501`) | authenticated | **`0024`.** `campground_state_log` rows, newest first, for one campground or all; at most 1,000. |
 | `handle_new_user()` | plpgsql, security definer, trigger | nobody directly (revoked; 0002) | Inserts the `users` row: `display_name` from the sign-up metadata's `display_name`, else the part of the email before `@`. |
 
 **Trigger:** `on_auth_user_created`: `after insert on auth.users for each row execute function public.handle_new_user()`.
+
+**Triggers on `campgrounds` (`0024`):** `campgrounds_state_capture_source` (before insert, per row: `source_state := state`, nothing else), `campgrounds_state_resolve` (before update, per row: the state rules and the log) and `campgrounds_state_resolve_inserted` (after insert, per statement, transition table: re-runs the rules on rows really inserted). Why three: `docs/adr/0002-three-triggers-for-campground-state.md`.
 
 **Last admin:** V1 only stops admins changing their own role or suspension. V1.1 adds a trigger that keeps at least one active admin (see **Fixes** #4).
 
@@ -218,10 +237,11 @@ Shawn reviewed the behaviors below and asked for them fixed in V1.1, except `mod
 | 8 | **212 campgrounds sat at 0,0** (added 2026-10-27). RIDB sends 0,0 when it doesn't know a location, and `ridb-sync` stored it. | `nearest_campgrounds` leaves out rows at exactly 0,0, so Finder results and counts only hold real locations. `get_campgrounds_by_ids` still returns them, so favorites and trip stops keep working, and the Admin page's name search (`ilike`) still finds them. `ridb-sync` is unchanged: it still stores and refreshes them, so their names and Reserve links stay current. The rows stay in the seed, which mirrors production. | `0021` |
 | 9 | **"NPS Priest Rock Public Use Cabin" had its longitude's sign flipped** (+154.18, in Russia; added 2026-10-27) | `nps-sync` flips that one campground's longitude back when it's positive, so every sync stores the right value (+1 Deno test). It's not a general rule, because real US places such as Guam have a positive longitude. `ralphloop/seed-app.sql` makes the same correction after loading production's data. V1's own row is unchanged. | `nps-sync/transform.ts`; seed |
 | 10 | **The Where filter let in campgrounds from other states** (added 2026-11-14; `docs/next-loop-bugs.md`, bug 6). `state_filter` kept every row with a null `state` (0014), and 422 of the 4,688 searchable campgrounds in production have none, so "Midwest only" returned 897 campgrounds nationwide instead of 475. | `nearest_campgrounds` drops `c.state is null or`: a state filter returns only rows in those states. With no state filter ("All states") the null-state rows still come back. **Applied to production by hand 2026-11-14** (Lisa, Shawn's go-ahead; history 22/22). Filling in the missing states from each campground's location is a later, hand-written migration (bug 6, option A), not loop work. | `0022` |
+| 11 | **Campgrounds with no state** (added 2026-11-15; `docs/next-loop-bugs.md`, bug 6 part A). 457 rows (422 searchable) had no `state` because their source records have no address (checked against the NPS API, 2026-11-15), so since #10 no Where filter finds them. Source addresses can also name a mailing office in another state. | ForgeGeo's state boundaries (`0023`, Census 1:500k) and three triggers (`0024`): a campground's `state` is its `state_override`, else the state its location is in, except that the source's state is kept within 1 km of that state (`near_border`) or when there's no location, boundary or boundary data. Every change is written to `campground_state_log`; admins fix a wrong result with `admin_set_campground_state_override`. Spec `~/plans/2026-11-15-state-backfill-design.md` (on Lisa). **Not yet in production.** | `0023`, `0024` |
 
 **Correction to the first draft.** It said an admin could demote or suspend every other admin, leaving none. That can't happen: admins can't change their own role or suspension, so the caller always stays an admin. The real gaps were #3 (a suspended admin kept its powers) and #4 (self-deletion).
 
-**Tests:** `supabase/tests/security_fixes_test.sql`, 22 pgTAP tests. Each fix has tests, and so do the V1 behaviors that must keep working (an active user adds favorites, trips and stops, and changes their theme; an admin lists users). It was run red before `0020` (16 failing, 6 passing), then green after `0020`, and green again after a full `supabase db reset` and the dev seed. `supabase/tests/zero_location_test.sql`, 5 pgTAP tests, covers `0021` (#8). `supabase/tests/state_filter_test.sql`, 4 pgTAP tests, covers `0022` (#10); run red against `0021`'s function (test 3 fails), green with `0022`.
+**Tests:** `supabase/tests/security_fixes_test.sql`, 22 pgTAP tests. Each fix has tests, and so do the V1 behaviors that must keep working (an active user adds favorites, trips and stops, and changes their theme; an admin lists users). It was run red before `0020` (16 failing, 6 passing), then green after `0020`, and green again after a full `supabase db reset` and the dev seed. `supabase/tests/zero_location_test.sql`, 5 pgTAP tests, covers `0021` (#8). `supabase/tests/state_filter_test.sql`, 4 pgTAP tests, covers `0022` (#10); run red against `0021`'s function (test 3 fails), green with `0022`. `supabase/tests/state_from_location_test.sql`, 55 pgTAP tests, covers `0024` (#11) with its own square test states; run red before `0024` (every test fails), green with it, and red again (T1–T6 and more) with the after-insert trigger dropped.
 
 ## Behaviors reviewed (2026-10-24)
 
@@ -232,7 +252,7 @@ Shawn's answers: 1–4, 7 and 8 are fixed (see **Fixes**); 5 stays as it is; 6 w
 3. **`nps-sync` and `ridb-sync` don't check who calls them.** Supabase's JWT check is on by default, and `config.toml` doesn't turn it off. The public anon key is itself a valid JWT, so anyone with it should be able to trigger a full sync against the NPS and RIDB APIs. Not tested: the functions aren't served locally.
 4. **No last-admin guard** (see Functions). *Fixed as #3 and #4; see the correction under Fixes.*
 5. **`moderator` is a role with no powers.** *Stays: moderators get powers later.*
-6. **Some campgrounds have no `state` in production.** Until `0022` the state filter never hid them; since `0022` (**Fixes** #10) any state filter leaves them out, so they're found only with "All states" (see `campgrounds.state`): 463 of the 4,900 rows have no `state`: 163 NPS, 243 USFS, 43 BLM and 8 USACE (counted from the seed, 2026-10-25). *Later.* A future sync from NPS and RIDB, whose code already parses state, could fill in some of them; rows whose source address has no state stay unknown.
+6. **Some campgrounds have no `state` in production.** Until `0022` the state filter never hid them; since `0022` (**Fixes** #10) any state filter leaves them out, so they're found only with "All states" (see `campgrounds.state`): 463 of the 4,900 rows have no `state`: 163 NPS, 243 USFS, 43 BLM and 8 USACE (counted from the seed, 2026-10-25). *Later.* A future sync from NPS and RIDB, whose code already parses state, could fill in some of them; rows whose source address has no state stay unknown. **Resolved by `0024`** (**Fixes** #11): the state now comes from location.
 7. **`trip_stops.position` isn't unique per trip.**
 8. **The `users` constraint names still say `profiles_…`** (cosmetic; from the 0004 rename).
 

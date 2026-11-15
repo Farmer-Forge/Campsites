@@ -79,7 +79,7 @@ mkdir -p src/environments && printf "export const environment = {\n  production:
 
 Done by Shawn and Claude in interactive sessions (2026-10-23 to 2026-10-25). The loop never runs this task.
 
-- [x] **Step 1: Start the stack.** `supabase start` in `~/projects/Campsites` on Ralph, from migrations `0001–0022` (`0022` added 2026-11-14, spec 1 **Fixes** #10), on ports 54320–54329.
+- [x] **Step 1: Start the stack.** `supabase start` in `~/projects/Campsites` on Ralph, from migrations `0001–0024` (`0022` added 2026-11-14, spec 1 **Fixes** #10; `0023`–`0024` added 2026-11-15, **Fixes** #11), on ports 54320–54329.
 - [x] **Step 2: Write the secrets file.** `~/.secrets/campsites-supabase.env` (`SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_JWT_SECRET`, `DATABASE_URL`).
 - [x] **Step 3: Seed.** `./ralphloop/seed-dev.sh`: the dev admin, 4,900 campgrounds and 117 parks from the production backup, and the sample users Pat and Sam.
 - [x] **Step 4: Local auth URLs.** `supabase/config.toml` points `site_url` and the reset redirect URLs at the review app (`http://192.168.1.188:4200`) and worker steps (`http://127.0.0.1:4201`).
@@ -2221,7 +2221,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
 - Unit and end-to-end tests (dropped).
 - Any change to the database, edge functions or their tests.
 - V1.2 ideas: showing campground attributes to users, moderator powers, and a dark palette.
-- Filling in `state` for the campgrounds that have none (bug 6, option A): a hand-written migration, not loop work. (Bug 6's part B, `0022`, is live and in spec 1.)
+- Filling in `state` for the campgrounds that have none (bug 6, option A): a hand-written migration, not loop work. (Bug 6's part B, `0022`, is live and in spec 1; part A is `0023`–`0024`, spec 1 **Fixes** #11.)
 
 ---
 
