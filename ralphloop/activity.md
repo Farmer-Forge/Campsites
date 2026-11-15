@@ -172,3 +172,41 @@ TASK 8 COMPLETE
 ## Task 9, call 2
 - Step 3: created `features/admin/admin.component.ts/.html` (stats pills, role=tab Users / Campground Attributes, invite form, users table with "You" row, role select, suspend, edit, inline delete confirm, attributes autocomplete + table + add row; styles verbatim inline; plain-English errors for "last admin" / "not authorized"; stats refresh after delete; search uses `CampgroundsService.searchByName`, which escapes `%`/`_`). Routed `admin` → `AdminComponent` with `adminGuard` and removed the placeholder helper from `app.routes.ts`. `ng lint` and `ng build` pass; no raw colors. Not exercised in a browser.
 - Note: `features/placeholder/` still exists on disk; Step 4 says to delete it (it's ticked already, so check that in the next call).
+
+## Task 10, call 1 — ended without completing a step (worker failed, exit code 0) at 2026-11-15 02:17 UTC
+
+## Task 10, call 2
+- Step 1: red check ran first (FAIL 1–4, PASS 5, exit 1). Then made the five edits in `campground-table.component.ts` only (MAX_SCROLL_PASSES, scrollRun/clickedId, second effect, toggleCard, revealCard/scrollCardToTop/scrollAreaOf). Verified: `ng lint` clean, production build OK, `scroll-check.mjs` PASSED 5 of 5, `app-check.sh` passed.
+
+## Task 10, call 3
+- Step 2: verified. `ng lint` clean, production build OK, `scroll-check.mjs` PASSED 5 of 5 (exit 0), one `scrollIntoView(`, all five marker strings found once, only `campground-table.component.ts` changed besides task.md/activity.md, `app-check.sh` ends "CONSOLE CHECK PASSED". Spec 3 change #12 re-read against the code: consistent.
+
+## Task 10, call 4
+- Step 3: Commit. Nothing left to commit; `campground-table.component.ts` is in checkpoint 53762f4 (`git log main..HEAD --stat`). Step treated as done.
+
+TASK 10 COMPLETE
+
+## Task 10, ratify
+What I ran (the task's Step 2, as written, on this branch):
+- npx ng lint: "All files pass linting."
+- npx ng build --configuration production,local: "Application bundle generation complete", no errors.
+- node ralphloop/scroll-check.mjs dist/campsite-finder/browser: PASS 1-5, "SCROLL CHECK PASSED: 5 of 5.", exit 0.
+  - Cases 1-3 land at offBy 0.
+  - At 1400px the scroller is the list, and main and the page stay at 0.
+  - At 390px the scroller is main.app-main, and the page stays at 0.
+  - Case 4 (the last card) ends at the end of the list with the card fully in view.
+  - Case 5 (a click in the list) moves the list 28px, the same as main.
+- grep: scrollIntoView( appears once, and each of the five required strings appears once.
+- git diff against the merge base, without task.md and activity.md: only campground-table.component.ts.
+- bash ralphloop/app-check.sh: ends with "CONSOLE CHECK PASSED: 15 page loads, no console errors."
+
+What I checked by reading the code:
+- The component diff matches Step 1's five code blocks line for line. Nothing else in the file changed: no template or style changes, and content-visibility and contain-intrinsic-size are untouched.
+- Review focus 1 (a one-shot scroll passing for the fix): it isn't one. The code makes repeated correction passes, finds the right scroller, and keeps a separate path for clicks in the list.
+- Review focus 2 (scrolling the wrong element): scrollAreaOf walks up from the list to the nearest element that can scroll, and the 390px case confirms that's main.
+- Review focus 3 (more than one file): ralphloop/scroll-check.mjs is unchanged from main. Nothing under supabase/, vercel.json, scripts/ or src/environments/ changed. No new tests, and no console output silenced.
+- The scroll-run counter stops an older selection's passes when a newer one starts. Both users of the component (Finder and Favorites) bind [selected], so a click in the list always comes back through the effect, which clears clickedId. It can't be left set.
+- The task touches no database code or access rules. I made no database calls and changed nothing in the database or the repo, apart from the gitignored environment.local.ts and dist/ that app-check writes anyway.
+
+Worth a look by hand: the plan's own note says a busy map (still zooming while the passes run) wasn't re-probed with the two-calm-passes stop rule. It's on the QC list.
+RATIFIED: Task 10
