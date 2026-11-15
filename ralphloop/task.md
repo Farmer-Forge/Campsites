@@ -68,9 +68,10 @@ mkdir -p src/environments && printf "export const environment = {\n  production:
 
 ## Review Focus
 
-1. **A one-shot scroll passing for the fix** (Task 10). In Chromium a single instant `scrollIntoView({ block: 'start' })` already lands exactly (scroll anchoring holds the card while cards around it are drawn), so `scroll-check.mjs` can't tell it from spec 3 change #12's correction passes. Step 2's three `grep -c` lines are what require the passes (`requestAnimationFrame(() => requestAnimationFrame(pass))`, `MAX_SCROLL_PASSES = 10`) and the scroller lookup (`scrollAreaOf`).
-2. **Scrolling the wrong element** (Task 10). Under 900px the list isn't the scroller (`overflow: visible`); the Finder's `main.app-main` is. `scroll-check.mjs` measures against the nearest scrolling ancestor at 390px and requires, at 1400px, that the list is the scroller and the page didn't move.
-3. **Touching more than the one file** (Task 10). Step 2's `git diff --name-only origin/main -- src/ ralphloop/ supabase/` must list only `campground-table.component.ts`; the worker never edits `ralphloop/scroll-check.mjs`.
+1. **A one-shot scroll passing for the fix** (Task 10). In Chromium a single instant `scrollIntoView({ block: 'start' })` lands cards 1–4 of `scroll-check.mjs` correctly, but it also snaps list clicks to the top, so case 5 fails it. Step 2's `grep` lines also require the correction passes, the scroller lookup and the list-click path.
+2. **Scrolling the wrong element** (Task 10). Under 900px the list isn't the scroller (`overflow: visible`); the Finder's `main.app-main` is. `scroll-check.mjs` measures against the nearest scrolling ancestor at 390px and requires, at 1400px, that the list is the scroller and neither `main` nor the page moved.
+3. **Touching more than the one file** (Task 10). Step 2's `git diff` against the merge base with `main` (minus `task.md` and `activity.md`) must list only `campground-table.component.ts`; the worker never edits `ralphloop/scroll-check.mjs`.
+4. **A retried Step 1** (Task 10). The red check runs only while the component still matches `main`; on a retry it's skipped, not mistaken for a broken check.
 
 ---
 
@@ -2049,16 +2050,21 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
 
 **Interfaces:** Consumes: the existing `selected` input, `host`, `injector`, `[attr.data-id]` on each card and `.rt-scroll-list` (Task 5, unchanged). Produces: nothing new; no input, output or template change.
 
-**Check script:** `ralphloop/scroll-check.mjs` (Lisa, 2026-11-14; like `console-check.mjs`, it's the loop's, so never edit it). It loads the production build in headless Chromium, opens the map popup of the campground ~75% of the way down the "Miles: All" list, clicks "View details ▸" (and, as the admin, "Add to trip…"), and measures the opened card's top against the top of whatever scrolls the list, at 1400px and 390px wide. It needs the local stack and the dev seed, which the gate restores.
+**Check script:** `ralphloop/scroll-check.mjs` (Lisa, 2026-11-14; like `console-check.mjs`, it's the loop's, so never edit it). It loads the production build in headless Chromium on the Finder with "Miles: All" and checks five cases: "View details ▸" for the campground ~75% down the list at 1400px and 390px, "Add to trip…" as the admin (the trip picker opens), the **last** campground, and a click on the 4th card in the list itself (which must keep today's scroll). Exit 0 all pass, 1 a case fails, 2 the check couldn't run. It needs the local stack and the dev seed, which the gate restores.
 
 - [ ] **Step 1: Prove the check fails, then scroll the selected card's top into place.**
-  **First, before changing anything in `src/`,** write the local environment (Global Constraints, **Local settings**), then:
+  **First, the red check.** Write the local environment (Global Constraints, **Local settings**). Then, **only if the component still matches `main`** (on a retry or a resumed step it's already changed, so skip to "Then"):
   ```bash
-  npx ng build --configuration production,local
-  node ralphloop/scroll-check.mjs dist/campsite-finder/browser; echo "exit $?"
-  # expect: three lines starting FAIL, then "SCROLL CHECK FAILED.", then "exit 1"
+  F=src/app/shared/ui/campground-table/campground-table.component.ts
+  if git diff --quiet "$(git merge-base main HEAD)" -- "$F"; then
+    npx ng build --configuration production,local
+    node ralphloop/scroll-check.mjs dist/campsite-finder/browser; echo "exit $?"
+  else
+    echo "component already changed: red check skipped"
+  fi
+  # expect (first run): lines starting "FAIL 1", "FAIL 2", "FAIL 3", "FAIL 4" and "PASS 5", then "SCROLL CHECK FAILED: 4 of 5.", then "exit 1"
   ```
-  If it prints `SCROLL CHECK PASSED`, or exits 2, stop and write a `BLOCKED:` line (rule 6): the check or the seed isn't what this plan expects.
+  Anything else (`SCROLL CHECK PASSED`, an `ERROR` line, `exit 2`, a build error): stop and write a `BLOCKED:` line (rule 6). The check, the seed or the stack isn't what this plan expects.
 
   **Then,** in `campground-table.component.ts`, make exactly these changes and no others:
   1. First line inside `export class CampgroundTableComponent {`, before `supabase`:
@@ -2071,24 +2077,63 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
      ```ts
        /** Bumped on every selection, so a newer selection stops an older one's scroll passes. */
        private scrollRun = 0;
+       /** The card just clicked in this list: its echoed selection keeps today's scroll (revealCard). */
+       private clickedId: string | null = null;
      ```
-  3. In the constructor's second `effect` (the one that reads `this.selected()`), replace the whole `afterNextRender(...)` call (the one with `scrollIntoView({ behavior: 'smooth', block: 'nearest' })`) with:
+  3. Replace the constructor's **second** `effect` (the one that starts `const sel = this.selected();`) with:
      ```ts
-             afterNextRender(() => this.scrollCardToTop(sel.id), { injector: this.injector });
+         effect(() => {
+           const sel = this.selected();
+           untracked(() => {
+             const fromList = sel !== null && sel.id === this.clickedId;
+             this.clickedId = null;
+             if (!sel) {
+               return;
+             }
+             this.expandedId.set(sel.id);
+             afterNextRender(() => (fromList ? this.revealCard(sel.id) : this.scrollCardToTop(sel.id)), {
+               injector: this.injector,
+             });
+           });
+         });
      ```
-  4. Right before `protected miles(c: Campground): string {`, add:
+  4. Replace the whole `toggleCard` method with (one new line, `this.clickedId = c.id;`):
      ```ts
+       protected toggleCard(c: Campground): void {
+         if (this.expandedId() === c.id) {
+           this.expandedId.set(null);
+           this.selectedChange.emit(null);
+         } else {
+           this.expandedId.set(c.id);
+           this.clickedId = c.id;
+           this.selectedChange.emit(c);
+         }
+       }
+     ```
+  5. Right before `protected miles(c: Campground): string {`, add:
+     ```ts
+       /** A card clicked in the list itself: unchanged, scroll only as far as needed to show it. */
+       private revealCard(id: string): void {
+         this.scrollRun += 1; // stops an earlier selection's scroll passes
+         this.host.nativeElement
+           .querySelector(`[data-id="${CSS.escape(id)}"]`)
+           ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+       }
+
        /**
-        * Scrolls the selected card so its top sits at the top of the list (spec 3, change #12).
+        * Scrolls a card selected from outside the list (the map popup) so its top sits at the top
+        * of the list (spec 3, change #12).
         * Off-screen cards use content-visibility: auto, so until they are drawn they count as
         * their 80px placeholder, and one scroll lands short. So scroll instantly, let the browser
         * draw the cards it now shows (two animation frames), measure again and scroll by what is
-        * left, until the card's top is in place, the scroller can't move further, or
-        * MAX_SCROLL_PASSES is reached. Only the element that scrolls the list moves (scrollAreaOf).
+        * left. Stop after two passes in a row that moved nothing (the card is in place, or the
+        * scroller can't go further even with the newly drawn cards), or after MAX_SCROLL_PASSES.
+        * Only the element that scrolls the list moves (scrollAreaOf).
         */
        private scrollCardToTop(id: string): void {
          const run = ++this.scrollRun;
          let passes = 0;
+         let calm = 0;
          const pass = (): void => {
            if (run !== this.scrollRun) {
              return;
@@ -2104,13 +2149,13 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
            }
            const { scroller, targetTop } = area;
            const offBy = card.getBoundingClientRect().top - targetTop;
-           if (Math.abs(offBy) < 1 || passes >= CampgroundTableComponent.MAX_SCROLL_PASSES) {
-             return;
-           }
            const before = scroller.scrollTop;
-           scroller.scrollTop = before + offBy;
+           if (Math.abs(offBy) >= 1) {
+             scroller.scrollTop = before + offBy;
+           }
+           calm = scroller.scrollTop === before ? calm + 1 : 0;
            passes += 1;
-           if (scroller.scrollTop === before) {
+           if (calm >= 2 || passes >= CampgroundTableComponent.MAX_SCROLL_PASSES) {
              return;
            }
            requestAnimationFrame(() => requestAnimationFrame(pass));
@@ -2146,12 +2191,12 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
   npx ng build --configuration production,local
   # expect: "Application bundle generation complete", no errors (the existing budget and ESM warnings are fine)
   node ralphloop/scroll-check.mjs dist/campsite-finder/browser; echo "exit $?"
-  # expect: three lines starting PASS, then "SCROLL CHECK PASSED: 3 of 3.", then "exit 0"
-  grep -c "block: 'nearest'\|behavior: 'smooth'" "$F"
-  # expect: 0
-  grep -c "requestAnimationFrame(() => requestAnimationFrame(pass))" "$F"; grep -c "MAX_SCROLL_PASSES = 10" "$F"; grep -c "private scrollAreaOf(list: HTMLElement)" "$F"
-  # expect: 1, 1, 1 (the correction passes and the scroller lookup are there, not just a one-shot scroll)
-  git diff --name-only origin/main -- src/ ralphloop/ supabase/
+  # expect: five lines starting PASS (1–5), then "SCROLL CHECK PASSED: 5 of 5.", then "exit 0"
+  grep -c "scrollIntoView(" "$F"
+  # expect: 1 (only revealCard, for clicks in the list)
+  for s in "requestAnimationFrame(() => requestAnimationFrame(pass))" "calm >= 2" "MAX_SCROLL_PASSES = 10" "private scrollAreaOf(list: HTMLElement)" "this.clickedId = c.id;"; do grep -cF "$s" "$F"; done
+  # expect: 1 on each of the five lines
+  git diff --name-only "$(git merge-base main HEAD)" -- src/ ralphloop/ supabase/ ':(exclude)ralphloop/task.md' ':(exclude)ralphloop/activity.md'
   # expect: exactly src/app/shared/ui/campground-table/campground-table.component.ts
   bash ralphloop/app-check.sh
   # expect: ends with "CONSOLE CHECK PASSED"
@@ -2164,7 +2209,8 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
 - Finder, **Miles: All**. Zoom the map to a campground far from you (say, California), click its marker, then **"View details ▸"**: the list jumps straight to that card, and its name, heart and **+** are at the top of the list.
 - Signed in, the same with **"Add to trip…"**: the card opens with the trip picker, top in view.
 - A narrow window (under 900px) or a phone: the same; the card's top is at the top of the screen.
-- Clicking a card in the list itself still just opens it, as before.
+- Clicking a card in the list itself still just opens it, as before (the list moves only if the opened card doesn't fit).
+- "View details ▸" on the **farthest** campground: the list scrolls to its end with that card fully in view.
 - Favorites: clicking cards in the list works as before.
 
 ---
@@ -2181,9 +2227,12 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
 
 ## Self-Review Notes
 
-Task 10 (Lisa, 2026-11-14, ralph-architect):
-- **The code in Step 1 was run, not just read.** On a throwaway stack on Ralph (`t10`, ports 553xx, torn down after): migrations `0001–0022`, the dev seed (4,900 campgrounds), `npm ci`, then `ng lint` (all files pass) and `ng build --configuration production,local` (no errors) with Step 1's code pasted into the file from `main` at `8e654f9`. `console-check.mjs` on that build: passed, 15 page loads.
-- **The check fails when the step is wrong.** `scroll-check.mjs` on the build from `main` (before Task 10): FAIL ×3, the card landing 4,497px (View details, 1400px), 7,492px (Add to trip, admin) and 12,925px (390px) short. On Step 1's code: PASS ×3 (0px). A first draft that scrolled the page under 900px failed the 390px case (the scroller there is `main.app-main`), which is why `scrollAreaOf` exists.
-- **What the check can't tell apart:** a one-shot instant `scrollIntoView({ block: 'start' })` also passes 3 of 3 in Chromium (Review Focus 1); the `grep -c` lines in Step 2 cover that.
-- **List clicks:** a card clicked in the list goes through the same path. A trial check that a list click must *not* snap to the top failed on the code from `main` too: an open card is taller than the list's view, so `nearest` already put its top at the top. So nothing a user sees changes there, and the trial check was dropped.
-- **Parse:** `check-task-md.sh` reports Tasks 2–9 as "no unchecked steps; the loop would skip it". They're done and merged, and skipping them is the point; Task 10 has 3 open steps, 8 `# expect:` lines, a commit step and QC.
+Task 10 (Lisa, 2026-11-14, ralph-architect; plan-adversary round 1 in `docs/superpowers/reviews/2026-11-14-plan-adversary-r1.md`):
+- **The code in Step 1 was run, not just read.** On a throwaway stack on Ralph (`t10`, ports 553xx, torn down after): migrations `0001–0022`, the dev seed (4,900 campgrounds), `npm ci`, then `ng lint` (all files pass) and `ng build --configuration production,local` (no errors), with Step 1's code applied to the file from `main` at `8e654f9`. `console-check.mjs` passed on that build (15 page loads). The adversary applied Step 1's blocks with a script too: the anchors are unique and the result matched.
+- **The check fails when the step is wrong** (`scroll-check.mjs`, five cases):
+  - build from `main`: cases 1–4 FAIL (the card lands 4,497 / 7,492 / 12,733 / 5,097 px short), case 5 PASS (a list click moves the list 28px);
+  - one-shot `scrollIntoView({ behavior: 'auto', block: 'start' })` for every selection: cases 1–4 PASS, case 5 FAIL (the list click snaps to the top);
+  - Step 1's code: 5 of 5 PASS (cases 1–3 at 0px; case 4 with the list at its end and the card fully in view; case 5 moves 28px, the same as `main`).
+- **Round 1 fixes:** the Step 2 diff now uses the merge base with `main` and excludes `task.md` and `activity.md` (F1: it listed those, and `origin/main` can be stale); list clicks keep today's scroll through `clickedId` (F2: they jumped 288px, and on a phone the map scrolled away); the red check is skipped on a retry (F3); passes stop only after two calm passes in a row (F5: the last card stopped 346px short of where the list could reach); case 4 (last card), case 5 (list click), the trip-picker and "nothing else moved" asserts, and exit 2 for a check that couldn't run (F6, F7).
+- **Not covered by the check:** the adversary's synthetic probe of a busy map (the map still zooming during the passes) left the card 30–52 px short with the earlier stop rule. The two-calm-passes rule should cover it, but that probe wasn't rerun; it's a QC item.
+- **Parse:** `check-task-md.sh` reports Tasks 2–9 as "no unchecked steps; the loop would skip it". They're done and merged, and skipping them is the point; Task 10 has 3 open steps, a commit step and QC.
