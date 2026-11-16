@@ -74,9 +74,7 @@ count_unchecked_all() {
 count_unchecked() {
     local range
     range=$(task_section_range "$1" "$2") || { echo 0; return 0; }
-    # grep -c, not -q — see find_current_task() in doloop.sh for the
-    # pipefail/SIGPIPE reason.
-    sed -n "${range% *},${range#* }p" "$1" | grep -c '^- \[ \]' || true
+    count_unchecked_lines "$1" "${range% *}" "${range#* }"
 }
 
 # first_unchecked_title <task_file> <task_num>
@@ -85,7 +83,7 @@ count_unchecked() {
 first_unchecked_title() {
     local range
     range=$(task_section_range "$1" "$2") || return 0
-    sed -n "${range% *},${range#* }p" "$1" | grep -m 1 '^- \[ \]' \
+    sed -n "${range% *},${range#* }p" "$1" | strip_fenced | grep -m 1 '^- \[ \]' \
         | sed -E 's/^- \[ \] (\*\*)?//; s/\*\*.*$//' || true
 }
 

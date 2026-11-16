@@ -36,6 +36,40 @@ RES_TEXT_LIMIT='{"type":"result","subtype":"error_during_execution","is_error":t
 EV_REJECTED='{"type":"rate_limit_event","rate_limit_info":{"status":"rejected","resetsAt":1790000000,"rateLimitType":"five_hour"}}'
 EV_ALLOWED='{"type":"rate_limit_event","rate_limit_info":{"status":"allowed","resetsAt":1790000000,"rateLimitType":"five_hour"}}'
 
+# A plan whose steps quote checkbox lines inside code fences (``` and ~~~, also
+# indented): only the real steps outside the fences count.
+FENCED_TASK=$(cat <<'EOF'
+# Plan
+## Task 1: Docs
+```markdown
+- [ ] a rule quoted in a fence
+```
+- [ ] **Step 1: Add the rule** — after the fence
+~~~
+- [ ] another quoted rule
+~~~
+  ```
+- [ ] inside an indented fence
+  ```
+- [x] **Step 2: Done**
+- [ ] **Step 3: Commit**
+## Task 2: Next
+- [ ] **Step 1: Real**
+EOF
+)
+
+fenced_file() { local f; f=$(mktemp); printf '%s\n' "$FENCED_TASK" > "$f"; echo "$f"; }
+
+test_unchecked_ignores_fenced_lines() {
+    local f; f=$(fenced_file)
+    assert_eq "fenced checkboxes aren't steps" "$(count_unchecked "$f" 1)" "2"
+    assert_eq "a fence doesn't leak into the next task" "$(count_unchecked "$f" 2)" "1"
+    assert_eq "first title skips a fenced checkbox" "$(first_unchecked_title "$f" 1)" 'Step 1: Add the rule'
+    assert_eq "range count ignores fences" "$(count_unchecked_lines "$f" 2 14)" "2"
+    assert_eq "whole-file count ignores fences" "$(count_unchecked_all "$f")" "3"
+    assert_eq "whole-file count on the plain fixture" "$(count_unchecked_all "$(task_file)")" "3"
+}
+
 test_count_unchecked() {
     local f; f=$(task_file)
     assert_eq "task 2 has 2 unchecked" "$(count_unchecked "$f" 2)" "2"

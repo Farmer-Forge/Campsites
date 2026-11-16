@@ -286,3 +286,17 @@ test_loop_restores_ticks_outside_the_task() {
     assert_contains "task 2 still completed" "$(branch_file ralphloop/task.md)" '- [x] **Step 3: Commit**'
     rm -rf "$SB"
 }
+
+test_loop_ignores_checkboxes_quoted_in_code_fences() {
+    # Task 2's only unchecked lines are quoted in a fence, so it's finished;
+    # Task 3 has one real step and a quoted one after it, so it publishes after
+    # that one step instead of waiting on a step that can never be checked.
+    sandbox "$(printf '%s\n' '# Fenced plan' '## Task 1: Already provisioned' '- [x] **Step 1: Done by hand**' \
+        '## Task 2: Finished' '- [x] **Step 1: Done**' '```markdown' '- [ ] a quoted rule' '```' \
+        '## Task 3: Next' '- [ ] **Step 1: Build it**' '```' '- [ ] another quoted rule' '```')"
+    EXTRA_ENV="RALPH_STUB_TASK=3" run_loop tick
+    assert_eq "exits 0" "$RC" 0
+    assert_contains "picked task 3, not the fenced lines in task 2" "$OUT" "Task 3: Next"
+    assert_contains "task 3's checkpoint reached the branch" "$(git -C "$SB/origin.git" log --format=%s refs/heads/ralph-loop/task-3 2>/dev/null)" "Checkpoint: Task 3 — Step 1: Build it"
+    assert_contains "the worker is told fenced lines aren't steps" "$(prompt 1)" "inside a fenced code"
+}

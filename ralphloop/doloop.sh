@@ -190,7 +190,9 @@ find_current_task() {
         # unchecked steps. -c always reads sed's output to completion, so
         # sed exits 0 and there's nothing for pipefail to misreport.
         local match_count
-        match_count=$(sed -n "${start},${end}p" "$TASK_FILE" | grep -c '^- \[ \]' || true)
+        # count_unchecked_lines (loop-lib.sh) skips checkbox lines quoted
+        # inside code fences.
+        match_count=$(count_unchecked_lines "$TASK_FILE" "$start" "$end")
         if [ "${match_count:-0}" -gt 0 ]; then
             local heading_line task_num task_name
             heading_line=$(sed -n "${start}p" "$TASK_FILE")
@@ -485,7 +487,8 @@ dedicated git worktree for ONE task only: Task ${TASK_NUM} (${TASK_NAME}) from
 
 CORE OBJECTIVES:
 1. Read '${TASK_FILE}' and find the FIRST unchecked step (a line starting
-   with "- [ ]") WITHIN Task ${TASK_NUM}'s own section only. Do not work on
+   with "- [ ]", outside code blocks — a "- [ ]" line inside a fenced code
+   block is quoted text, never a step) WITHIN Task ${TASK_NUM}'s own section only. Do not work on
    any other task's steps, even if you finish Task ${TASK_NUM} early or
    notice unchecked steps elsewhere — this worktree only merges Task
    ${TASK_NUM}'s changes.
