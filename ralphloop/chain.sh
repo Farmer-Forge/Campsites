@@ -56,6 +56,8 @@ fi
 
 CANONICAL_ROOT="$(pwd -P)"
 DOLOOP="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/doloop.sh"
+# shellcheck source=loop-lib.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/loop-lib.sh"
 REVIEW="${RALPH_REVIEW_SCRIPT:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/review.sh}"
 SEED="${RALPH_SEED_SCRIPT:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/seed-dev.sh}"
 CHAIN_LOG="$(cd .. && pwd)/Campsites-chain.log"
@@ -187,9 +189,10 @@ update_main() {
     git merge -q --ff-only FETCH_HEAD >/dev/null   # errors shown: local paths only, no token
 }
 
-# unchecked_on_main — "- [ ]" steps left in task.md on the checked-out main.
+# unchecked_on_main — "- [ ]" steps left in task.md on the checked-out main
+# (outside code fences: count_unchecked_all in loop-lib.sh).
 unchecked_on_main() {
-    grep -c '^- \[ \]' ralphloop/task.md || true
+    count_unchecked_all ralphloop/task.md
 }
 
 exec 9>"$LOCK_FILE"
