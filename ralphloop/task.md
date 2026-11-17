@@ -1,6 +1,6 @@
 # Campsite Finder V1.1 Implementation Plan
 
-> **For the loop:** `ralphloop/doloop.sh` (or `ralphloop/chain.sh`) works through this file task by task, one worker call per unchecked `- [ ]` step, one PR per task. Task 1 is manual infrastructure and stays checked. Tasks 2–9 build the app. Task 10 (added 2026-11-14) fixes bug 5 in the built app.
+> **For the loop:** `ralphloop/doloop.sh` (or `ralphloop/chain.sh`) works through this file task by task, one worker call per unchecked `- [ ]` step, one PR per task. Task 1 is manual infrastructure and stays checked. Tasks 2–9 build the app. Task 10 (added 2026-11-14) fixes bug 5 in the built app. Task 11 (added 2026-11-16) rebrands the shell as Forge Outdoors · Campsites (spec 2, change #6).
 >
 > **Specs (binding, all approved by Shawn):** read the one a task names before its first step.
 > - `docs/superpowers/specs/2026-10-24-schema-contract-design.md` (spec 1: the database you build on, unchanged);
@@ -68,10 +68,13 @@ mkdir -p src/environments && printf "export const environment = {\n  production:
 
 ## Review Focus
 
-1. **A one-shot scroll passing for the fix** (Task 10). In Chromium a single instant `scrollIntoView({ block: 'start' })` lands cards 1–4 of `scroll-check.mjs` correctly, but it also snaps list clicks to the top, so case 5 fails it. Step 2's `grep` lines also require the correction passes, the scroller lookup and the list-click path.
-2. **Scrolling the wrong element** (Task 10). Under 900px the list isn't the scroller (`overflow: visible`); the Finder's `main.app-main` is. `scroll-check.mjs` measures against the nearest scrolling ancestor at 390px and requires, at 1400px, that the list is the scroller and neither `main` nor the page moved.
-3. **Touching more than the one file** (Task 10). Step 2's `git diff` against the merge base with `main` (minus `task.md` and `activity.md`) must list only `campground-table.component.ts`; the worker never edits `ralphloop/scroll-check.mjs`.
-4. **A retried Step 1** (Task 10). The red check runs only while the component still matches `main`; on a retry it's skipped, not mistaken for a broken check.
+1. **The nav contrast coming back** (Task 11). Today's links are cream 14px on plain teal (3.6:1) with a translucent hover. `header-check.mjs` case 4 measures every nav link, user pill, nav button and the label against its own solid background at rest, and each main link on hover; a translucent background fails. Break-tested: a `transparent` hover fails case 4 at 3.26:1.
+2. **The header wrapping on a laptop** (Task 11). The hand-off's spacing (16px pill padding, 2px letter-spacing, 44px wordmark) wraps to two rows at 1280px as the admin (140px tall against 76px today), and the map loses the height. Case 7 requires one row (≤ 100px) at 1280px signed out and as the admin; it fails on that spacing.
+3. **Drift: a second palette or raw colors** (Task 11). Case 6 reads the `--rt-*` values on `:root` and the declared fonts; Step 4's `grep`s refuse raw hex/`rgb()` in the shell files and any `--fo-`, "Work Sans" or "Campsite Finder" left in `src/`.
+4. **Touching more than the eight files** (Task 11). Step 4's `git diff` against the merge base with `main` (minus `task.md` and `activity.md`) must list exactly the eight files, and the badge's hash is pinned.
+5. **A retried Step 1** (Task 11). The red check runs only while `src/` still matches `main`; on a retry it's skipped, not mistaken for a broken check.
+
+Task 10's review focus (the scroll fix) is in this file's history (PR #43).
 
 ---
 
@@ -2215,12 +2218,387 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
 
 ---
 
+## Task 11: Forge Outdoors · Campsites header (spec 2, change #6)
+
+> Added 2026-11-16 (Shawn; spec 2, **Change #6**). Tasks 1–10 are done and merged; this task rebrands the app shell: the brand pack's colors and font, the new header, and tab titles. Branding only: no route, guard, nav item or behavior changes. Read spec 2's **Change #6** and `docs/superpowers/Design.md`'s **Nav bar** section first.
+
+**Files:** Create: `src/app/core/services/brand-title.strategy.ts`. Modify: `src/index.html`, `src/styles.scss`, `src/app/app.html`, `src/app/app.scss`, `src/app/app.config.ts`, `src/app/app.routes.ts`, `src/app/features/about/about.component.html`. No other file. `public/forge-outdoors-badge.svg` (the brand pack's badge) came with this plan; never edit it.
+
+**Interfaces:** Consumes: `supabase.session()`, `userService.profile()`, `routerLink` / `routerLinkActive` in `app.html` (Task 2, unchanged). Produces: the `--rt-teal-deep` token; `SITE_TITLE` and `BrandTitleStrategy` (`src/app/core/services/brand-title.strategy.ts`); a `title` on every route but the Finder. No component input, output or service changes.
+
+**Check script:** `ralphloop/header-check.mjs` (Lisa, 2026-11-16; like `scroll-check.mjs`, it's the loop's, so never edit it). It loads the production build in headless Chromium, signed out at 1280px and 390px, as the admin on `/trips` (both widths) and `/admin`, and as Pat on their first trip, and judges seven cases: 1 tab titles, 2 brand (badge, wordmark, label), 3 no "Campsite Finder", 4 contrast ≥ 4.5:1 for every nav link, user pill, nav button and the label (and each main link on hover), 5 tap height ≥ 44px, 6 the brand tokens and Archivo, 7 fit (nothing scrolls sideways at 390px; one row at 1280px, signed out and as the admin). Exit 0 all pass, 1 a case fails, 2 the check couldn't run. It needs the local stack and the dev seed, which the gate restores, and Google Fonts (which the console check already loads).
+
+- [ ] **Step 1: Prove the check fails, then switch the tokens, the font and the tab title.**
+  **First, the red check.** Write the local environment (Global Constraints, **Local settings**). Then, **only if `src/` still matches `main`** (on a retry or a resumed step it has already changed, so skip to "Then"):
+  ```bash
+  if git diff --quiet "$(git merge-base main HEAD)" -- src/; then
+    npx ng build --configuration production,local
+    node ralphloop/header-check.mjs dist/campsite-finder/browser; echo "exit $?"
+  else
+    echo "app already changed: red check skipped"
+  fi
+  # expect (first run): lines starting "FAIL 1 titles", "FAIL 2 brand", "FAIL 3 old name", "FAIL 4 contrast", "FAIL 5 tap size", "FAIL 6 tokens and font" and "PASS 7 fit", then "HEADER CHECK FAILED: 6 of 7.", then "exit 1"
+  ```
+  Anything else (`HEADER CHECK PASSED`, an `ERROR` line, `exit 2`, a build error): stop and write a `BLOCKED:` line (rule 6). The check, the seed, the stack or the network isn't what this plan expects.
+
+  **Then:**
+  1. In `src/styles.scss`, replace the comment line that starts `/* '50s road-trip design tokens` and the whole `:root { … }` block after it (through its closing `}`) with exactly:
+     ```scss
+     /* '50s road-trip design tokens. Colors and fonts follow the Forge Outdoors brand pack (spec 2, change #6); see docs/superpowers/Design.md */
+     :root {
+       --rt-paper: #f3e9d2;
+       --rt-card: #fbf4e4;
+       --rt-cream: #f5ead6;
+       --rt-ink: #2b2420;
+       --rt-teal: #2f8f89;
+       --rt-teal-deep: #1f6b66;
+       --rt-cherry: #c8402a;
+       --rt-cherry-dark: #9a2e1d;
+       --rt-mustard: #e8a93a;
+       --rt-mustard-dark: #d4952a;
+       --rt-sand: #e7dcc2;
+
+       --rt-script: 'Yellowtail', cursive;
+       --rt-display: 'Alfa Slab One', serif;
+       --rt-body: 'Archivo', system-ui, sans-serif;
+     }
+     ```
+     Nothing else in `styles.scss` changes.
+  2. In `src/index.html`, change exactly two lines:
+     - `<title>Campsite Finder</title>` → `<title>Campsites · Forge Outdoors</title>`
+     - in the Google Fonts `<link>`, `family=Work+Sans:wght@400;500;600;700` → `family=Archivo:wght@400..800` (the rest of the URL stays: `family=Yellowtail&family=Alfa+Slab+One&…&display=swap`).
+
+- [ ] **Step 2: The Forge Outdoors header.**
+  1. Replace the whole of `src/app/app.html` with (the badge `public/forge-outdoors-badge.svg` is already in the repo, added with this plan; don't edit it):
+     ```html
+     <nav class="app-nav">
+       <a class="brand" routerLink="/" aria-label="Forge Outdoors Campsites, home">
+         <img class="brand-badge" src="forge-outdoors-badge.svg" alt="" width="60" height="60" />
+         <span class="wordmark">Forge Outdoors</span>
+       </a>
+       <span class="section-label">Campsites</span>
+       <div class="nav-main">
+         <a class="nav-link" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Finder</a>
+         <a class="nav-link" routerLink="/favorites" routerLinkActive="active">Favorites</a>
+         <a class="nav-link" routerLink="/trips" routerLinkActive="active">Trips</a>
+         <a class="nav-link" routerLink="/about" routerLinkActive="active">About Us</a>
+       </div>
+       <div class="nav-user">
+         @if (supabase.session()) {
+           <a class="nav-pill" routerLink="/account" routerLinkActive="active">Account</a>
+           @if (userService.profile()?.role === 'admin') {
+             <a class="nav-pill" routerLink="/admin" routerLinkActive="active">Admin</a>
+           }
+           <button type="button" class="rt-btn rt-btn--mustard rt-btn--shadow sign-out-button" (click)="supabase.signOut()">
+             Sign out
+           </button>
+         } @else {
+           <a class="nav-pill" routerLink="/login">Sign in</a>
+         }
+       </div>
+     </nav>
+     <main class="app-main"><router-outlet /></main>
+     ```
+  2. Replace the whole of `src/app/app.scss` with:
+     ```scss
+     :host {
+       height: 100vh;
+       display: flex;
+       flex-direction: column;
+       overflow: hidden;
+     }
+
+     /* The Forge Outdoors header (spec 2, change #6). */
+     .app-nav {
+       flex: none;
+       display: flex;
+       flex-wrap: wrap;
+       align-items: center;
+       gap: 8px 12px;
+       min-width: 0;
+       min-height: 84px;
+       padding: 12px 24px;
+       box-sizing: border-box;
+       background: var(--rt-teal);
+       border-bottom: 4px solid var(--rt-ink);
+     }
+
+     .brand {
+       display: flex;
+       align-items: center;
+       gap: 12px;
+       text-decoration: none;
+     }
+
+     .brand-badge {
+       display: block;
+       width: 60px;
+       height: 60px;
+     }
+
+     .wordmark {
+       font-family: var(--rt-script);
+       font-size: 40px;
+       line-height: 1;
+       color: var(--rt-cream);
+       text-shadow: 3px 3px 0 var(--rt-cherry);
+       white-space: nowrap;
+     }
+
+     .section-label {
+       padding: 4px 12px;
+       border: 3px solid var(--rt-ink);
+       border-radius: 999px;
+       background: var(--rt-mustard);
+       color: var(--rt-ink);
+       font-family: var(--rt-display);
+       font-size: 15px;
+       line-height: 1.2;
+       letter-spacing: 2px;
+       text-transform: uppercase;
+       white-space: nowrap;
+     }
+
+     .nav-main {
+       display: flex;
+       flex-wrap: wrap;
+       gap: 6px;
+     }
+
+     /* Small text on --rt-teal fails contrast, so every link sits on a deep-teal pill (cream 5.3:1). */
+     .nav-link,
+     .nav-pill {
+       display: inline-flex;
+       align-items: center;
+       box-sizing: border-box;
+       min-height: 44px;
+       padding: 0 12px;
+       border: 2px solid var(--rt-ink);
+       border-radius: 999px;
+       background: var(--rt-teal-deep);
+       color: var(--rt-cream);
+       font-size: 13px;
+       font-weight: 800;
+       letter-spacing: 1px;
+       text-transform: uppercase;
+       text-decoration: none;
+       white-space: nowrap;
+
+       &:hover {
+         background: var(--rt-ink);
+         color: var(--rt-cream);
+       }
+
+       &.active {
+         background: var(--rt-mustard);
+         color: var(--rt-ink);
+       }
+     }
+
+     .nav-user {
+       margin-left: auto;
+       display: flex;
+       flex-wrap: wrap;
+       gap: 6px;
+       align-items: center;
+     }
+
+     .app-main {
+       flex: 1;
+       min-height: 0;
+       overflow-y: auto;
+       overflow-x: hidden;
+       display: flex;
+       flex-direction: column;
+     }
+
+     @media (max-width: 900px) {
+       .app-nav {
+         padding: 12px 16px;
+       }
+     }
+
+     @media (max-width: 640px) {
+       .app-nav {
+         gap: 8px 10px;
+       }
+
+       .brand {
+         gap: 10px;
+       }
+
+       .brand-badge {
+         width: 40px;
+         height: 40px;
+       }
+
+       .wordmark {
+         font-size: 30px;
+         text-shadow: 2px 2px 0 var(--rt-cherry);
+       }
+
+       .section-label {
+         padding: 3px 10px;
+         border-width: 2px;
+         font-size: 11px;
+         letter-spacing: 2px;
+       }
+     }
+     ```
+  The spacing is tuned so the header stays on one row at 1280px signed in as the admin (case 7). Don't loosen it. Every color is a `var(--rt-…)` token (`style-task.md`).
+
+- [ ] **Step 3: Tab titles and the About page.**
+  1. Create `src/app/core/services/brand-title.strategy.ts`:
+     ```ts
+     import { Injectable, inject } from '@angular/core';
+     import { Title } from '@angular/platform-browser';
+     import { RouterStateSnapshot, TitleStrategy } from '@angular/router';
+
+     /** The end of every tab title (spec 2, change #6). */
+     export const SITE_TITLE = 'Campsites · Forge Outdoors';
+
+     /** Tab titles: "<route title> · Campsites · Forge Outdoors", or just the suffix for a route without one. */
+     @Injectable({ providedIn: 'root' })
+     export class BrandTitleStrategy extends TitleStrategy {
+       private readonly title = inject(Title);
+
+       override updateTitle(snapshot: RouterStateSnapshot): void {
+         const page = this.buildTitle(snapshot);
+         this.title.setTitle(page ? `${page} · ${SITE_TITLE}` : SITE_TITLE);
+       }
+     }
+     ```
+  2. In `src/app/app.config.ts`, make exactly these three edits (the PrimeNG block stays as it is):
+     - `import { provideRouter } from '@angular/router';` → `import { TitleStrategy, provideRouter } from '@angular/router';`
+     - after `import { routes } from './app.routes';`, add the line `import { BrandTitleStrategy } from './core/services/brand-title.strategy';`
+     - after `    provideRouter(routes),`, add the line `    { provide: TitleStrategy, useClass: BrandTitleStrategy },`
+  3. Replace the whole of `src/app/app.routes.ts` with (each route as before, plus a `title` on every route but the Finder):
+     ```ts
+     import { Routes } from '@angular/router';
+     import { adminGuard } from './core/guards/admin.guard';
+     import { authGuard } from './core/guards/auth.guard';
+     import { guestGuard } from './core/guards/guest.guard';
+
+     export const routes: Routes = [
+       {
+         path: '',
+         loadComponent: () => import('./features/finder/finder.component').then((m) => m.FinderComponent),
+       },
+       {
+         path: 'favorites',
+         title: 'Favorites',
+         loadComponent: () => import('./features/favorites/favorites.component').then((m) => m.FavoritesComponent),
+         canActivate: [authGuard],
+       },
+       {
+         path: 'trips',
+         title: 'Trips',
+         loadComponent: () => import('./features/trips/trips-list.component').then((m) => m.TripsListComponent),
+         canActivate: [authGuard],
+       },
+       {
+         path: 'trips/:id',
+         title: 'Trip',
+         loadComponent: () => import('./features/trips/trip-detail.component').then((m) => m.TripDetailComponent),
+         canActivate: [authGuard],
+       },
+       {
+         path: 'account',
+         title: 'Account',
+         loadComponent: () => import('./features/account/account.component').then((m) => m.AccountComponent),
+         canActivate: [authGuard],
+       },
+       {
+         path: 'admin',
+         title: 'Admin',
+         loadComponent: () => import('./features/admin/admin.component').then((m) => m.AdminComponent),
+         canActivate: [adminGuard],
+       },
+       {
+         path: 'login',
+         title: 'Sign in',
+         loadComponent: () => import('./features/auth/login.component').then((m) => m.LoginComponent),
+         canActivate: [guestGuard],
+       },
+       {
+         path: 'signup',
+         title: 'Sign up',
+         loadComponent: () => import('./features/auth/signup.component').then((m) => m.SignupComponent),
+         canActivate: [guestGuard],
+       },
+       {
+         path: 'forgot-password',
+         title: 'Forgot password',
+         loadComponent: () => import('./features/auth/forgot-password.component').then((m) => m.ForgotPasswordComponent),
+       },
+       {
+         path: 'reset-password',
+         title: 'Reset password',
+         loadComponent: () => import('./features/auth/reset-password.component').then((m) => m.ResetPasswordComponent),
+       },
+       {
+         path: 'about',
+         title: 'About Us',
+         loadComponent: () => import('./features/about/about.component').then((m) => m.AboutComponent),
+       },
+       {
+         path: '**',
+         title: 'Page not found',
+         loadComponent: () => import('./features/not-found/not-found.component').then((m) => m.NotFoundComponent),
+       },
+     ];
+     ```
+  4. In `src/app/features/about/about.component.html`, `<div class="eyebrow">Campsite Finder</div>` → `<div class="eyebrow">Forge Outdoors · Campsites</div>`.
+
+- [ ] **Step 4: Verify.**
+  ```bash
+  npx ng lint
+  # expect: "All files pass linting."
+  npx ng build --configuration production,local
+  # expect: "Application bundle generation complete", no errors (the existing initial-budget warning is fine)
+  node ralphloop/header-check.mjs dist/campsite-finder/browser; echo "exit $?"
+  # expect: seven lines starting PASS (1–7), then "HEADER CHECK PASSED: 7 of 7.", then "exit 0"
+  grep -nE '#[0-9a-fA-F]{3,8}\b|rgb\(|rgba\(' src/app/app.scss src/app/app.html src/app/core/services/brand-title.strategy.ts; echo "grep exit $?"
+  # expect: no matches, then "grep exit 1"
+  grep -rniE 'campsite finder|work sans|--fo-' src/; echo "grep exit $?"
+  # expect: no matches, then "grep exit 1"
+  sha256sum public/forge-outdoors-badge.svg
+  # expect: 409eb7e5ae9c39482289ac71d3b8276dae089594e3e233c4637f2f4daad6d584 (unchanged since this plan added it)
+  git diff --name-only "$(git merge-base main HEAD)" -- src/ public/ ralphloop/ supabase/ docs/ ':(exclude)ralphloop/task.md' ':(exclude)ralphloop/activity.md' | sort
+  # expect exactly these eight lines:
+  #   src/app/app.config.ts
+  #   src/app/app.html
+  #   src/app/app.routes.ts
+  #   src/app/app.scss
+  #   src/app/core/services/brand-title.strategy.ts
+  #   src/app/features/about/about.component.html
+  #   src/index.html
+  #   src/styles.scss
+  bash ralphloop/app-check.sh
+  # expect: ends with "CONSOLE CHECK PASSED"
+  ```
+  Re-read spec 2 change #6 and run `style-task.md`'s self-check.
+
+- [ ] **Step 5: Commit.** `git commit -m "Task 11: Forge Outdoors · Campsites header, brand tokens and tab titles (spec 2, change #6)"`
+
+**QC (for Shawn, in the browser):**
+- Finder at a laptop width, signed in as the admin: badge, "Forge Outdoors", the CAMPSITES pill, then FINDER / FAVORITES / TRIPS / ABOUT US and ACCOUNT / ADMIN / Sign out, all on **one row**. The map is as tall as before, give or take about 12px.
+- The current page's link is mustard; the others are deep teal and turn dark brown on hover. Everything reads easily.
+- A phone (or a window under 640px): smaller badge and wordmark, and the links wrap onto rows (no menu button). Nothing scrolls sideways. The header is about 26px taller than before, because the links are now 44px tall tap targets.
+- The browser tab: "Campsites · Forge Outdoors" on the Finder, "Favorites · Campsites · Forge Outdoors" on Favorites, "Trip · …" on a trip. The tab icon is still the Farmer-Forge F.
+- Body text is Archivo now, not Work Sans. Look over the Finder list, a trip and the Account page: the text should look a little sturdier, and nothing overflows its card or button.
+- The cream (inputs, light buttons, expanded cards) is slightly warmer and darker than before. Account and Admin inputs still stand out from their cards.
+- About page: the eyebrow reads "Forge Outdoors · Campsites".
+
+---
+
 ## Out of Scope (this plan)
 
 - V1.1's own Supabase cloud project, its Vercel site, and production settings (by hand, later, when V1.1 is ready).
 - Unit and end-to-end tests (dropped).
 - Any change to the database, edge functions or their tests.
 - V1.2 ideas: showing campground attributes to users, moderator powers, and a dark palette.
+- Task 11 leaves out: a footer, a mobile menu, a new favicon, the section switcher, the patch logo and social image, the forgeoutdoors.app domain, and restyling anything beyond the shell and the token values (spec 2, change #6). Body links in cherry on paper are 4.1:1 (4.3:1 before), still under 4.5:1; that's a separate brand decision.
 - Filling in `state` for the campgrounds that have none (bug 6, option A): a hand-written migration, not loop work. (Bug 6's part B, `0022`, is live and in spec 1; part A is `0023`–`0024`, spec 1 **Fixes** #11.)
 
 ---
@@ -2236,3 +2614,16 @@ Task 10 (Lisa, 2026-11-14, ralph-architect; plan-adversary round 1 in `docs/supe
 - **Round 1 fixes:** the Step 2 diff now uses the merge base with `main` and excludes `task.md` and `activity.md` (F1: it listed those, and `origin/main` can be stale); list clicks keep today's scroll through `clickedId` (F2: they jumped 288px, and on a phone the map scrolled away); the red check is skipped on a retry (F3); passes stop only after two calm passes in a row (F5: the last card stopped 346px short of where the list could reach); case 4 (last card), case 5 (list click), the trip-picker and "nothing else moved" asserts, and exit 2 for a check that couldn't run (F6, F7).
 - **Not covered by the check:** the adversary's synthetic probe of a busy map (the map still zooming during the passes) left the card 30–52 px short with the earlier stop rule. The two-calm-passes rule should cover it, but that probe wasn't rerun; it's a QC item.
 - **Parse:** `check-task-md.sh` reports Tasks 2–9 as "no unchecked steps; the loop would skip it". They're done and merged, and skipping them is the point; Task 10 has 3 open steps, a commit step and QC.
+
+Task 11 (Lisa, 2026-11-16, ralph-architect):
+- **Run on Lisa, not Ralph.** Ralph was busy with the ForgeDB loop, so no throwaway stack. In a clone of `main` at `81c3e64`: `npm ci`, Steps 1–3 applied, `ng lint` (all files pass), `ng build --configuration production,local` (only the existing initial-budget warning), and the colour self-check `grep` (no matches). `header-check.mjs` ran against a **mock** Supabase (scratch only, never committed) that signs anyone in and makes the admin an admin, so the signed-in header rendered. The step code was then extracted from this file's text and compared with the tested files: identical.
+- **The check fails when the step is wrong:**
+  - `main`'s build: FAIL 1–6, PASS 7 (titles "Campsite Finder"; no brand link; nav links 3.61:1 and 37px tall; old tokens and Work Sans).
+  - Task 11's build: 7 of 7 PASS.
+  - One break per case on Task 11's build, all in one run: the About route's `title` removed (FAIL 1), the badge `src` pointing at a missing file (FAIL 2), the About eyebrow back to "Campsite Finder" (FAIL 3), a `transparent` hover (FAIL 4, 3.26:1 on hover only), pills `min-height: 40px` (FAIL 5), `--rt-cherry-dark` back to `#9e2a21` (FAIL 6). Each failed only its own case.
+  - A phone wordmark at 80px (FAIL 7, sideways scroll at 390px); `min-height: 110px` (FAIL 7, wide); the hand-off's spacing (FAIL 7: the admin header 140px tall at 1280px).
+- **Measured heights** (Chromium, Archivo and Yellowtail loaded): 1280px signed out 88px, as the admin 88px (today 76 / 76); 390px 222px (today 196). The +26px on phones comes from the 44px tap targets.
+- **The Google Fonts CSS is inlined by the production build** (Angular font inlining), so case 6 reads the declared font faces, not a `<link>`. The gate's console check already loads these fonts without errors, so the worker container reaches Google Fonts.
+- **Not yet run:** `header-check.mjs` and `app-check.sh` against the real local stack and dev seed on Ralph (a throwaway stack, 553xx). Lisa runs this when Ralph is free, before chain.sh (decisions file).
+
+- **Parse:** `check-task-md.sh` reports Tasks 2–10 as "no unchecked steps; the loop would skip it" (and 2–9 as having no `# expect:` lines). They're done and merged, and skipping them is the point; Task 11 has 5 open steps, 7 `# expect:` lines, a commit step and QC.

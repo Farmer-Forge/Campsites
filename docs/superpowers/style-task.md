@@ -27,7 +27,7 @@ This project is built by an unattended loop. Nothing here stops a feature from b
 - [ ] Every button is an `rt-btn` / `rt-text-btn` / `rt-icon-btn`, every text input or select is an `rt-input`, and the step didn't add a hand-styled duplicate.
 - [ ] No new `rt-*` class or shared component without a matching `Design.md` entry in this same step.
 - [ ] `npx ng lint` and `npx ng build` are clean.
-- [ ] The copy matches the spec's exact text, and the product name is "Campsite Finder".
+- [ ] The copy matches the spec's exact text. The product is **Forge Outdoors · Campsites** (spec 2, change #6); "Campsite Finder" is the old name and never appears in the UI.
 
 If any box is unchecked, fix it in this step. Later passes build on inconsistency rather than fixing it.
 

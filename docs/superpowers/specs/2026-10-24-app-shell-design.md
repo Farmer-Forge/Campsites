@@ -210,6 +210,18 @@ Shawn reviewed V1's behaviors and asked for them addressed. He handed the detail
    The Finder's saved search stays, since it belongs to the tab, not the user.
 5. **"Campsite Finder" everywhere.** The browser tab title becomes "Campsite Finder", matching the wordmark. The nav link keeps the label "About Us".
 
+## Change #6: Forge Outdoors · Campsites (Shawn, 2026-11-15)
+
+Campsite Finder is now the **Campsites** section of **Forge Outdoors** (next to Gear and Trips). This change **replaces change #5** and wins over the **Project setup**, **Nav bar** and **Design system** sections above where they differ. Branding only: routes, guards, nav items and behaviour don't change. Built by `task.md` Task 11; checked by `ralphloop/header-check.mjs`.
+
+1. **One palette and font set: the Forge Outdoors brand pack.** The October road-trip hand-off (`docs/design/Campsite01/`) and the brand pack had drifted apart; the brand pack wins. The `--rt-*` token names stay, and their values change: `--rt-teal` `#2f8f89`, `--rt-cherry` `#c8402a`, `--rt-cherry-dark` `#9a2e1d`, `--rt-ink` `#2b2420`, `--rt-cream` `#f5ead6`, and a new `--rt-teal-deep` `#1f6b66`. `--rt-mustard` was already right; `--rt-paper`, `--rt-card`, `--rt-sand` and `--rt-mustard-dark` stay (the brand pack doesn't define them). The body font is **Archivo** (variable, weights 400–800), replacing Work Sans. `docs/superpowers/Design.md` has the current table.
+2. **Header:** a link to `/` holding the Forge Outdoors badge (`public/forge-outdoors-badge.svg`, 60px; 40px under 640px) and the wordmark "Forge Outdoors" (Yellowtail 40px, cream, cherry shadow; 30px under 640px), then a **CAMPSITES** section label (Alfa Slab One, ink on a mustard pill with a 3px ink border). The label is static for now. "Campsite Finder" no longer appears in the UI.
+3. **Nav links and user pills** (Finder, Favorites, Trips, About Us; Account, Admin, Sign in) are deep-teal pills with a 2px ink border, 44px tall, 13px / 800 / uppercase, cream text: small text on the teal bar fails contrast (3.6:1 before this change), cream on deep teal is 5.3:1. Hover is an ink pill; the active link is a mustard pill with ink text. Sign out stays the mustard `rt-btn`. At 1280px the whole header stays on one row, signed in as the admin.
+4. **No footer and no mobile menu.** The shell has no room for a footer (map pages fill the height), and the nav keeps wrapping on narrow screens.
+5. **Tab titles:** `Campsites · Forge Outdoors` on the Finder; other pages put their name in front, e.g. `Favorites · Campsites · Forge Outdoors` (route `title`s plus a `TitleStrategy`). Trip detail is "Trip", not the trip's name.
+6. **The browser-tab icon doesn't change** (the Farmer-Forge icon; see **Decided**).
+7. The About page's eyebrow reads "Forge Outdoors · Campsites".
+
 ## Decided
 
 - **Browser-tab icon** (Shawn, 2026-10-26): the Farmer-Forge icon, everywhere possible. `public/favicon.svg` is copied from the Farmer-Forge site (`~/ReactProjects/Farmer-Forge/public/favicon.svg`), and `index.html` links it as `<link rel="icon" type="image/svg+xml" href="favicon.svg">`. It replaces V1's `favicon.ico`, which was Angular's default logo. Browsers without SVG favicons (old Safari) show no icon.
