@@ -70,9 +70,9 @@ mkdir -p src/environments && printf "export const environment = {\n  production:
 
 1. **The nav contrast coming back** (Task 11). Today's links are cream 14px on plain teal (3.6:1) with a translucent hover. `header-check.mjs` case 4 measures every nav link, user pill, nav button and the label against its own solid background at rest, and each main link on hover; a translucent background fails. Break-tested: a `transparent` hover fails case 4 at 3.26:1.
 2. **The header wrapping on a laptop** (Task 11). The hand-off's spacing (16px pill padding, 2px letter-spacing, 44px wordmark) wraps to two rows at 1280px as the admin (140px tall against 76px today), and the map loses the height. Case 7 requires one row (≤ 100px) at 1280px signed out and as the admin; it fails on that spacing.
-3. **Drift: a second palette or raw colors** (Task 11). Case 6 reads the `--rt-*` values on `:root` and the declared fonts; Step 4's `grep`s refuse raw hex/`rgb()` in the shell files and any `--fo-`, "Work Sans" or "Campsite Finder" left in `src/`.
-4. **Touching more than the eight files** (Task 11). Step 4's `git diff` against the merge base with `main` (minus `task.md` and `activity.md`) must list exactly the eight files, and the badge's hash is pinned.
-5. **A retried Step 1** (Task 11). The red check runs only while `src/` still matches `main`; on a retry it's skipped, not mistaken for a broken check.
+3. **Drift: a second palette or raw colors** (Task 11). Case 6 reads all eleven `--rt-*` color values on `:root` and the declared fonts; Step 4's `grep`s refuse raw hex/`rgb()` in the shell files, any `rgba()` in `styles.scss` but the PrimeNG focus ring (the two old-palette tints become `color-mix` on the tokens), and any `--fo-`, "Work Sans" or "Campsite Finder" left in `src/`.
+4. **Touching more than the eight files** (Task 11). Step 4's `git diff` of the **whole tree** against the merge base with `main` (minus `task.md` and `activity.md`) must list exactly the eight files, `git status --porcelain` must be empty, and the badge's hash is pinned.
+5. **A retried Step 1** (Task 11). The red check runs only while `src/` still matches `main`; on a retry it's skipped, not mistaken for a broken check. A missing merge base stops loudly instead of skipping it, and an `exit 2` (a network or stack blip) is rerun once before BLOCKED.
 
 Task 10's review focus (the scroll fix) is in this file's history (PR #43).
 
@@ -2226,12 +2226,13 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
 
 **Interfaces:** Consumes: `supabase.session()`, `userService.profile()`, `routerLink` / `routerLinkActive` in `app.html` (Task 2, unchanged). Produces: the `--rt-teal-deep` token; `SITE_TITLE` and `BrandTitleStrategy` (`src/app/core/services/brand-title.strategy.ts`); a `title` on every route but the Finder. No component input, output or service changes.
 
-**Check script:** `ralphloop/header-check.mjs` (Lisa, 2026-11-16; like `scroll-check.mjs`, it's the loop's, so never edit it). It loads the production build in headless Chromium, signed out at 1280px and 390px, as the admin on `/trips` (both widths) and `/admin`, and as Pat on their first trip, and judges seven cases: 1 tab titles, 2 brand (badge, wordmark, label), 3 no "Campsite Finder", 4 contrast ≥ 4.5:1 for every nav link, user pill, nav button and the label (and each main link on hover), 5 tap height ≥ 44px, 6 the brand tokens and Archivo, 7 fit (nothing scrolls sideways at 390px; one row at 1280px, signed out and as the admin). Exit 0 all pass, 1 a case fails, 2 the check couldn't run. It needs the local stack and the dev seed, which the gate restores, and Google Fonts (which the console check already loads).
+**Check script:** `ralphloop/header-check.mjs` (Lisa, 2026-11-16; like `scroll-check.mjs`, it's the loop's, so never edit it). It loads the production build in headless Chromium, signed out at 1280px and 390px, as the admin on `/trips` (both widths) and `/admin`, and as Pat on their first trip, and judges seven cases: 1 tab titles (all twelve routes), 2 brand (badge, wordmark, label), 3 no "Campsite Finder", 4 contrast ≥ 4.5:1 for every nav link, user pill, nav button and the label (and each link and pill on hover), 5 tap height ≥ 44px, 6 the brand tokens (and the four unchanged ones) and Archivo, 7 fit (nothing scrolls sideways at 390px; one row at 1280px, signed out and as the admin). Exit 0 all pass, 1 a case fails, 2 the check couldn't run. It needs the local stack and the dev seed, which the gate restores, and Google Fonts (which the console check already loads).
 
 - [ ] **Step 1: Prove the check fails, then switch the tokens, the font and the tab title.**
   **First, the red check.** Write the local environment (Global Constraints, **Local settings**). Then, **only if `src/` still matches `main`** (on a retry or a resumed step it has already changed, so skip to "Then"):
   ```bash
-  if git diff --quiet "$(git merge-base main HEAD)" -- src/; then
+  MB=$(git merge-base main HEAD) || { echo "BLOCKED: no merge base with main"; exit 1; }
+  if git diff --quiet "$MB" -- src/; then
     npx ng build --configuration production,local
     node ralphloop/header-check.mjs dist/campsite-finder/browser; echo "exit $?"
   else
@@ -2239,7 +2240,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
   fi
   # expect (first run): lines starting "FAIL 1 titles", "FAIL 2 brand", "FAIL 3 old name", "FAIL 4 contrast", "FAIL 5 tap size", "FAIL 6 tokens and font" and "PASS 7 fit", then "HEADER CHECK FAILED: 6 of 7.", then "exit 1"
   ```
-  Anything else (`HEADER CHECK PASSED`, an `ERROR` line, `exit 2`, a build error): stop and write a `BLOCKED:` line (rule 6). The check, the seed, the stack or the network isn't what this plan expects.
+  If it ends `exit 2` (an `ERROR` line: the stack, the seed or Google Fonts didn't answer), run the `node ralphloop/header-check.mjs …` line **once more**; a blip passes the second time. Anything else, or `exit 2` twice (`HEADER CHECK PASSED`, a build error, a different FAIL/PASS pattern): stop and write a `BLOCKED:` line (rule 6). The check, the seed, the stack or the network isn't what this plan expects.
 
   **Then:**
   1. In `src/styles.scss`, replace the comment line that starts `/* '50s road-trip design tokens` and the whole `:root { … }` block after it (through its closing `}`) with exactly:
@@ -2267,6 +2268,9 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
   2. In `src/index.html`, change exactly two lines:
      - `<title>Campsite Finder</title>` → `<title>Campsites · Forge Outdoors</title>`
      - in the Google Fonts `<link>`, `family=Work+Sans:wght@400;500;600;700` → `family=Archivo:wght@400..800` (the rest of the URL stays: `family=Yellowtail&family=Alfa+Slab+One&…&display=swap`).
+  3. Two tints further down `src/styles.scss` are hard-coded from the old palette. Make them follow the tokens (exactly these two lines; the blue `rgba(37, 99, 235, 0.4)` focus ring stays):
+     - `    background: rgba(198, 58, 47, 0.08);` → `    background: color-mix(in srgb, var(--rt-cherry) 8%, transparent);`
+     - `    color: rgba(43, 37, 34, 0.55);` → `    color: color-mix(in srgb, var(--rt-ink) 55%, transparent);`
 
 - [ ] **Step 2: The Forge Outdoors header.**
   1. Replace the whole of `src/app/app.html` with (the badge `public/forge-outdoors-badge.svg` is already in the repo, added with this plan; don't edit it):
@@ -2557,15 +2561,18 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
   npx ng build --configuration production,local
   # expect: "Application bundle generation complete", no errors (the existing initial-budget warning is fine)
   node ralphloop/header-check.mjs dist/campsite-finder/browser; echo "exit $?"
-  # expect: seven lines starting PASS (1–7), then "HEADER CHECK PASSED: 7 of 7.", then "exit 0"
+  # expect: seven lines starting PASS (1–7), then "HEADER CHECK PASSED: 7 of 7.", then "exit 0" (on "exit 2", run it once more, as in Step 1)
   grep -nE '#[0-9a-fA-F]{3,8}\b|rgb\(|rgba\(' src/app/app.scss src/app/app.html src/app/core/services/brand-title.strategy.ts; echo "grep exit $?"
   # expect: no matches, then "grep exit 1"
   grep -rniE 'campsite finder|work sans|--fo-' src/; echo "grep exit $?"
   # expect: no matches, then "grep exit 1"
+  grep -nE 'rgba?\(' src/styles.scss
+  # expect: exactly one line, the one holding "rgba(37, 99, 235, 0.4)"
   sha256sum public/forge-outdoors-badge.svg
   # expect: 409eb7e5ae9c39482289ac71d3b8276dae089594e3e233c4637f2f4daad6d584 (unchanged since this plan added it)
-  git diff --name-only "$(git merge-base main HEAD)" -- src/ public/ ralphloop/ supabase/ docs/ ':(exclude)ralphloop/task.md' ':(exclude)ralphloop/activity.md' | sort
-  # expect exactly these eight lines:
+  MB=$(git merge-base main HEAD) || echo "BLOCKED: no merge base with main"
+  git diff --name-only "$MB" -- . ':(exclude)ralphloop/task.md' ':(exclude)ralphloop/activity.md' | sort
+  # expect exactly these eight lines (the whole tree, not just src/):
   #   src/app/app.config.ts
   #   src/app/app.html
   #   src/app/app.routes.ts
@@ -2574,6 +2581,8 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
   #   src/app/features/about/about.component.html
   #   src/index.html
   #   src/styles.scss
+  git status --porcelain -- . ':(exclude)ralphloop/task.md' ':(exclude)ralphloop/activity.md'
+  # expect: nothing (no stray or untracked files; environment.local.ts and dist/ are gitignored)
   bash ralphloop/app-check.sh
   # expect: ends with "CONSOLE CHECK PASSED"
   ```
@@ -2626,4 +2635,5 @@ Task 11 (Lisa, 2026-11-16, ralph-architect):
 - **The Google Fonts CSS is inlined by the production build** (Angular font inlining), so case 6 reads the declared font faces, not a `<link>`. The gate's console check already loads these fonts without errors, so the worker container reaches Google Fonts.
 - **Not yet run:** `header-check.mjs` and `app-check.sh` against the real local stack and dev seed on Ralph (a throwaway stack, 553xx). Lisa runs this when Ralph is free, before chain.sh (decisions file).
 
+- **Round 1 fixes** (plan-adversary r1, `docs/superpowers/reviews/2026-11-16-plan-adversary-r1.md`; 0 High, 2 Med, 5 Low): Step 4's file check covers the whole tree plus `git status --porcelain` (F4); case 1 checks all twelve routes' titles, case 4 hovers the user pills too, case 6 pins the four unchanged tokens (F5); the two old-palette tints in `styles.scss` become `color-mix` on the tokens, with a `grep` for any other `rgba()` (F6); a missing merge base stops loudly, and an `exit 2` is rerun once before BLOCKED (F7). Retested on Lisa against the mock: `main` FAIL 1–6 / PASS 7; Task 11 7 of 7; a removed Sign up title, a transparent pill hover and a changed `--rt-sand` fail only cases 1, 4 and 6. F1–F3 (contrast elsewhere in the app, wrapping between 1005 and 1212px, phone heights) are decisions for Shawn.
 - **Parse:** `check-task-md.sh` reports Tasks 2–10 as "no unchecked steps; the loop would skip it" (and 2–9 as having no `# expect:` lines). They're done and merged, and skipping them is the point; Task 11 has 5 open steps, 7 `# expect:` lines, a commit step and QC.

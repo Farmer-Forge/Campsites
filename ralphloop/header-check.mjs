@@ -1,20 +1,23 @@
 // HEADER CHECK — task.md Task 11 (spec 2, change #6: Forge Outdoors · Campsites).
 // Loads the app's production build in headless Chromium and checks the rebranded header:
 //   1. Tab titles: "Campsites · Forge Outdoors" on the Finder; "<page> · Campsites · Forge Outdoors"
-//      on titled pages (About Us, Sign in after the guard's redirect, Page not found, Admin, Trip).
+//      on every other route (all eleven titled routes, plus Sign in after the guard's redirect).
 //   2. Brand: one link to "/" holding the badge (loaded from /forge-outdoors-badge.svg, 60px wide,
 //      40px on a phone) and the wordmark "Forge Outdoors"; the section label "Campsites".
 //   3. The old name: "Campsite Finder" appears nowhere on the Finder or the About page.
 //   4. Contrast: every nav link, user pill, nav button and the section label is at least 4.5:1
-//      against its own solid background, at rest, and each main link on hover (1280px).
+//      against its own solid background, at rest, and each nav link and user pill on hover (1280px,
+//      signed out and as the admin).
 //      A translucent background can't be judged and fails.
 //   5. Tap size: every nav link and user pill is at least 44px tall.
-//   6. Brand tokens and font: the --rt-* values on :root match the brand pack, the body font is
+//   6. Brand tokens and font: the --rt-* values on :root match the brand pack (and the four it
+//      doesn't define are unchanged), the body font is
 //      Archivo, and the declared web fonts include Archivo and not Work Sans.
 //   7. Fit: at 390px nothing scrolls sideways (page or header); at 1280px the header is one
 //      row (at most 100px tall), signed out and signed in as the admin (the most items).
-// Pages: signed out at 1280px and 390px (/, plus /about, /favorites, /no-such-page for titles),
-// the admin on /trips at 1280px and 390px and on /admin, the camper on their first trip.
+// Pages: signed out at 1280px and 390px (/, plus /about, /favorites, /no-such-page, /login, /signup,
+// /forgot-password, /reset-password for titles), the admin on /trips at 1280px and 390px and on
+// /admin, /favorites, /account, the camper on their first trip.
 // One PASS or FAIL line per case. Exit 0 if all pass, 1 if any fails, 2 if the check itself
 // couldn't run (usage, sign-in, a page or the Google fonts didn't load).
 //
@@ -44,7 +47,7 @@ const CAMPER = { email: 'pat@campsites.test', password: 'campsites-pat' };
 const WIDE = { width: 1280, height: 800 };
 const PHONE = { width: 390, height: 844 };
 const SUFFIX = 'Campsites · Forge Outdoors';
-// The brand pack's values (spec 2, change #6). --rt-mustard was already right.
+// The brand pack's values (spec 2, change #6). --rt-mustard was already right; the last four it doesn't define.
 const TOKENS = {
   '--rt-teal': '#2f8f89',
   '--rt-teal-deep': '#1f6b66',
@@ -53,6 +56,11 @@ const TOKENS = {
   '--rt-ink': '#2b2420',
   '--rt-cream': '#f5ead6',
   '--rt-mustard': '#e8a93a',
+  // Unchanged by the brand pack, and must stay so.
+  '--rt-paper': '#f3e9d2',
+  '--rt-card': '#fbf4e4',
+  '--rt-sand': '#e7dcc2',
+  '--rt-mustard-dark': '#d4952a',
 };
 const MIN_CONTRAST = 4.5;
 const MIN_TAP = 43.5; // 44px, less half a pixel of rounding
@@ -97,7 +105,7 @@ async function newContext(browser, session) {
 }
 
 // Runs in the page: everything the cases judge, measured once the page and its fonts settle.
-const MEASURE = () => {
+const MEASURE = (tokenKeys) => {
   const parse = (s) => {
     const m = /^rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)$/.exec(s.trim());
     return m ? [+m[1], +m[2], +m[3], m[4] === undefined ? 1 : +m[4]] : null;
@@ -145,9 +153,7 @@ const MEASURE = () => {
     },
     oldName: /campsite finder/i.test(document.body.innerText) || /campsite finder/i.test(document.title),
     tokens: Object.fromEntries(
-      ['--rt-teal', '--rt-teal-deep', '--rt-cherry', '--rt-cherry-dark', '--rt-ink', '--rt-cream', '--rt-mustard'].map(
-        (k) => [k, rootStyle.getPropertyValue(k).trim().toLowerCase()],
-      ),
+      tokenKeys.map((k) => [k, rootStyle.getPropertyValue(k).trim().toLowerCase()]),
     ),
     bodyFont: getComputedStyle(document.body).fontFamily.split(',')[0].replace(/["']/g, '').trim(),
     // The production build inlines the Google Fonts CSS, so read the declared faces, not a <link>.
@@ -170,19 +176,19 @@ async function look(ctx, base, label, path, viewport, { hover = false } = {}) {
     await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
     await page.evaluate(() => document.fonts.ready);
     await page.waitForTimeout(500);
-    const m = await page.evaluate(MEASURE);
+    const m = await page.evaluate(MEASURE, Object.keys(TOKENS));
     if (m.noNav) throw new Error('no .app-nav on the page');
     if (m.fontsFailed.length) throw new Error(`fonts failed to load: ${m.fontsFailed.join(', ')}`);
     if (!m.scriptLoaded) throw new Error('Yellowtail never loaded: Google Fonts unreachable, layout cannot be judged');
     if (hover) {
-      // Hover each main link in turn and re-measure it (MEASURE reads computed styles live).
+      // Hover each nav link and user pill in turn and re-measure it (MEASURE reads computed styles live).
       m.hover = [];
-      const links = page.locator('.app-nav .nav-link');
+      const links = page.locator('.app-nav .nav-link, .app-nav .nav-pill');
       const n = await links.count();
       for (let i = 0; i < n; i++) {
         await links.nth(i).hover();
         await page.waitForTimeout(100);
-        const r = await page.evaluate(MEASURE);
+        const r = await page.evaluate(MEASURE, Object.keys(TOKENS));
         m.hover.push(r.items.filter((it) => it.link)[i]);
       }
       await page.mouse.move(5, viewport.height - 5);
@@ -204,12 +210,18 @@ try {
   await look(ctx, base, 'anon-about', '/about', WIDE);
   await look(ctx, base, 'anon-favorites', '/favorites', WIDE);
   await look(ctx, base, 'anon-404', '/no-such-page', WIDE);
+  await look(ctx, base, 'anon-login', '/login', WIDE);
+  await look(ctx, base, 'anon-signup', '/signup', WIDE);
+  await look(ctx, base, 'anon-forgot', '/forgot-password', WIDE);
+  await look(ctx, base, 'anon-reset', '/reset-password', WIDE);
   await ctx.close();
 
   ctx = await newContext(browser, await signIn(ADMIN));
-  await look(ctx, base, 'admin-wide', '/trips', WIDE);
+  await look(ctx, base, 'admin-wide', '/trips', WIDE, { hover: true });
   await look(ctx, base, 'admin-phone', '/trips', PHONE);
   await look(ctx, base, 'admin-admin', '/admin', WIDE);
+  await look(ctx, base, 'admin-favorites', '/favorites', WIDE);
+  await look(ctx, base, 'admin-account', '/account', WIDE);
   await ctx.close();
 
   const camper = await signIn(CAMPER);
@@ -239,6 +251,13 @@ const CASES = [
         'anon-about': ['/about', `About Us · ${SUFFIX}`],
         'anon-favorites': ['/login', `Sign in · ${SUFFIX}`],
         'anon-404': ['/no-such-page', `Page not found · ${SUFFIX}`],
+        'anon-login': ['/login', `Sign in · ${SUFFIX}`],
+        'anon-signup': ['/signup', `Sign up · ${SUFFIX}`],
+        'anon-forgot': ['/forgot-password', `Forgot password · ${SUFFIX}`],
+        'anon-reset': ['/reset-password', `Reset password · ${SUFFIX}`],
+        'admin-wide': ['/trips', `Trips · ${SUFFIX}`],
+        'admin-favorites': ['/favorites', `Favorites · ${SUFFIX}`],
+        'admin-account': ['/account', `Account · ${SUFFIX}`],
         'admin-admin': ['/admin', `Admin · ${SUFFIX}`],
         'camper-trip': [null, `Trip · ${SUFFIX}`],
       };
@@ -277,8 +296,9 @@ const CASES = [
         for (const it of seen[k].items)
           if (it.ratio === null || it.ratio < MIN_CONTRAST) bad.push(`${k} "${it.text}": ${it.ratio}`);
       }
-      for (const it of seen['anon-wide'].hover)
-        if (!it || it.ratio === null || it.ratio < MIN_CONTRAST) bad.push(`anon-wide hover "${it?.text}": ${it?.ratio}`);
+      for (const k of ['anon-wide', 'admin-wide'])
+        for (const it of seen[k].hover)
+          if (!it || it.ratio === null || it.ratio < MIN_CONTRAST) bad.push(`${k} hover "${it?.text}": ${it?.ratio}`);
       return [bad.length === 0, bad];
     },
   ],
