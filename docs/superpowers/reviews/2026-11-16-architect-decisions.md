@@ -4,7 +4,7 @@ Spec: spec 2, **Change #6** (from Lisa's approved design `2026-11-15-campsites-h
 
 ## Must answer before chain.sh
 
-- [ ] D1: The real-stack run. Ralph was busy with the ForgeDB loop, so `header-check.mjs` was tested on Lisa against a mock Supabase, not the local stack and dev seed. Options: Lisa starts a throwaway stack on Ralph (553xx ports, torn down after) once the ForgeDB loop finishes, and runs `header-check.mjs` + `app-check.sh` on `main` (expect FAIL 1–6) and on Task 11's code (expect 7 of 7) | skip it and let the loop's red check in Step 1 be the first real run. Draft assumes the first (task.md: Self-Review Notes, "Not yet run"). If skipped: a difference between the mock and the real seed (for example the admin's profile loading late) shows up as a BLOCKED Step 1 in chain mode instead of here.
+- [x] D1 (Shawn: yes; done 2026-11-17: `main` FAIL 1–6, Task 11 7 of 7, console check passed, on a throwaway `t11` stack with the dev seed; see task.md Self-Review Notes): The real-stack run. Ralph was busy with the ForgeDB loop, so `header-check.mjs` was tested on Lisa against a mock Supabase, not the local stack and dev seed. Options: Lisa starts a throwaway stack on Ralph (553xx ports, torn down after) once the ForgeDB loop finishes, and runs `header-check.mjs` + `app-check.sh` on `main` (expect FAIL 1–6) and on Task 11's code (expect 7 of 7) | skip it and let the loop's red check in Step 1 be the first real run. Draft assumes the first (task.md: Self-Review Notes, "Not yet run"). If skipped: a difference between the mock and the real seed (for example the admin's profile loading late) shows up as a BLOCKED Step 1 in chain mode instead of here.
 
 ## Default stands unless you object
 
