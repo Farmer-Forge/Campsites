@@ -1,10 +1,10 @@
-# Campsite Finder design system
+# Forge Outdoors · Campsites design system
 
-The '50s road-trip look, as V1 shipped it on 2026-10-08. It's the single reference for UI steps (worker prompt rule 8; the rules are in `style-task.md`).
+The '50s road-trip look, as V1 shipped it on 2026-10-08, with the Forge Outdoors brand pack's colors and fonts since 2026-11-15 (spec 2, change #6). It's the single reference for UI steps (worker prompt rule 8; the rules are in `style-task.md`).
 
 - **The source of truth is the stylesheet:** `src/styles.scss` (tokens, globals and every shared `rt-*` class), `src/app/app.scss` (the nav), and each component's own styles. All of them are carried over verbatim from V1 by the scaffold and feature tasks.
 - **This file says what exists and when to use it.**
-- **The fuller description** is in `docs/design/Campsite01/README.md` and the clickable prototype `docs/design/Campsite01/CampsiteFinder.dc.html`.
+- **The fuller description** is in `docs/design/Campsite01/README.md` and the clickable prototype `docs/design/Campsite01/CampsiteFinder.dc.html`. Their colors, fonts and header are out of date: this file and spec 2, change #6 win.
 
 ## Tokens (on `:root`)
 
@@ -12,17 +12,18 @@ The '50s road-trip look, as V1 shipped it on 2026-10-08. It's the single referen
 |---|---|---|
 | `--rt-paper` | `#f3e9d2` | page background |
 | `--rt-card` | `#fbf4e4` | card surface |
-| `--rt-cream` | `#fff6e3` | inputs, light buttons, text on dark fills, expanded cards |
-| `--rt-ink` | `#2b2522` | text, **every** border, hard shadows |
-| `--rt-teal` | `#2f8f8a` | nav bar, agency tags, "on" states, teal text buttons |
-| `--rt-cherry` | `#c63a2f` | primary buttons, page titles, links, danger, trip-stop markers |
-| `--rt-cherry-dark` | `#9e2a21` | link and cherry-button hover |
+| `--rt-cream` | `#f5ead6` | inputs, light buttons, text on dark fills, expanded cards |
+| `--rt-ink` | `#2b2420` | text, **every** border, hard shadows |
+| `--rt-teal` | `#2f8f89` | nav bar, agency tags, "on" states, teal text buttons |
+| `--rt-teal-deep` | `#1f6b66` | nav link and user pills (cream text on it is 5.3:1) |
+| `--rt-cherry` | `#b8381f` | primary buttons, page titles, links, danger, trip-stop markers |
+| `--rt-cherry-dark` | `#9a2e1d` | link and cherry-button hover |
 | `--rt-mustard` | `#e8a93a` | distance badges, secondary actions (Sign out, Plan a trip, Add, Open), the focus ring |
 | `--rt-mustard-dark` | `#d4952a` | mustard hover |
 | `--rt-sand` | `#e7dcc2` | disabled and inactive fills (an "added" trip chip, an inactive tab, a switch track that's off) |
 | `--rt-script` | `'Yellowtail', cursive` | the wordmark and postcard script only |
 | `--rt-display` | `'Alfa Slab One', serif` | titles, headings, labels, badges |
-| `--rt-body` | `'Work Sans', system-ui, sans-serif` | everything else: body 15px / 1.5 |
+| `--rt-body` | `'Archivo', system-ui, sans-serif` | everything else: body 15px / 1.5 (Archivo is loaded as a variable font, 400–800) |
 
 **There are no other colors.** Use `var(--rt-…)`, never a raw hex value, in component styles.
 
@@ -35,6 +36,10 @@ The '50s road-trip look, as V1 shipped it on 2026-10-08. It's the single referen
 - **Hard shadows, no blur:** buttons `2px 2px 0`; list cards `3px 3px 0`; stat pills `4px 4px 0`; page cards `5px 5px 0`; map and auth cards `6px 6px 0`, all `var(--rt-ink)`.
 - **Spacing:** page padding 32px horizontal; 24px grid gaps; 10–14px card gaps; card padding 12–14px (list) and 20–24px (page).
 - **Focus:** `:focus-visible` is a 3px mustard outline with a 2px offset. It's set globally; don't override it.
+
+## Nav bar (`src/app/app.html` + `app.scss`)
+
+The Forge Outdoors header (spec 2, change #6): the brand link (`.brand`: `.brand-badge` + `.wordmark`), the `.section-label` pill (hidden above 640px and below 1240px), the main links (`.nav-link`) and the user pills (`.nav-pill`), all deep-teal pills 44px tall with mustard for the active page, and Sign out as `rt-btn rt-btn--mustard rt-btn--shadow`. These classes belong to the shell; pages don't reuse them. `ralphloop/header-check.mjs` checks the header's titles, contrast, tap size, tokens and fit.
 
 ## Shared classes: use these before writing styles
 
@@ -76,6 +81,6 @@ They live in `src/app/shared/ui/` (spec 3, **Shared pieces**):
 
 ## Copy
 
-- The product is **"Campsite Finder"** (two words), everywhere.
+- The product is **Forge Outdoors · Campsites** (spec 2, change #6): the header shows the "Forge Outdoors" wordmark and a "Campsites" label, and tab titles end in "Campsites · Forge Outdoors". "Campsite Finder" is the old name; it never appears in the UI.
 - Buttons are short verbs in title case, as in V1 ("Save Name", "Plan a trip", "Create & Add").
 - Errors follow V1's pattern: "Couldn't … — try again." or "Could not …. Please try again.". The specs give the exact text for each.

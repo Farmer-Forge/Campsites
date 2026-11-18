@@ -1,5 +1,7 @@
 # Handoff: CampsiteFinder — '50s Road Trip Redesign
 
+> **Out of date for colors, fonts and the header (2026-11-15).** The Forge Outdoors brand pack replaced them (spec 2, change #6). The current values are in `docs/superpowers/Design.md` and `src/styles.scss`; this hand-off still describes the layouts and components.
+
 ## Overview
 A full visual redesign of CampsiteFinder (repo `Farmer-Forge/CampsiteFinder`, Angular 22 + PrimeNG + Supabase + Leaflet) in a 1950s road-trip style: cream paper, teal, cherry red and mustard, a script wordmark, pill buttons with hard offset shadows. Covers every route: Finder, Favorites, Trips, Trip detail, Account, Admin, About, Login, Signup.
 
