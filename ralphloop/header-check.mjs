@@ -7,7 +7,8 @@
 //   3. The old name: "Campsite Finder" appears nowhere on the Finder or the About page.
 //   4. Contrast: every nav link, user pill, nav button and the section label is at least 4.5:1
 //      against its own solid background, at rest, and each nav link and user pill on hover (1280px,
-//      signed out and as the admin); and the primary (cream on cherry) buttons on /login.
+//      signed out and as the admin, Sign out included); the enabled primary (cream on cherry)
+//      buttons on /login; and the token pairs cream on cherry, cherry on paper and on card.
 //      A translucent background can't be judged and fails.
 //   5. Tap size: every nav link and user pill is at least 44px tall.
 //   6. Brand tokens and font: the --rt-* values on :root match the brand pack (and the four it
@@ -15,7 +16,7 @@
 //      Archivo, and the declared web fonts include Archivo and not Work Sans.
 //   7. Fit: at 390px nothing scrolls sideways (page or header); the header is one row (at most
 //      100px tall) at 1280px signed out and as the admin (the most items), at 1100px as the admin
-//      and at 1024px signed out (the CAMPSITES label gives way between 641px and 1239px).
+//      and at 1024px signed out (the CAMPSITES label gives way above 640px and below 1240px).
 // Pages: signed out at 1280px and 390px (/, plus /about, /favorites, /no-such-page, /login, /signup,
 // /forgot-password, /reset-password for titles), the admin on /trips at 1280px and 390px and on
 // /admin, /favorites, /account, the camper on their first trip.
@@ -134,12 +135,24 @@ const MEASURE = (tokenKeys) => {
   if (!nav) return { noNav: true };
   const items = [...nav.querySelectorAll('.nav-link, .nav-pill, button, .section-label')].map((el) => ({
     text: el.textContent.trim(),
+    hovered: el.matches(':hover'),
     link: el.matches('.nav-link, .nav-pill'),
     ratio: ratioOf(el),
     height: Math.round(el.getBoundingClientRect().height * 10) / 10,
   }));
   // The app's primary buttons (cream on cherry) live outside the header; they depend on the same tokens.
-  const primary = [...document.querySelectorAll('.rt-btn--cherry')].map((el) => ({ text: el.textContent.trim(), ratio: ratioOf(el) }));
+  const primary = [...document.querySelectorAll('.rt-btn--cherry:not(:disabled)')].map((el) => ({ text: el.textContent.trim(), ratio: ratioOf(el) }));
+  // The token pairs spec 2 change #6 promises, measured on throwaway elements so no page layout matters.
+  const pair = (fg, bg) => {
+    const el = document.createElement('span');
+    el.textContent = 'x';
+    el.style.cssText = `color: var(${fg}); background: var(${bg}); position: absolute; left: -9999px;`;
+    document.body.appendChild(el);
+    const r = ratioOf(el);
+    el.remove();
+    return { text: `${fg} on ${bg}`, ratio: r };
+  };
+  const pairs = [pair('--rt-cream', '--rt-cherry'), pair('--rt-cherry', '--rt-paper'), pair('--rt-cherry', '--rt-card')];
   const brands = nav.querySelectorAll('a.brand');
   const brand = brands[0];
   const img = brand?.querySelector('img.brand-badge');
@@ -149,6 +162,7 @@ const MEASURE = (tokenKeys) => {
     title: document.title,
     items,
     primary,
+    pairs,
     brand: {
       count: brands.length,
       href: brand?.getAttribute('href') ?? null,
@@ -187,15 +201,17 @@ async function look(ctx, base, label, path, viewport, { hover = false } = {}) {
     if (m.fontsFailed.length) throw new Error(`fonts failed to load: ${m.fontsFailed.join(', ')}`);
     if (!m.scriptLoaded) throw new Error('Yellowtail never loaded: Google Fonts unreachable, layout cannot be judged');
     if (hover) {
-      // Hover each nav link and user pill in turn and re-measure it (MEASURE reads computed styles live).
+      // Hover each nav link, user pill and nav button in turn and re-measure the one under the pointer
+      // (MEASURE reads computed styles live and marks the :hover element).
       m.hover = [];
-      const links = page.locator('.app-nav .nav-link, .app-nav .nav-pill');
+      const links = page.locator('.app-nav .nav-link, .app-nav .nav-pill, .app-nav button');
       const n = await links.count();
       for (let i = 0; i < n; i++) {
         await links.nth(i).hover();
         await page.waitForTimeout(100);
         const r = await page.evaluate(MEASURE, Object.keys(TOKENS));
-        m.hover.push(r.items.filter((it) => it.link)[i]);
+        const under = r.items.filter((it) => it.hovered);
+        m.hover.push(under.length === 1 ? under[0] : { text: `item ${i}: ${under.length} hovered`, ratio: null });
       }
       await page.mouse.move(5, viewport.height - 5);
     }
@@ -307,6 +323,7 @@ const CASES = [
       const login = seen['anon-login'].primary;
       if (login.length === 0) bad.push('anon-login: no .rt-btn--cherry button to measure');
       for (const it of login) if (it.ratio === null || it.ratio < MIN_CONTRAST) bad.push(`anon-login primary "${it.text}": ${it.ratio}`);
+      for (const it of seen['anon-wide'].pairs) if (it.ratio === null || it.ratio < MIN_CONTRAST) bad.push(`token pair ${it.text}: ${it.ratio}`);
       for (const k of ['anon-wide', 'admin-wide'])
         for (const it of seen[k].hover)
           if (!it || it.ratio === null || it.ratio < MIN_CONTRAST) bad.push(`${k} hover "${it?.text}": ${it?.ratio}`);

@@ -39,7 +39,7 @@ The '50s road-trip look, as V1 shipped it on 2026-10-08, with the Forge Outdoors
 
 ## Nav bar (`src/app/app.html` + `app.scss`)
 
-The Forge Outdoors header (spec 2, change #6): the brand link (`.brand`: `.brand-badge` + `.wordmark`), the `.section-label` pill (hidden between 641px and 1239px), the main links (`.nav-link`) and the user pills (`.nav-pill`), all deep-teal pills 44px tall with mustard for the active page, and Sign out as `rt-btn rt-btn--mustard rt-btn--shadow`. These classes belong to the shell; pages don't reuse them. `ralphloop/header-check.mjs` checks the header's titles, contrast, tap size, tokens and fit.
+The Forge Outdoors header (spec 2, change #6): the brand link (`.brand`: `.brand-badge` + `.wordmark`), the `.section-label` pill (hidden above 640px and below 1240px), the main links (`.nav-link`) and the user pills (`.nav-pill`), all deep-teal pills 44px tall with mustard for the active page, and Sign out as `rt-btn rt-btn--mustard rt-btn--shadow`. These classes belong to the shell; pages don't reuse them. `ralphloop/header-check.mjs` checks the header's titles, contrast, tap size, tokens and fit.
 
 ## Shared classes: use these before writing styles
 

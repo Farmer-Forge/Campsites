@@ -30,4 +30,4 @@ D10: The favicon stays the Farmer-Forge F (Shawn, 2026-11-15; spec 2 **Decided**
 
 D11 (F1): The brand pack's red `#c8402a` put cream on the primary buttons at 4.17:1 and red links on paper at 4.1:1. **Answer: `--rt-cherry` `#b8381f`** (4.86:1 and 4.8:1). Desktop updates the brand pack to match, so GearForge uses the same red. task.md: Step 1's `:root`; cases 4 (the `/login` primary button) and 6.
 
-D12 (F2): The header wrapped between about 1005px and 1212px. **Answer: hide the CAMPSITES label between 641px and 1239px.** One row holds down to 829px signed out, 967px as Pat and 1052px as the admin (today: 1049px as the admin). task.md: Step 2's `app.scss`; case 7 at 1024px signed out and 1100px as the admin.
+D12 (F2): The header wrapped between about 1005px and 1212px. **Answer: hide the CAMPSITES label above 640px and below 1240px.** One row holds down to 829px signed out, 967px as Pat and 1052px as the admin (today: 775px signed out, 1049px as the admin). task.md: Step 2's `app.scss`; case 7 at 1024px signed out and 1100px as the admin.

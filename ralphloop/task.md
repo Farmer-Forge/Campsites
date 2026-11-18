@@ -70,7 +70,7 @@ mkdir -p src/environments && printf "export const environment = {\n  production:
 
 1. **The nav contrast coming back** (Task 11). Today's links are cream 14px on plain teal (3.6:1) with a translucent hover. `header-check.mjs` case 4 measures every nav link, user pill, nav button and the label against its own solid background at rest, and each main link on hover; a translucent background fails. Break-tested: a `transparent` hover fails case 4 at 3.26:1.
 2. **The header wrapping on a laptop or tablet** (Task 11). The hand-off's spacing (16px pill padding, 2px letter-spacing, 44px wordmark) wraps to two rows at 1280px as the admin (140px tall against 76px today), and without the mid-width label rule it wrapped from 1212px down (admin) and 1005px (signed out). Case 7 requires one row (≤ 100px) at 1280px signed out and as the admin, 1100px as the admin and 1024px signed out.
-3. **Drift: a second palette or raw colors** (Task 11). Case 6 reads all eleven `--rt-*` color values on `:root` and the declared fonts; Step 4's `grep`s refuse raw hex/`rgb()` in the shell files, any `rgba()` in `styles.scss` but the PrimeNG focus ring (the two old-palette tints become `color-mix` on the tokens), and any `--fo-`, "Work Sans" or "Campsite Finder" left in `src/`.
+3. **Drift: a second palette or raw colors** (Task 11). Case 6 reads all eleven `--rt-*` color values on `:root` and the declared fonts, and case 4 checks the token pairs the spec promises (cream on cherry, cherry on paper and card). Step 4's `grep`s refuse raw hex/`rgb()` in the shell files, any `rgba()` or hex in `styles.scss` outside `:root` but the blue current-location marker (the four old-palette colors become `color-mix` on the tokens), and any `--fo-`, "Work Sans" or "Campsite Finder" left in `src/`.
 4. **Touching more than the eight files** (Task 11). Step 4's `git diff` of the **whole tree** against the merge base with `main` (minus `task.md` and `activity.md`) must list exactly the eight files, `git status --porcelain` must be empty, and the badge's hash is pinned.
 5. **A retried Step 1** (Task 11). The red check runs only while `src/` still matches `main`; on a retry it's skipped, not mistaken for a broken check. A missing merge base stops loudly instead of skipping it, and an `exit 2` (a network or stack blip) is rerun once before BLOCKED.
 
@@ -2268,9 +2268,10 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
   2. In `src/index.html`, change exactly two lines:
      - `<title>Campsite Finder</title>` → `<title>Campsites · Forge Outdoors</title>`
      - in the Google Fonts `<link>`, `family=Work+Sans:wght@400;500;600;700` → `family=Archivo:wght@400..800` (the rest of the URL stays: `family=Yellowtail&family=Alfa+Slab+One&…&display=swap`).
-  3. Two tints further down `src/styles.scss` are hard-coded from the old palette. Make them follow the tokens (exactly these two lines; the blue `rgba(37, 99, 235, 0.4)` focus ring stays):
+  3. Four colors further down `src/styles.scss` are hard-coded from the old palette. Make them follow the tokens (exactly these lines; the blue current-location marker, `#2563eb`, `#fff` and `rgba(37, 99, 235, 0.4)`, stays):
      - `    background: rgba(198, 58, 47, 0.08);` → `    background: color-mix(in srgb, var(--rt-cherry) 8%, transparent);`
      - `    color: rgba(43, 37, 34, 0.55);` → `    color: color-mix(in srgb, var(--rt-ink) 55%, transparent);`
+     - both `    background: #f0e5cc;` lines (the `rt-btn` and `rt-text-btn` hovers) → `    background: color-mix(in srgb, var(--rt-cream), var(--rt-ink) 8%);`
 
 - [ ] **Step 2: The Forge Outdoors header.**
   1. Replace the whole of `src/app/app.html` with (the badge `public/forge-outdoors-badge.svg` is already in the repo, added with this plan; don't edit it):
@@ -2417,7 +2418,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
      }
 
      /* Between phone and wide screens the static section label gives way, so the header keeps one row. */
-     @media (min-width: 641px) and (max-width: 1239px) {
+     @media (640px < width < 1240px) {
        .section-label {
          display: none;
        }
@@ -2456,7 +2457,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
        }
      }
      ```
-  The spacing is tuned, and the label hides between 641px and 1239px, so the header stays on one row at 1280px and 1100px as the admin and at 1024px signed out (case 7). Don't loosen it. Every color is a `var(--rt-…)` token (`style-task.md`).
+  The spacing is tuned, and the label hides above 640px and below 1240px, so the header stays on one row at 1280px and 1100px as the admin and at 1024px signed out (case 7). Don't loosen it. Every color is a `var(--rt-…)` token (`style-task.md`).
 
 - [ ] **Step 3: Tab titles and the About page.**
   1. Create `src/app/core/services/brand-title.strategy.ts`:
@@ -2575,9 +2576,11 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
   # expect: no matches, then "grep exit 1"
   grep -nE 'rgba?\(' src/styles.scss
   # expect: exactly one line, the one holding "rgba(37, 99, 235, 0.4)"
+  grep -nE '#[0-9a-fA-F]{3,8}\b' src/styles.scss | grep -vE '^[0-9]+:  --rt-'
+  # expect: exactly three lines, the current-location marker's: two holding "#2563eb" and one holding "#fff"
   sha256sum public/forge-outdoors-badge.svg
   # expect: 409eb7e5ae9c39482289ac71d3b8276dae089594e3e233c4637f2f4daad6d584 (unchanged since this plan added it)
-  MB=$(git merge-base main HEAD) || echo "BLOCKED: no merge base with main"
+  MB=$(git merge-base main HEAD) || { echo "BLOCKED: no merge base with main"; exit 1; }
   git diff --name-only "$MB" -- . ':(exclude)ralphloop/task.md' ':(exclude)ralphloop/activity.md' | sort
   # expect exactly these eight lines (the whole tree, not just src/):
   #   src/app/app.config.ts
@@ -2599,7 +2602,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
 
 **QC (for Shawn, in the browser):**
 - Finder on a wide screen (1280px or more), signed in as the admin: badge, "Forge Outdoors", the CAMPSITES pill, then FINDER / FAVORITES / TRIPS / ABOUT US and ACCOUNT / ADMIN / Sign out, all on **one row**. The map is as tall as before, give or take about 12px.
-- Narrow the window to a tablet or small laptop (about 1050–1239px): the CAMPSITES pill disappears and the header stays on one row. It wraps at about the same widths as before (admin about 1050px, signed out about 830px).
+- Narrow the window to a tablet or small laptop (about 1050px up to 1240px): the CAMPSITES pill disappears and the header stays on one row. It wraps at about the same width as before as the admin (about 1050px), and a little earlier signed out (about 830px, against 775px before).
 - The current page's link is mustard; the others are deep teal and turn dark brown on hover. Everything reads easily.
 - A phone (or a window under 640px): smaller badge and wordmark, and the links wrap onto rows (no menu button). Nothing scrolls sideways. The header is about 26px taller than before, because the links are now 44px tall tap targets.
 - The browser tab: "Campsites · Forge Outdoors" on the Finder, "Favorites · Campsites · Forge Outdoors" on Favorites, "Trip · …" on a trip. The tab icon is still the Farmer-Forge F.
@@ -2645,5 +2648,6 @@ Task 11 (Lisa, 2026-11-16, ralph-architect):
 - **Not yet run:** `header-check.mjs` and `app-check.sh` against the real local stack and dev seed on Ralph (a throwaway stack, 553xx). Lisa runs this when Ralph is free, before chain.sh (decisions file).
 
 - **Round 1 fixes** (plan-adversary r1, `docs/superpowers/reviews/2026-11-16-plan-adversary-r1.md`; 0 High, 2 Med, 5 Low): Step 4's file check covers the whole tree plus `git status --porcelain` (F4); case 1 checks all twelve routes' titles, case 4 hovers the user pills too, case 6 pins the four unchanged tokens (F5); the two old-palette tints in `styles.scss` become `color-mix` on the tokens, with a `grep` for any other `rgba()` (F6); a missing merge base stops loudly, and an `exit 2` is rerun once before BLOCKED (F7). Retested on Lisa against the mock: `main` FAIL 1–6 / PASS 7; Task 11 7 of 7; a removed Sign up title, a transparent pill hover and a changed `--rt-sand` fail only cases 1, 4 and 6. F1–F3 (contrast elsewhere in the app, wrapping between 1005 and 1212px, phone heights) went to Shawn: see Round 2.
-- **Round 2 (Shawn's answers, 2026-11-16):** F1: `--rt-cherry` is `#b8381f`, darker than the brand pack's `#c8402a`, so cream on the primary buttons is 4.86:1 and links on paper 4.8:1 (desktop is asked to update the brand pack, so GearForge matches). Case 4 now measures the `/login` primary button, case 6 pins the new value. F2: the CAMPSITES label hides between 641px and 1239px; one row now holds down to 829px signed out, 967px as Pat and 1052px as the admin (today's header: 1049px as the admin). Case 7 adds 1024px signed out and 1100px as the admin. F3: phone heights (222px at 390px, 253px at 360px, 297px at 320px) accepted as D3.
+- **Round 2 (Shawn's answers, 2026-11-16):** F1: `--rt-cherry` is `#b8381f`, darker than the brand pack's `#c8402a`, so cream on the primary buttons is 4.86:1 and links on paper 4.8:1 (desktop is asked to update the brand pack, so GearForge matches). Case 4 now measures the `/login` primary button, case 6 pins the new value. F2: the CAMPSITES label hides above 640px and below 1240px; one row now holds down to 829px signed out, 967px as Pat and 1052px as the admin (today's header: 775px signed out, 1049px as the admin; the 775–829px band signed out now wraps, accepted with D12). Case 7 adds 1024px signed out and 1100px as the admin. F3: phone heights (222px at 390px, 253px at 360px, 297px at 320px) accepted as D3.
+- **Code review (2026-11-17, `/code-review` medium; 6 findings, all fixed):** the two `#f0e5cc` hover fills (old palette) become `color-mix` of cream and 8% ink (1.16:1, as before), with a `grep` for hex outside `:root`; Step 4's merge-base guard exits like Step 1's; the label rule uses range syntax `(640px < width < 1240px)` so fractional widths (zoom) have no gap; case 4 skips disabled primary buttons and checks the token pairs cream on cherry, cherry on paper and on card; the QC line no longer says signed-out wrapping is unchanged (775px → 829px); the hover pass includes Sign out and pairs by `:hover`, not by index.
 - **Parse:** `check-task-md.sh` reports Tasks 2–10 as "no unchecked steps; the loop would skip it" (and 2–9 as having no `# expect:` lines). They're done and merged, and skipping them is the point; Task 11 has 5 open steps, 7 `# expect:` lines, a commit step and QC.
