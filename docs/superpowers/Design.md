@@ -16,7 +16,7 @@ The '50s road-trip look, as V1 shipped it on 2026-10-08, with the Forge Outdoors
 | `--rt-ink` | `#2b2420` | text, **every** border, hard shadows |
 | `--rt-teal` | `#2f8f89` | nav bar, agency tags, "on" states, teal text buttons |
 | `--rt-teal-deep` | `#1f6b66` | nav link and user pills (cream text on it is 5.3:1) |
-| `--rt-cherry` | `#c8402a` | primary buttons, page titles, links, danger, trip-stop markers |
+| `--rt-cherry` | `#b8381f` | primary buttons, page titles, links, danger, trip-stop markers |
 | `--rt-cherry-dark` | `#9a2e1d` | link and cherry-button hover |
 | `--rt-mustard` | `#e8a93a` | distance badges, secondary actions (Sign out, Plan a trip, Add, Open), the focus ring |
 | `--rt-mustard-dark` | `#d4952a` | mustard hover |
@@ -39,7 +39,7 @@ The '50s road-trip look, as V1 shipped it on 2026-10-08, with the Forge Outdoors
 
 ## Nav bar (`src/app/app.html` + `app.scss`)
 
-The Forge Outdoors header (spec 2, change #6): the brand link (`.brand`: `.brand-badge` + `.wordmark`), the `.section-label` pill, the main links (`.nav-link`) and the user pills (`.nav-pill`), all deep-teal pills 44px tall with mustard for the active page, and Sign out as `rt-btn rt-btn--mustard rt-btn--shadow`. These classes belong to the shell; pages don't reuse them. `ralphloop/header-check.mjs` checks the header's titles, contrast, tap size, tokens and fit.
+The Forge Outdoors header (spec 2, change #6): the brand link (`.brand`: `.brand-badge` + `.wordmark`), the `.section-label` pill (hidden between 641px and 1239px), the main links (`.nav-link`) and the user pills (`.nav-pill`), all deep-teal pills 44px tall with mustard for the active page, and Sign out as `rt-btn rt-btn--mustard rt-btn--shadow`. These classes belong to the shell; pages don't reuse them. `ralphloop/header-check.mjs` checks the header's titles, contrast, tap size, tokens and fit.
 
 ## Shared classes: use these before writing styles
 

@@ -7,14 +7,15 @@
 //   3. The old name: "Campsite Finder" appears nowhere on the Finder or the About page.
 //   4. Contrast: every nav link, user pill, nav button and the section label is at least 4.5:1
 //      against its own solid background, at rest, and each nav link and user pill on hover (1280px,
-//      signed out and as the admin).
+//      signed out and as the admin); and the primary (cream on cherry) buttons on /login.
 //      A translucent background can't be judged and fails.
 //   5. Tap size: every nav link and user pill is at least 44px tall.
 //   6. Brand tokens and font: the --rt-* values on :root match the brand pack (and the four it
 //      doesn't define are unchanged), the body font is
 //      Archivo, and the declared web fonts include Archivo and not Work Sans.
-//   7. Fit: at 390px nothing scrolls sideways (page or header); at 1280px the header is one
-//      row (at most 100px tall), signed out and signed in as the admin (the most items).
+//   7. Fit: at 390px nothing scrolls sideways (page or header); the header is one row (at most
+//      100px tall) at 1280px signed out and as the admin (the most items), at 1100px as the admin
+//      and at 1024px signed out (the CAMPSITES label gives way between 641px and 1239px).
 // Pages: signed out at 1280px and 390px (/, plus /about, /favorites, /no-such-page, /login, /signup,
 // /forgot-password, /reset-password for titles), the admin on /trips at 1280px and 390px and on
 // /admin, /favorites, /account, the camper on their first trip.
@@ -46,12 +47,14 @@ const ADMIN = { email: 'admin@campsites.test', password: 'campsites-admin' };
 const CAMPER = { email: 'pat@campsites.test', password: 'campsites-pat' };
 const WIDE = { width: 1280, height: 800 };
 const PHONE = { width: 390, height: 844 };
+const TABLET = { width: 1024, height: 768 };
+const LAPTOP = { width: 1100, height: 800 };
 const SUFFIX = 'Campsites · Forge Outdoors';
 // The brand pack's values (spec 2, change #6). --rt-mustard was already right; the last four it doesn't define.
 const TOKENS = {
   '--rt-teal': '#2f8f89',
   '--rt-teal-deep': '#1f6b66',
-  '--rt-cherry': '#c8402a',
+  '--rt-cherry': '#b8381f', // darker than the brand pack's #c8402a, so cream on it passes (Shawn, 2026-11-16)
   '--rt-cherry-dark': '#9a2e1d',
   '--rt-ink': '#2b2420',
   '--rt-cream': '#f5ead6',
@@ -135,6 +138,8 @@ const MEASURE = (tokenKeys) => {
     ratio: ratioOf(el),
     height: Math.round(el.getBoundingClientRect().height * 10) / 10,
   }));
+  // The app's primary buttons (cream on cherry) live outside the header; they depend on the same tokens.
+  const primary = [...document.querySelectorAll('.rt-btn--cherry')].map((el) => ({ text: el.textContent.trim(), ratio: ratioOf(el) }));
   const brands = nav.querySelectorAll('a.brand');
   const brand = brands[0];
   const img = brand?.querySelector('img.brand-badge');
@@ -143,6 +148,7 @@ const MEASURE = (tokenKeys) => {
     path: location.pathname,
     title: document.title,
     items,
+    primary,
     brand: {
       count: brands.length,
       href: brand?.getAttribute('href') ?? null,
@@ -207,6 +213,7 @@ try {
   let ctx = await newContext(browser, null);
   await look(ctx, base, 'anon-wide', '/', WIDE, { hover: true });
   await look(ctx, base, 'anon-phone', '/', PHONE);
+  await look(ctx, base, 'anon-tablet', '/', TABLET);
   await look(ctx, base, 'anon-about', '/about', WIDE);
   await look(ctx, base, 'anon-favorites', '/favorites', WIDE);
   await look(ctx, base, 'anon-404', '/no-such-page', WIDE);
@@ -219,6 +226,7 @@ try {
   ctx = await newContext(browser, await signIn(ADMIN));
   await look(ctx, base, 'admin-wide', '/trips', WIDE, { hover: true });
   await look(ctx, base, 'admin-phone', '/trips', PHONE);
+  await look(ctx, base, 'admin-laptop', '/trips', LAPTOP);
   await look(ctx, base, 'admin-admin', '/admin', WIDE);
   await look(ctx, base, 'admin-favorites', '/favorites', WIDE);
   await look(ctx, base, 'admin-account', '/account', WIDE);
@@ -296,6 +304,9 @@ const CASES = [
         for (const it of seen[k].items)
           if (it.ratio === null || it.ratio < MIN_CONTRAST) bad.push(`${k} "${it.text}": ${it.ratio}`);
       }
+      const login = seen['anon-login'].primary;
+      if (login.length === 0) bad.push('anon-login: no .rt-btn--cherry button to measure');
+      for (const it of login) if (it.ratio === null || it.ratio < MIN_CONTRAST) bad.push(`anon-login primary "${it.text}": ${it.ratio}`);
       for (const k of ['anon-wide', 'admin-wide'])
         for (const it of seen[k].hover)
           if (!it || it.ratio === null || it.ratio < MIN_CONTRAST) bad.push(`${k} hover "${it?.text}": ${it?.ratio}`);
@@ -328,7 +339,7 @@ const CASES = [
     '7 fit',
     () => {
       const bad = ['anon-phone', 'admin-phone'].filter((k) => seen[k].overflow).map((k) => `${k}: scrolls sideways`);
-      for (const k of ['anon-wide', 'admin-wide'])
+      for (const k of ['anon-wide', 'admin-wide', 'anon-tablet', 'admin-laptop'])
         if (seen[k].navHeight > 100) bad.push(`${k}: header ${seen[k].navHeight}px tall (wrapped)`);
       return [bad.length === 0, bad];
     },

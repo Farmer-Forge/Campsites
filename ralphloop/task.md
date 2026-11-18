@@ -69,7 +69,7 @@ mkdir -p src/environments && printf "export const environment = {\n  production:
 ## Review Focus
 
 1. **The nav contrast coming back** (Task 11). Today's links are cream 14px on plain teal (3.6:1) with a translucent hover. `header-check.mjs` case 4 measures every nav link, user pill, nav button and the label against its own solid background at rest, and each main link on hover; a translucent background fails. Break-tested: a `transparent` hover fails case 4 at 3.26:1.
-2. **The header wrapping on a laptop** (Task 11). The hand-off's spacing (16px pill padding, 2px letter-spacing, 44px wordmark) wraps to two rows at 1280px as the admin (140px tall against 76px today), and the map loses the height. Case 7 requires one row (≤ 100px) at 1280px signed out and as the admin; it fails on that spacing.
+2. **The header wrapping on a laptop or tablet** (Task 11). The hand-off's spacing (16px pill padding, 2px letter-spacing, 44px wordmark) wraps to two rows at 1280px as the admin (140px tall against 76px today), and without the mid-width label rule it wrapped from 1212px down (admin) and 1005px (signed out). Case 7 requires one row (≤ 100px) at 1280px signed out and as the admin, 1100px as the admin and 1024px signed out.
 3. **Drift: a second palette or raw colors** (Task 11). Case 6 reads all eleven `--rt-*` color values on `:root` and the declared fonts; Step 4's `grep`s refuse raw hex/`rgb()` in the shell files, any `rgba()` in `styles.scss` but the PrimeNG focus ring (the two old-palette tints become `color-mix` on the tokens), and any `--fo-`, "Work Sans" or "Campsite Finder" left in `src/`.
 4. **Touching more than the eight files** (Task 11). Step 4's `git diff` of the **whole tree** against the merge base with `main` (minus `task.md` and `activity.md`) must list exactly the eight files, `git status --porcelain` must be empty, and the badge's hash is pinned.
 5. **A retried Step 1** (Task 11). The red check runs only while `src/` still matches `main`; on a retry it's skipped, not mistaken for a broken check. A missing merge base stops loudly instead of skipping it, and an `exit 2` (a network or stack blip) is rerun once before BLOCKED.
@@ -2226,7 +2226,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
 
 **Interfaces:** Consumes: `supabase.session()`, `userService.profile()`, `routerLink` / `routerLinkActive` in `app.html` (Task 2, unchanged). Produces: the `--rt-teal-deep` token; `SITE_TITLE` and `BrandTitleStrategy` (`src/app/core/services/brand-title.strategy.ts`); a `title` on every route but the Finder. No component input, output or service changes.
 
-**Check script:** `ralphloop/header-check.mjs` (Lisa, 2026-11-16; like `scroll-check.mjs`, it's the loop's, so never edit it). It loads the production build in headless Chromium, signed out at 1280px and 390px, as the admin on `/trips` (both widths) and `/admin`, and as Pat on their first trip, and judges seven cases: 1 tab titles (all twelve routes), 2 brand (badge, wordmark, label), 3 no "Campsite Finder", 4 contrast ≥ 4.5:1 for every nav link, user pill, nav button and the label (and each link and pill on hover), 5 tap height ≥ 44px, 6 the brand tokens (and the four unchanged ones) and Archivo, 7 fit (nothing scrolls sideways at 390px; one row at 1280px, signed out and as the admin). Exit 0 all pass, 1 a case fails, 2 the check couldn't run. It needs the local stack and the dev seed, which the gate restores, and Google Fonts (which the console check already loads).
+**Check script:** `ralphloop/header-check.mjs` (Lisa, 2026-11-16; like `scroll-check.mjs`, it's the loop's, so never edit it). It loads the production build in headless Chromium, signed out at 1280px and 390px, as the admin on `/trips` (both widths) and `/admin`, and as Pat on their first trip, and judges seven cases: 1 tab titles (all twelve routes), 2 brand (badge, wordmark, label), 3 no "Campsite Finder", 4 contrast ≥ 4.5:1 for every nav link, user pill, nav button and the label (and each link and pill on hover), 5 tap height ≥ 44px, 6 the brand tokens (and the four unchanged ones) and Archivo, 7 fit (nothing scrolls sideways at 390px; one row at 1280px signed out and as the admin, at 1100px as the admin and at 1024px signed out). Case 4 also measures the red primary buttons on `/login`. Exit 0 all pass, 1 a case fails, 2 the check couldn't run. It needs the local stack and the dev seed, which the gate restores, and Google Fonts (which the console check already loads).
 
 - [ ] **Step 1: Prove the check fails, then switch the tokens, the font and the tab title.**
   **First, the red check.** Write the local environment (Global Constraints, **Local settings**). Then, **only if `src/` still matches `main`** (on a retry or a resumed step it has already changed, so skip to "Then"):
@@ -2253,7 +2253,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
        --rt-ink: #2b2420;
        --rt-teal: #2f8f89;
        --rt-teal-deep: #1f6b66;
-       --rt-cherry: #c8402a;
+       --rt-cherry: #b8381f;
        --rt-cherry-dark: #9a2e1d;
        --rt-mustard: #e8a93a;
        --rt-mustard-dark: #d4952a;
@@ -2416,6 +2416,13 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
        flex-direction: column;
      }
 
+     /* Between phone and wide screens the static section label gives way, so the header keeps one row. */
+     @media (min-width: 641px) and (max-width: 1239px) {
+       .section-label {
+         display: none;
+       }
+     }
+
      @media (max-width: 900px) {
        .app-nav {
          padding: 12px 16px;
@@ -2449,7 +2456,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
        }
      }
      ```
-  The spacing is tuned so the header stays on one row at 1280px signed in as the admin (case 7). Don't loosen it. Every color is a `var(--rt-…)` token (`style-task.md`).
+  The spacing is tuned, and the label hides between 641px and 1239px, so the header stays on one row at 1280px and 1100px as the admin and at 1024px signed out (case 7). Don't loosen it. Every color is a `var(--rt-…)` token (`style-task.md`).
 
 - [ ] **Step 3: Tab titles and the About page.**
   1. Create `src/app/core/services/brand-title.strategy.ts`:
@@ -2591,12 +2598,14 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
 - [ ] **Step 5: Commit.** `git commit -m "Task 11: Forge Outdoors · Campsites header, brand tokens and tab titles (spec 2, change #6)"`
 
 **QC (for Shawn, in the browser):**
-- Finder at a laptop width, signed in as the admin: badge, "Forge Outdoors", the CAMPSITES pill, then FINDER / FAVORITES / TRIPS / ABOUT US and ACCOUNT / ADMIN / Sign out, all on **one row**. The map is as tall as before, give or take about 12px.
+- Finder on a wide screen (1280px or more), signed in as the admin: badge, "Forge Outdoors", the CAMPSITES pill, then FINDER / FAVORITES / TRIPS / ABOUT US and ACCOUNT / ADMIN / Sign out, all on **one row**. The map is as tall as before, give or take about 12px.
+- Narrow the window to a tablet or small laptop (about 1050–1239px): the CAMPSITES pill disappears and the header stays on one row. It wraps at about the same widths as before (admin about 1050px, signed out about 830px).
 - The current page's link is mustard; the others are deep teal and turn dark brown on hover. Everything reads easily.
 - A phone (or a window under 640px): smaller badge and wordmark, and the links wrap onto rows (no menu button). Nothing scrolls sideways. The header is about 26px taller than before, because the links are now 44px tall tap targets.
 - The browser tab: "Campsites · Forge Outdoors" on the Finder, "Favorites · Campsites · Forge Outdoors" on Favorites, "Trip · …" on a trip. The tab icon is still the Farmer-Forge F.
 - Body text is Archivo now, not Work Sans. Look over the Finder list, a trip and the Account page: the text should look a little sturdier, and nothing overflows its card or button.
 - The cream (inputs, light buttons, expanded cards) is slightly warmer and darker than before. Account and Admin inputs still stand out from their cards.
+- The red is a little deeper (`#b8381f`): the Sign in / Save buttons, page titles and links. Cream on the red buttons now reads at 4.9:1 (it was 4.8:1).
 - About page: the eyebrow reads "Forge Outdoors · Campsites".
 
 ---
@@ -2607,7 +2616,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
 - Unit and end-to-end tests (dropped).
 - Any change to the database, edge functions or their tests.
 - V1.2 ideas: showing campground attributes to users, moderator powers, and a dark palette.
-- Task 11 leaves out: a footer, a mobile menu, a new favicon, the section switcher, the patch logo and social image, the forgeoutdoors.app domain, and restyling anything beyond the shell and the token values (spec 2, change #6). Body links in cherry on paper are 4.1:1 (4.3:1 before), still under 4.5:1; that's a separate brand decision.
+- Task 11 leaves out: a footer, a mobile menu, a new favicon, the section switcher, the patch logo and social image, the forgeoutdoors.app domain, and restyling anything beyond the shell and the token values (spec 2, change #6). Cream on plain teal (agency tags, the postcard and auth headers) is 3.26:1 (3.61:1 before, both under 4.5:1); not fixed here.
 - Filling in `state` for the campgrounds that have none (bug 6, option A): a hand-written migration, not loop work. (Bug 6's part B, `0022`, is live and in spec 1; part A is `0023`–`0024`, spec 1 **Fixes** #11.)
 
 ---
@@ -2635,5 +2644,6 @@ Task 11 (Lisa, 2026-11-16, ralph-architect):
 - **The Google Fonts CSS is inlined by the production build** (Angular font inlining), so case 6 reads the declared font faces, not a `<link>`. The gate's console check already loads these fonts without errors, so the worker container reaches Google Fonts.
 - **Not yet run:** `header-check.mjs` and `app-check.sh` against the real local stack and dev seed on Ralph (a throwaway stack, 553xx). Lisa runs this when Ralph is free, before chain.sh (decisions file).
 
-- **Round 1 fixes** (plan-adversary r1, `docs/superpowers/reviews/2026-11-16-plan-adversary-r1.md`; 0 High, 2 Med, 5 Low): Step 4's file check covers the whole tree plus `git status --porcelain` (F4); case 1 checks all twelve routes' titles, case 4 hovers the user pills too, case 6 pins the four unchanged tokens (F5); the two old-palette tints in `styles.scss` become `color-mix` on the tokens, with a `grep` for any other `rgba()` (F6); a missing merge base stops loudly, and an `exit 2` is rerun once before BLOCKED (F7). Retested on Lisa against the mock: `main` FAIL 1–6 / PASS 7; Task 11 7 of 7; a removed Sign up title, a transparent pill hover and a changed `--rt-sand` fail only cases 1, 4 and 6. F1–F3 (contrast elsewhere in the app, wrapping between 1005 and 1212px, phone heights) are decisions for Shawn.
+- **Round 1 fixes** (plan-adversary r1, `docs/superpowers/reviews/2026-11-16-plan-adversary-r1.md`; 0 High, 2 Med, 5 Low): Step 4's file check covers the whole tree plus `git status --porcelain` (F4); case 1 checks all twelve routes' titles, case 4 hovers the user pills too, case 6 pins the four unchanged tokens (F5); the two old-palette tints in `styles.scss` become `color-mix` on the tokens, with a `grep` for any other `rgba()` (F6); a missing merge base stops loudly, and an `exit 2` is rerun once before BLOCKED (F7). Retested on Lisa against the mock: `main` FAIL 1–6 / PASS 7; Task 11 7 of 7; a removed Sign up title, a transparent pill hover and a changed `--rt-sand` fail only cases 1, 4 and 6. F1–F3 (contrast elsewhere in the app, wrapping between 1005 and 1212px, phone heights) went to Shawn: see Round 2.
+- **Round 2 (Shawn's answers, 2026-11-16):** F1: `--rt-cherry` is `#b8381f`, darker than the brand pack's `#c8402a`, so cream on the primary buttons is 4.86:1 and links on paper 4.8:1 (desktop is asked to update the brand pack, so GearForge matches). Case 4 now measures the `/login` primary button, case 6 pins the new value. F2: the CAMPSITES label hides between 641px and 1239px; one row now holds down to 829px signed out, 967px as Pat and 1052px as the admin (today's header: 1049px as the admin). Case 7 adds 1024px signed out and 1100px as the admin. F3: phone heights (222px at 390px, 253px at 360px, 297px at 320px) accepted as D3.
 - **Parse:** `check-task-md.sh` reports Tasks 2–10 as "no unchecked steps; the loop would skip it" (and 2–9 as having no `# expect:` lines). They're done and merged, and skipping them is the point; Task 11 has 5 open steps, 7 `# expect:` lines, a commit step and QC.
