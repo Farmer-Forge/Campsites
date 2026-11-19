@@ -210,3 +210,8 @@ What I checked by reading the code:
 
 Worth a look by hand: the plan's own note says a busy map (still zooming while the passes run) wasn't re-probed with the two-calm-passes stop rule. It's on the QC list.
 RATIFIED: Task 10
+
+## Task 11, call 1
+- Step 1: red check ran as expected (FAIL 1–6, PASS 7, exit 1). Then edited src/styles.scss (tokens, `--rt-teal-deep`, Archivo, four color-mix lines) and src/index.html (title, font link).
+- Verified: ng lint passes; production build OK; header-check now PASS 6 and 7, with 1–5 still failing (Steps 2–3 cover the header and titles); app-check.sh console check passed.
+- Note: no python in the worker; use node for scripted edits.

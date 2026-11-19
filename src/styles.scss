@@ -1,21 +1,22 @@
 @import "primeicons/primeicons.css";
 
-/* '50s road-trip design tokens — see docs/design/Campsite01/README.md */
+/* '50s road-trip design tokens. Colors and fonts follow the Forge Outdoors brand pack (spec 2, change #6); see docs/superpowers/Design.md */
 :root {
   --rt-paper: #f3e9d2;
   --rt-card: #fbf4e4;
-  --rt-cream: #fff6e3;
-  --rt-ink: #2b2522;
-  --rt-teal: #2f8f8a;
-  --rt-cherry: #c63a2f;
-  --rt-cherry-dark: #9e2a21;
+  --rt-cream: #f5ead6;
+  --rt-ink: #2b2420;
+  --rt-teal: #2f8f89;
+  --rt-teal-deep: #1f6b66;
+  --rt-cherry: #b8381f;
+  --rt-cherry-dark: #9a2e1d;
   --rt-mustard: #e8a93a;
   --rt-mustard-dark: #d4952a;
   --rt-sand: #e7dcc2;
 
   --rt-script: 'Yellowtail', cursive;
   --rt-display: 'Alfa Slab One', serif;
-  --rt-body: 'Work Sans', system-ui, sans-serif;
+  --rt-body: 'Archivo', system-ui, sans-serif;
 }
 
 html,
@@ -119,7 +120,7 @@ a:hover {
 
   &:hover {
     color: var(--rt-ink);
-    background: #f0e5cc;
+    background: color-mix(in srgb, var(--rt-cream), var(--rt-ink) 8%);
   }
 
   &:active:not(:disabled) {
@@ -167,7 +168,7 @@ a:hover {
   color: var(--rt-cherry);
 
   &:hover:not(:disabled) {
-    background: rgba(198, 58, 47, 0.08);
+    background: color-mix(in srgb, var(--rt-cherry) 8%, transparent);
     color: var(--rt-cherry-dark);
   }
 }
@@ -212,7 +213,7 @@ a:hover {
   cursor: pointer;
 
   &:hover {
-    background: #f0e5cc;
+    background: color-mix(in srgb, var(--rt-cream), var(--rt-ink) 8%);
   }
 
   &.is-active {
@@ -235,7 +236,7 @@ a:hover {
   color: var(--rt-ink);
 
   &::placeholder {
-    color: rgba(43, 37, 34, 0.55);
+    color: color-mix(in srgb, var(--rt-ink) 55%, transparent);
   }
 }
 

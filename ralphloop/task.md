@@ -2228,7 +2228,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
 
 **Check script:** `ralphloop/header-check.mjs` (Lisa, 2026-11-16; like `scroll-check.mjs`, it's the loop's, so never edit it). It loads the production build in headless Chromium, signed out at 1280px and 390px, as the admin on `/trips` (both widths) and `/admin`, and as Pat on their first trip, and judges seven cases: 1 tab titles (all twelve routes), 2 brand (badge, wordmark, label), 3 no "Campsite Finder", 4 contrast ≥ 4.5:1 for every nav link, user pill, nav button and the label (and each link and pill on hover), 5 tap height ≥ 44px, 6 the brand tokens (and the four unchanged ones) and Archivo, 7 fit (nothing scrolls sideways at 390px; one row at 1280px signed out and as the admin, at 1100px as the admin and at 1024px signed out). Case 4 also measures the red primary buttons on `/login`. Exit 0 all pass, 1 a case fails, 2 the check couldn't run. It needs the local stack and the dev seed, which the gate restores, and Google Fonts (which the console check already loads).
 
-- [ ] **Step 1: Prove the check fails, then switch the tokens, the font and the tab title.**
+- [x] **Step 1: Prove the check fails, then switch the tokens, the font and the tab title.**
   **First, the red check.** Write the local environment (Global Constraints, **Local settings**). Then, **only if `src/` still matches `main`** (on a retry or a resumed step it has already changed, so skip to "Then"):
   ```bash
   MB=$(git merge-base main HEAD) || { echo "BLOCKED: no merge base with main"; exit 1; }
