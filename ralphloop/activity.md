@@ -226,3 +226,7 @@ RATIFIED: Task 10
 ## Task 11, call 4
 - Step 4: ran every check as written. ng lint clean; production build OK; header-check PASSED 7 of 7 (exit 0); colour greps as expected (no matches in app files; only the blue marker's rgba/hex in styles.scss); no "campsite finder|work sans|--fo-" in src/; badge sha256 unchanged; the diff lists exactly the eight expected files; git status clean; app-check.sh ends "CONSOLE CHECK PASSED: 15 page loads".
 - Style self-check: shell-only change, tokens used throughout, no one-off colors.
+
+## Task 11, call 5
+- Step 5: Commit. The step's files (styles.scss, index.html, app.html, app.scss, app.config.ts, app.routes.ts, brand-title.strategy.ts, about.component.html) are already in the checkpoint commits (`git log main..HEAD --stat`), and `git status` is clean, so there was nothing to commit. Treated as done.
+TASK 11 COMPLETE

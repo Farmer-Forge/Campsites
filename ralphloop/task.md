@@ -2598,7 +2598,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
   ```
   Re-read spec 2 change #6 and run `style-task.md`'s self-check.
 
-- [ ] **Step 5: Commit.** `git commit -m "Task 11: Forge Outdoors · Campsites header, brand tokens and tab titles (spec 2, change #6)"`
+- [x] **Step 5: Commit.** `git commit -m "Task 11: Forge Outdoors · Campsites header, brand tokens and tab titles (spec 2, change #6)"`
 
 **QC (for Shawn, in the browser):**
 - Finder on a wide screen (1280px or more), signed in as the admin: badge, "Forge Outdoors", the CAMPSITES pill, then FINDER / FAVORITES / TRIPS / ABOUT US and ACCOUNT / ADMIN / Sign out, all on **one row**. The map is as tall as before, give or take about 12px.
