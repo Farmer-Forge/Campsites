@@ -218,3 +218,7 @@ RATIFIED: Task 10
 
 ## Task 11, call 2
 - Step 2: replaced app.html and app.scss with the plan's blocks (extracted by script from task.md, so verbatim). Verified: ng lint passes; production build OK; header-check now PASS 2, 4, 5, 6, 7; FAIL 1 (titles) and 3 (About page's "Campsite Finder") remain for Step 3; app-check.sh console check passed.
+
+## Task 11, call 3
+- Step 3: created brand-title.strategy.ts, wired TitleStrategy in app.config.ts, replaced app.routes.ts (titles on all routes but Finder), changed About eyebrow. Code extracted by script from task.md.
+- Verified: ng lint clean; app-check.sh console check passed; header-check PASSED 7 of 7.

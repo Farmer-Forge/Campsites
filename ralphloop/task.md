@@ -2459,7 +2459,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
      ```
   The spacing is tuned, and the label hides above 640px and below 1240px, so the header stays on one row at 1280px and 1100px as the admin and at 1024px signed out (case 7). Don't loosen it. Every color is a `var(--rt-…)` token (`style-task.md`).
 
-- [ ] **Step 3: Tab titles and the About page.**
+- [x] **Step 3: Tab titles and the About page.**
   1. Create `src/app/core/services/brand-title.strategy.ts`:
      ```ts
      import { Injectable, inject } from '@angular/core';
