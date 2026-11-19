@@ -222,3 +222,7 @@ RATIFIED: Task 10
 ## Task 11, call 3
 - Step 3: created brand-title.strategy.ts, wired TitleStrategy in app.config.ts, replaced app.routes.ts (titles on all routes but Finder), changed About eyebrow. Code extracted by script from task.md.
 - Verified: ng lint clean; app-check.sh console check passed; header-check PASSED 7 of 7.
+
+## Task 11, call 4
+- Step 4: ran every check as written. ng lint clean; production build OK; header-check PASSED 7 of 7 (exit 0); colour greps as expected (no matches in app files; only the blue marker's rgba/hex in styles.scss); no "campsite finder|work sans|--fo-" in src/; badge sha256 unchanged; the diff lists exactly the eight expected files; git status clean; app-check.sh ends "CONSOLE CHECK PASSED: 15 page loads".
+- Style self-check: shell-only change, tokens used throughout, no one-off colors.

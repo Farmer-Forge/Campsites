@@ -2562,7 +2562,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
      ```
   4. In `src/app/features/about/about.component.html`, `<div class="eyebrow">Campsite Finder</div>` → `<div class="eyebrow">Forge Outdoors · Campsites</div>`.
 
-- [ ] **Step 4: Verify.**
+- [x] **Step 4: Verify.**
   ```bash
   npx ng lint
   # expect: "All files pass linting."
