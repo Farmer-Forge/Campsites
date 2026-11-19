@@ -230,3 +230,17 @@ RATIFIED: Task 10
 ## Task 11, call 5
 - Step 5: Commit. The step's files (styles.scss, index.html, app.html, app.scss, app.config.ts, app.routes.ts, brand-title.strategy.ts, about.component.html) are already in the checkpoint commits (`git log main..HEAD --stat`), and `git status` is clean, so there was nothing to commit. Treated as done.
 TASK 11 COMPLETE
+
+## Task 11, ratify
+What I ran (on this branch's final state):
+- Step 4, word for word: `ng lint` (All files pass linting), `ng build -c production,local` (it built; the only warning is the existing leaflet.markercluster CommonJS one), `header-check.mjs`: PASS 1-7, "HEADER CHECK PASSED: 7 of 7.", exit 0. Hex/rgb grep on the shell files: no matches. The 'campsite finder|work sans|--fo-' grep on src/: no matches. styles.scss rgba(): one line only, rgba(37, 99, 235, 0.4). Hex outside :root: the three current-location marker lines only (two #2563eb, one #fff). Badge sha256 409eb7e5…d584, unchanged. The whole-tree diff against the merge base lists exactly the eight planned files. git status shows only the activity.md placeholder. `bash ralphloop/app-check.sh` ends with "CONSOLE CHECK PASSED: 15 page loads, no console errors."
+- Verbatim check: I pulled every code block out of task-section.md with a script and diffed each against the repo. app.html, app.scss, brand-title.strategy.ts, app.routes.ts and the styles.scss :root block all match exactly. The edits to index.html, app.config.ts, about.component.html and the four color-mix lines in styles.scss are exactly the ones the plan lists, and nothing else in those files changed.
+- What I tried to break:
+  - Behavior or route drift: with the `title:` lines removed, app.routes.ts is identical to main's, so guards, paths and lazy loads are unchanged. In app.html only the brand link and the section label changed; the nav links, the session/admin conditionals and Sign out are unchanged.
+  - Contrast, tap size, fit and tokens (review focus 1-3): header-check cases 4-7 pass on the production build.
+  - Scope (review focus 4): no changes under supabase/, vercel.json, scripts/ or config.toml. environment.ts is still empty, environment.local.ts isn't tracked, no spec files, no new features, no private details.
+  - task.md: the diff only ticks Task 11's five boxes.
+- Not run: Step 1's red check. src/ already differs from main, so the plan itself says to skip it. The plan's own notes record that main's build fails cases 1-6.
+- For the person merging: the QC items are visual (Archivo body text, the warmer cream, the deeper red, phone wrapping). Check them in the browser as listed.
+- Cleanup: I rewrote the gitignored environment.local.ts from $SUPABASE_URL/$SUPABASE_ANON_KEY and rebuilt dist/ (both gitignored). I wrote nothing to the database and changed nothing in the repo.
+RATIFIED: Task 11
