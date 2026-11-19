@@ -2273,7 +2273,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
      - `    color: rgba(43, 37, 34, 0.55);` → `    color: color-mix(in srgb, var(--rt-ink) 55%, transparent);`
      - both `    background: #f0e5cc;` lines (the `rt-btn` and `rt-text-btn` hovers) → `    background: color-mix(in srgb, var(--rt-cream), var(--rt-ink) 8%);`
 
-- [ ] **Step 2: The Forge Outdoors header.**
+- [x] **Step 2: The Forge Outdoors header.**
   1. Replace the whole of `src/app/app.html` with (the badge `public/forge-outdoors-badge.svg` is already in the repo, added with this plan; don't edit it):
      ```html
      <nav class="app-nav">

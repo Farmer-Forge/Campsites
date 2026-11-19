@@ -215,3 +215,6 @@ RATIFIED: Task 10
 - Step 1: red check ran as expected (FAIL 1–6, PASS 7, exit 1). Then edited src/styles.scss (tokens, `--rt-teal-deep`, Archivo, four color-mix lines) and src/index.html (title, font link).
 - Verified: ng lint passes; production build OK; header-check now PASS 6 and 7, with 1–5 still failing (Steps 2–3 cover the header and titles); app-check.sh console check passed.
 - Note: no python in the worker; use node for scripted edits.
+
+## Task 11, call 2
+- Step 2: replaced app.html and app.scss with the plan's blocks (extracted by script from task.md, so verbatim). Verified: ng lint passes; production build OK; header-check now PASS 2, 4, 5, 6, 7; FAIL 1 (titles) and 3 (About page's "Campsite Finder") remain for Step 3; app-check.sh console check passed.

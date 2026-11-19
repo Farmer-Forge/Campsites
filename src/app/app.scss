@@ -5,18 +5,32 @@
   overflow: hidden;
 }
 
+/* The Forge Outdoors header (spec 2, change #6). */
 .app-nav {
   flex: none;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 24px;
+  gap: 8px 12px;
   min-width: 0;
-  min-height: 76px;
-  padding: 12px 32px;
+  min-height: 84px;
+  padding: 12px 24px;
   box-sizing: border-box;
   background: var(--rt-teal);
   border-bottom: 4px solid var(--rt-ink);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+
+.brand-badge {
+  display: block;
+  width: 60px;
+  height: 60px;
 }
 
 .wordmark {
@@ -25,12 +39,21 @@
   line-height: 1;
   color: var(--rt-cream);
   text-shadow: 3px 3px 0 var(--rt-cherry);
-  text-decoration: none;
   white-space: nowrap;
+}
 
-  &:hover {
-    color: var(--rt-cream);
-  }
+.section-label {
+  padding: 4px 12px;
+  border: 3px solid var(--rt-ink);
+  border-radius: 999px;
+  background: var(--rt-mustard);
+  color: var(--rt-ink);
+  font-family: var(--rt-display);
+  font-size: 15px;
+  line-height: 1.2;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .nav-main {
@@ -39,24 +62,32 @@
   gap: 6px;
 }
 
-.nav-link {
-  padding: 8px 16px;
+/* Small text on --rt-teal fails contrast, so every link sits on a deep-teal pill (cream 5.3:1). */
+.nav-link,
+.nav-pill {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 2px solid var(--rt-ink);
   border-radius: 999px;
+  background: var(--rt-teal-deep);
   color: var(--rt-cream);
-  font-weight: 700;
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 1px;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
   text-decoration: none;
   white-space: nowrap;
 
   &:hover {
+    background: var(--rt-ink);
     color: var(--rt-cream);
-    background: rgba(255, 246, 227, 0.15);
   }
 
   &.active {
-    background: var(--rt-cream);
+    background: var(--rt-mustard);
     color: var(--rt-ink);
   }
 }
@@ -64,29 +95,9 @@
 .nav-user {
   margin-left: auto;
   display: flex;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 6px;
   align-items: center;
-}
-
-.nav-pill {
-  padding: 6px 16px;
-  border: 2px solid var(--rt-cream);
-  border-radius: 999px;
-  color: var(--rt-cream);
-  font-weight: 700;
-  font-size: 14px;
-  text-decoration: none;
-  white-space: nowrap;
-
-  &:hover {
-    color: var(--rt-cream);
-    background: rgba(255, 246, 227, 0.15);
-  }
-
-  &.active {
-    background: var(--rt-cream);
-    color: var(--rt-ink);
-  }
 }
 
 .app-main {
@@ -98,12 +109,42 @@
   flex-direction: column;
 }
 
+/* Between phone and wide screens the static section label gives way, so the header keeps one row. */
+@media (640px < width < 1240px) {
+  .section-label {
+    display: none;
+  }
+}
+
 @media (max-width: 900px) {
   .app-nav {
     padding: 12px 16px;
   }
+}
+
+@media (max-width: 640px) {
+  .app-nav {
+    gap: 8px 10px;
+  }
+
+  .brand {
+    gap: 10px;
+  }
+
+  .brand-badge {
+    width: 40px;
+    height: 40px;
+  }
 
   .wordmark {
-    font-size: 34px;
+    font-size: 30px;
+    text-shadow: 2px 2px 0 var(--rt-cherry);
+  }
+
+  .section-label {
+    padding: 3px 10px;
+    border-width: 2px;
+    font-size: 11px;
+    letter-spacing: 2px;
   }
 }
