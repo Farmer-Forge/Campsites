@@ -25,9 +25,14 @@ sam@campsites.test / campsites-sam (suspended).
 
 WHAT YOU ARE DELIBERATELY NOT GIVEN: the worker's activity log
 ('@LOG_FILE@'). In this checkout it is an empty read-only file, so reading it
-tells you nothing. Don't try to recover it from git history either (no
-`git log -p`, `git show` or `git diff` on that file). Judge the work, not the
-worker's account of it.
+tells you nothing. Its text is still in git history, so keep it out of every
+git command that prints file contents: add ':(exclude)@LOG_FILE@' to the
+pathspec of every `git diff`, `git log -p` and `git show` you run, including
+ones over a whole folder, for example
+`git diff @BASE_BRANCH@..HEAD -- . ':(exclude)@LOG_FILE@'` or
+`git diff @BASE_BRANCH@..HEAD -- ralphloop/ ':(exclude)@LOG_FILE@'`.
+diff.patch already leaves it out. If you see the log's text anyway, say so in
+your write-up and don't use it. Judge the work, not the worker's account of it.
 
 DO THIS, IN ORDER:
 1. Run the task's own verification steps yourself, exactly as written in

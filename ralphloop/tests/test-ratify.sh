@@ -115,6 +115,8 @@ test_ratify_is_not_given_the_workers_log() {
     assert_contains "the diff has the task's work" "$(cat "$dir/diff.patch")" "stub-file-1.txt"
     assert_not_contains "the worker's log text isn't in the prompt" "$(rat_prompt 1)" "Stub completed a step"
     assert_contains "told the log is an empty read-only file" "$(rat_prompt 1)" "empty read-only file"
+    assert_contains "told to exclude the log from every git diff, log and show" "$(rat_prompt 1)" "add ':(exclude)ralphloop/activity.md' to the"
+    assert_contains "including diffs over a whole folder" "$(rat_prompt 1)" "-- ralphloop/ ':(exclude)ralphloop/activity.md'"
     assert_contains "told where the verdict goes" "$(rat_prompt 1)" "/ratify-output/verdict.md"
     assert_contains "told every command must finish" "$(rat_prompt 1)" "EVERY command must finish on its own"
     assert_contains "told to run nothing that listens" "$(rat_prompt 1)" "Run nothing that listens"
