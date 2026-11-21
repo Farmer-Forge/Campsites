@@ -1,5 +1,9 @@
 <nav class="app-nav">
-  <a class="wordmark" routerLink="/">Campsite Finder</a>
+  <a class="brand" routerLink="/" aria-label="Forge Outdoors Campsites, home">
+    <img class="brand-badge" src="forge-outdoors-badge.svg" alt="" width="60" height="60" />
+    <span class="wordmark">Forge Outdoors</span>
+  </a>
+  <span class="section-label">Campsites</span>
   <div class="nav-main">
     <a class="nav-link" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Finder</a>
     <a class="nav-link" routerLink="/favorites" routerLinkActive="active">Favorites</a>

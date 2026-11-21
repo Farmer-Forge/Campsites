@@ -2228,7 +2228,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
 
 **Check script:** `ralphloop/header-check.mjs` (Lisa, 2026-11-16; like `scroll-check.mjs`, it's the loop's, so never edit it). It loads the production build in headless Chromium, signed out at 1280px and 390px, as the admin on `/trips` (both widths) and `/admin`, and as Pat on their first trip, and judges seven cases: 1 tab titles (all twelve routes), 2 brand (badge, wordmark, label), 3 no "Campsite Finder", 4 contrast ≥ 4.5:1 for every nav link, user pill, nav button and the label (and each link and pill on hover), 5 tap height ≥ 44px, 6 the brand tokens (and the four unchanged ones) and Archivo, 7 fit (nothing scrolls sideways at 390px; one row at 1280px signed out and as the admin, at 1100px as the admin and at 1024px signed out). Case 4 also measures the red primary buttons on `/login`. Exit 0 all pass, 1 a case fails, 2 the check couldn't run. It needs the local stack and the dev seed, which the gate restores, and Google Fonts (which the console check already loads).
 
-- [ ] **Step 1: Prove the check fails, then switch the tokens, the font and the tab title.**
+- [x] **Step 1: Prove the check fails, then switch the tokens, the font and the tab title.**
   **First, the red check.** Write the local environment (Global Constraints, **Local settings**). Then, **only if `src/` still matches `main`** (on a retry or a resumed step it has already changed, so skip to "Then"):
   ```bash
   MB=$(git merge-base main HEAD) || { echo "BLOCKED: no merge base with main"; exit 1; }
@@ -2273,7 +2273,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
      - `    color: rgba(43, 37, 34, 0.55);` → `    color: color-mix(in srgb, var(--rt-ink) 55%, transparent);`
      - both `    background: #f0e5cc;` lines (the `rt-btn` and `rt-text-btn` hovers) → `    background: color-mix(in srgb, var(--rt-cream), var(--rt-ink) 8%);`
 
-- [ ] **Step 2: The Forge Outdoors header.**
+- [x] **Step 2: The Forge Outdoors header.**
   1. Replace the whole of `src/app/app.html` with (the badge `public/forge-outdoors-badge.svg` is already in the repo, added with this plan; don't edit it):
      ```html
      <nav class="app-nav">
@@ -2459,7 +2459,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
      ```
   The spacing is tuned, and the label hides above 640px and below 1240px, so the header stays on one row at 1280px and 1100px as the admin and at 1024px signed out (case 7). Don't loosen it. Every color is a `var(--rt-…)` token (`style-task.md`).
 
-- [ ] **Step 3: Tab titles and the About page.**
+- [x] **Step 3: Tab titles and the About page.**
   1. Create `src/app/core/services/brand-title.strategy.ts`:
      ```ts
      import { Injectable, inject } from '@angular/core';
@@ -2562,7 +2562,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
      ```
   4. In `src/app/features/about/about.component.html`, `<div class="eyebrow">Campsite Finder</div>` → `<div class="eyebrow">Forge Outdoors · Campsites</div>`.
 
-- [ ] **Step 4: Verify.**
+- [x] **Step 4: Verify.**
   ```bash
   npx ng lint
   # expect: "All files pass linting."
@@ -2598,7 +2598,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
   ```
   Re-read spec 2 change #6 and run `style-task.md`'s self-check.
 
-- [ ] **Step 5: Commit.** `git commit -m "Task 11: Forge Outdoors · Campsites header, brand tokens and tab titles (spec 2, change #6)"`
+- [x] **Step 5: Commit.** `git commit -m "Task 11: Forge Outdoors · Campsites header, brand tokens and tab titles (spec 2, change #6)"`
 
 **QC (for Shawn, in the browser):**
 - Finder on a wide screen (1280px or more), signed in as the admin: badge, "Forge Outdoors", the CAMPSITES pill, then FINDER / FAVORITES / TRIPS / ABOUT US and ACCOUNT / ADMIN / Sign out, all on **one row**. The map is as tall as before, give or take about 12px.
