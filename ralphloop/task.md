@@ -3124,5 +3124,5 @@ Task 12 (Lisa, 2026-11-21, ralph-architect):
   - Breaks, each failing only its own case(s): the control top-left (FAIL 1); no `reduce()` before the popup emits, no `sessionStorage` write, and a planted `console.error` on toggle, in one run (FAIL 4, 5, 6); a `ResizeObserver` that does nothing (FAIL 2, 3, "Leaflet's size doesn't match"); no phone height rule (FAIL 3, 380 → 380).
 - **Two findings while testing, fixed in the plan:** the center drifts below a pixel on resize (Leaflet rounds), so case 2 compares the center in world pixels (≤ 2px), not degrees; on a 390px phone, "fill the space below the filters" made the map smaller (308px vs 380px), so the big map takes `calc(100cqh - 32px)` of `.app-main` (spec 3 change #13 records this, and the decisions file D2).
 - **Measured** (Chromium, the seed): 1280px, map 692 → 1216px wide; 390px, 380 → ~590px tall.
-- **The bug list** (`docs/next-loop-bugs.md` item 8) isn't touched here: it's added by docs PR #53, still open.
+- **The bug list:** item 8 (added by docs PR #53, merged) now points at spec 3 change #13 and Task 12.
 

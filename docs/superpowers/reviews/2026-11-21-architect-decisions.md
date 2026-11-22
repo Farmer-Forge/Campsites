@@ -22,7 +22,7 @@ D6: On Favorites and Trip detail, the popup's "View details ▸" also brings the
 
 D7: The setting's storage: `sessionStorage` key `campsite-finder.map-maximized` (`'1'` / `'0'`), per browser tab, shared by the three pages; a private window without storage keeps it until reload.
 
-D8: The spec and design-system edits come with this plan PR (spec 3 **Change #13**, `Design.md`'s map-layout row and Leaflet line). The bug list's item 8 is added by docs PR #53 (still open), so its status is updated after #53 merges, not here.
+D8: The spec and design-system edits come with this plan PR (spec 3 **Change #13**, `Design.md`'s map-layout row and Leaflet line). The bug list's item 8 (added by docs PR #53, merged 2026-11-22) is updated here to point at change #13 and Task 12.
 
 ## Notes (not decisions)
 

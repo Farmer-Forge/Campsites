@@ -165,3 +165,5 @@ Likely home: the Admin page's campground tools (spec 8), next to the campground 
 
 **Spec:** 3 (Finder) and the shared map pieces, as a new change. It goes through spec → `task.md` like any loop task.
 
+**Approved (Shawn, 2026-11-21):** the header stays; for browsing (nearby sites, a region); "View details ▸" / "Add to trip…" bring the list back (option A). Folded into spec 3 as change #13 and `task.md` Task 12 (with `ralphloop/map-check.mjs`). The code changes when the loop runs Task 12.
+
