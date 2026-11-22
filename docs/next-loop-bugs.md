@@ -18,6 +18,8 @@ At zoom 12 the marker cluster group merges nearby markers again, so a campground
 
 **Approved (Shawn, 2026-11-08).** Folded into spec 3 as change #10, and into `task.md` and its template (Task 5, the shared map). The code changes when the loop next runs.
 
+**Fixed and live.** Built in the Tasks 5–9 rerun (#31–#35, 2026-11-09); Shawn confirmed it fixed in QC (2026-11-21).
+
 ## 2. Reset filters button on the Finder (Shawn, 2026-10-31)
 
 **What's missing:** there's no way to undo all the filter changes at once. You have to put back every agency chip, the Where picker, the Park picker and the miles control one by one.
@@ -33,6 +35,8 @@ At zoom 12 the marker cluster group merges nearby markers again, so a campground
 It keeps the current search location: resetting doesn't ask for your location again or move you back to it. It's disabled, not hidden, when the filters are already at their starting values. It sits at the end of the filter row. The saved Finder state (`sessionStorage`) is updated just as for any other filter change.
 
 **Spec:** 3 (Finder, `2026-10-25-finder-design.md`), "Filter bar" and "Changes from V1".
+
+**Fixed and live.** Built in the Tasks 5–9 rerun (#31–#35, 2026-11-09); Shawn confirmed it fixed in QC (2026-11-21).
 
 ## 3. No place to enter my location (Shawn, 2026-11-09)
 
@@ -152,3 +156,12 @@ The code check that followed also found that the map's right-click doesn't work 
 Likely home: the Admin page's campground tools (spec 8), next to the campground notes.
 
 **Spec:** 8 (Admin), as a new change. It goes through spec → `task.md` like any loop task. Not scheduled.
+
+## 8. A switch to maximize or reduce the map (Shawn, 2026-11-21; idea, not specced)
+
+**What:** on the map pages (Finder, Favorites, Trip detail), a switch that makes the map bigger and back again, so you can see more of it without the list.
+
+**Not decided yet:** what "maximize" covers (the list hidden, or the header too), where the switch sits, how it behaves on a phone where the map already stacks above the list, and whether the choice is remembered.
+
+**Spec:** 3 (Finder) and the shared map pieces, as a new change. It goes through spec → `task.md` like any loop task.
+
