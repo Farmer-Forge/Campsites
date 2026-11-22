@@ -300,6 +300,13 @@ Shawn reviewed V1's behaviors and asked for them addressed. He handed the detail
    - **Only the list moves** on a wide screen; the page itself doesn't scroll.
    - **Clicking a card in the list is unchanged** (V1's smooth `block: 'nearest'`, only as far as needed). The page sends that selection back down as `selected`, so the list remembers the card it just clicked and keeps the old scroll for it. Without that, a click on a card already in view would jump it to the top, and on a phone the map would scroll away.
    - Same component, so the same holds on Favorites. Nothing else changes: change #2's `content-visibility` and its placeholder height stay.
+13. **A switch to maximize or reduce the map** (Shawn, 2026-11-21; `docs/next-loop-bugs.md`, item 8; design `~/plans/2026-11-21-campsites-map-maximize-design.md` on Lisa). New: V1 has none. For browsing (looking for nearby sites, seeing a region), a switch on the map hides the list so the map gets more room. On the Finder, Favorites and Trip detail (same map component and layout):
+   - **The switch** is a Leaflet control bar at the map's **top-right**, built like Leaflet's zoom buttons (an `<a role="button">` in a `.leaflet-bar`) so it looks like them. Its icon is `pi-window-maximize` while the list shows and `pi-window-minimize` while the map is big; `aria-pressed` and the label ("Enlarge map" / "Show list") say which.
+   - **Maximized,** the list column (`rt-side`) is hidden and the map takes the whole width of `rt-map-layout` (`rt-map-layout--max`). The header, the page title and the Finder's filter bar stay. Under 900px (map stacked above the list), the big map takes the height of the scrolling area under the header (`.app-main` is a size container; `calc(100cqh - 32px)`), so scrolling past the filters shows only map. (The design said "fill the space below the filters"; on a 390px phone that space is smaller than today's 45vh, so the map would shrink.)
+   - **While maximized,** panning, zooming, marker clicks and popups work as before. **"View details ▸" and "Add to trip…" in a popup switch back to the normal layout first,** then do what they did (change #12 still holds).
+   - **The map keeps its place:** the switch doesn't change the zoom, and the center moves at most the pixel Leaflet rounds to; Leaflet redraws at the new size (the existing `ResizeObserver` → `invalidateSize()`).
+   - **Remembered for the browser tab** (`sessionStorage`, key `campsite-finder.map-maximized`), one setting for the three pages, like the Finder's saved state. A new tab starts with the list showing; nothing is saved to the account.
+   - Out: hiding the header, browser fullscreen, a details panel on the map.
 
 ## Out of scope
 

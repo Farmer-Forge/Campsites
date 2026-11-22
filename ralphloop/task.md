@@ -1,6 +1,6 @@
 # Campsite Finder V1.1 Implementation Plan
 
-> **For the loop:** `ralphloop/doloop.sh` (or `ralphloop/chain.sh`) works through this file task by task, one worker call per unchecked `- [ ]` step, one PR per task. Task 1 is manual infrastructure and stays checked. Tasks 2–9 build the app. Task 10 (added 2026-11-14) fixes bug 5 in the built app. Task 11 (added 2026-11-16) rebrands the shell as Forge Outdoors · Campsites (spec 2, change #6).
+> **For the loop:** `ralphloop/doloop.sh` (or `ralphloop/chain.sh`) works through this file task by task, one worker call per unchecked `- [ ]` step, one PR per task. Task 1 is manual infrastructure and stays checked. Tasks 2–9 build the app. Task 10 (added 2026-11-14) fixes bug 5 in the built app. Task 11 (added 2026-11-16) rebrands the shell as Forge Outdoors · Campsites (spec 2, change #6). Task 12 (added 2026-11-21) adds a switch to maximize or reduce the map (spec 3, change #13).
 >
 > **Specs (binding, all approved by Shawn):** read the one a task names before its first step.
 > - `docs/superpowers/specs/2026-10-24-schema-contract-design.md` (spec 1: the database you build on, unchanged);
@@ -68,13 +68,13 @@ mkdir -p src/environments && printf "export const environment = {\n  production:
 
 ## Review Focus
 
-1. **The nav contrast coming back** (Task 11). Today's links are cream 14px on plain teal (3.6:1) with a translucent hover. `header-check.mjs` case 4 measures every nav link, user pill, nav button and the label against its own solid background at rest, and each main link on hover; a translucent background fails. Break-tested: a `transparent` hover fails case 4 at 3.26:1.
-2. **The header wrapping on a laptop or tablet** (Task 11). The hand-off's spacing (16px pill padding, 2px letter-spacing, 44px wordmark) wraps to two rows at 1280px as the admin (140px tall against 76px today), and without the mid-width label rule it wrapped from 1212px down (admin) and 1005px (signed out). Case 7 requires one row (≤ 100px) at 1280px signed out and as the admin, 1100px as the admin and 1024px signed out.
-3. **Drift: a second palette or raw colors** (Task 11). Case 6 reads all eleven `--rt-*` color values on `:root` and the declared fonts, and case 4 checks the token pairs the spec promises (cream on cherry, cherry on paper and card). Step 4's `grep`s refuse raw hex/`rgb()` in the shell files, any `rgba()` or hex in `styles.scss` outside `:root` but the blue current-location marker (the four old-palette colors become `color-mix` on the tokens), and any `--fo-`, "Work Sans" or "Campsite Finder" left in `src/`.
-4. **Touching more than the eight files** (Task 11). Step 4's `git diff` of the **whole tree** against the merge base with `main` (minus `task.md` and `activity.md`) must list exactly the eight files, `git status --porcelain` must be empty, and the badge's hash is pinned.
-5. **A retried Step 1** (Task 11). The red check runs only while `src/` still matches `main`; on a retry it's skipped, not mistaken for a broken check. A missing merge base stops loudly instead of skipping it, and an `exit 2` (a network or stack blip) is rerun once before BLOCKED.
+1. **The list not coming back** (Task 12). With the map big, "View details ▸" or "Add to trip…" must restore the list before the card opens, or the card opens out of sight. `map-check.mjs` case 4 maximizes, clicks each popup button, and requires the list showing and the card open, matching the popup and in view. Break-tested: without `this.mapSize.reduce()` case 4 fails.
+2. **The map losing its place or size** (Task 12). A resize without `invalidateSize()` leaves Leaflet drawing at the old size. Case 2 and 3 require Leaflet's size to match its container, the same zoom and the center within 2px. Break-tested: a `ResizeObserver` that does nothing fails 2 and 3.
+3. **A phone map that shrinks** (Task 12). "Fill the space below the filters" is smaller than today's 45vh on a 390px phone (308px against 380px). Case 3 requires at least 100px more; the big map takes `100cqh` of `.app-main`. Break-tested: without that rule, 380 → 380 fails case 3.
+4. **Breaking Tasks 10 and 11** (Task 12). `.app-main` becomes a size container and the map component changes. Step 4 reruns `scroll-check.mjs` (5 of 5) and `header-check.mjs` (7 of 7).
+5. **Touching more than the ten files, or new raw colors** (Task 12). Step 4's whole-tree `git diff` must list exactly the ten files, `git status --porcelain` must be empty, and the `styles.scss` color counts must stay at 1 `rgba()` and 3 hex values outside `:root`.
 
-Task 10's review focus (the scroll fix) is in this file's history (PR #43).
+Task 11's review focus (the header) is in this file's history (PR #50).
 
 ---
 
@@ -2613,12 +2613,476 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
 
 ---
 
+## Task 12: A switch to maximize or reduce the map (spec 3, change #13)
+
+> Added 2026-11-21 (Shawn; spec 3, **Change #13**; `docs/next-loop-bugs.md` item 8). Tasks 1–11 are done and merged. This task adds a maximize / reduce switch to the shared map and layout (Finder, Favorites, Trip detail). Read spec 3's **Change #13** and `docs/superpowers/Design.md`'s **Map-and-list page** row and **Leaflet** line first (this plan already added `rt-map-layout--max` and `.map-size-toggle` there).
+
+**Files:** Create: `src/app/core/services/map-size.service.ts`. Modify: `src/app/shared/ui/campground-map/campground-map.component.ts`, `src/styles.scss`, `src/app/app.scss`, `src/app/features/finder/finder.component.html`, `src/app/features/finder/finder.component.ts`, `src/app/features/favorites/favorites.component.html`, `src/app/features/favorites/favorites.component.ts`, `src/app/features/trips/trip-detail.component.html`, `src/app/features/trips/trip-detail.component.ts`. No other file.
+
+**Interfaces:** Consumes: `app-campground-map`'s inputs and outputs, its `ResizeObserver` → `invalidateSize()` (Task 5, unchanged), `rt-map-layout` / `rt-side` / `rt-map-frame` (Task 2), the Finder's `viewDetails` / `addToTrip` handlers (Task 6, unchanged). Produces: `MapSizeService` (`maximized: Signal<boolean>`, `toggle()`, `reduce()`; `sessionStorage` key `campsite-finder.map-maximized`), the CSS modifier `rt-map-layout--max`, the Leaflet control `.map-size-toggle`, and `.app-main` as a size container.
+
+**Check script:** `ralphloop/map-check.mjs` (Lisa, 2026-11-21; like `scroll-check.mjs`, it's the loop's, so never edit it). It loads the production build in headless Chromium against the local stack and the dev seed and judges six cases: 1 the switch on every map page (top-right, "Enlarge map", list showing); 2 at 1280px the switch hides the list, the map takes the full width, Leaflet follows its container, zoom unchanged and center within 2px, and back again; 3 at 390px the map grows at least 100px taller with nothing scrolling sideways, and back again; 4 from the maximized map, "View details ▸" (signed out) and "Add to trip…" (admin) bring the list back with that card open and in view; 5 remembered across a reload and on Favorites in the same tab, not in a new tab; 6 no console errors. Exit 0 all pass, 1 a case fails, 2 the check couldn't run.
+
+- [ ] **Step 1: Prove the check fails, then add the shared setting.**
+  **First, the red check.** Write the local environment (Global Constraints, **Local settings**). Then, **only if `src/` still matches `main`** (on a retry or a resumed step it has already changed, so skip to "Then"):
+  ```bash
+  MB=$(git merge-base main HEAD) || { echo "BLOCKED: no merge base with main"; exit 1; }
+  if git diff --quiet "$MB" -- src/; then
+    npx ng build --configuration production,local
+    node ralphloop/map-check.mjs dist/campsite-finder/browser; echo "exit $?"
+  else
+    echo "app already changed: red check skipped"
+  fi
+  # expect (first run): lines starting "FAIL 1 switch on every map page", "FAIL 2 maximize and reduce at 1280px", "FAIL 3 maximize and reduce at 390px", "FAIL 4 a popup action brings the list back", "FAIL 5 remembered for the tab" and "PASS 6 no console errors", then "MAP CHECK FAILED: 5 of 6.", then "exit 1"
+  ```
+  If it ends `exit 2` (an `ERROR` line: the stack or the seed didn't answer), run the `node ralphloop/map-check.mjs …` line **once more**. Anything else, or `exit 2` twice: stop and write a `BLOCKED:` line (rule 6).
+
+  **Then** create `src/app/core/services/map-size.service.ts`:
+     ```ts
+     import { Injectable, signal } from '@angular/core';
+
+     const STORAGE_KEY = 'campsite-finder.map-maximized';
+
+     /**
+      * Whether the map pages (Finder, Favorites, Trip detail) show the map at full width with the
+      * list hidden (spec 3, change #13). Remembered for the browser tab, like the Finder's saved state.
+      */
+     @Injectable({ providedIn: 'root' })
+     export class MapSizeService {
+       private readonly state = signal(MapSizeService.load());
+       readonly maximized = this.state.asReadonly();
+
+       toggle(): void {
+         this.set(!this.state());
+       }
+
+       reduce(): void {
+         this.set(false);
+       }
+
+       private set(value: boolean): void {
+         this.state.set(value);
+         try {
+           sessionStorage.setItem(STORAGE_KEY, value ? '1' : '0');
+         } catch {
+           // No storage (a private window): the choice lasts until the page reloads.
+         }
+       }
+
+       private static load(): boolean {
+         try {
+           return sessionStorage.getItem(STORAGE_KEY) === '1';
+         } catch {
+           return false;
+         }
+       }
+     }
+     ```
+
+- [ ] **Step 2: The switch on the map, and the layout.**
+  1. Replace the whole of `src/app/shared/ui/campground-map/campground-map.component.ts` with (as before, plus: `MapSizeService`, the `sizeButton` field, an effect that repaints the switch, `addSizeControl` and `paintSizeButton`, and `this.mapSize.reduce()` before each popup button's `emit`):
+     ```ts
+     import {
+       AfterViewInit,
+       Component,
+       effect,
+       ElementRef,
+       inject,
+       input,
+       OnDestroy,
+       output,
+       untracked,
+       viewChild,
+     } from '@angular/core';
+     import * as L from 'leaflet';
+     import 'leaflet.markercluster';
+     import { Campground, hasLocation } from '../../../core/models/campground.model';
+     import { Coordinates } from '../../../core/services/campgrounds.service';
+     import { MapSizeService } from '../../../core/services/map-size.service';
+     import { SupabaseService } from '../../../core/services/supabase.service';
+
+     L.Icon.Default.imagePath = '';
+     L.Icon.Default.mergeOptions({
+       iconUrl: 'marker-icon.png',
+       iconRetinaUrl: 'marker-icon-2x.png',
+       shadowUrl: 'marker-shadow.png',
+     });
+
+     const US_CENTER: L.LatLngTuple = [39.8283, -98.5795];
+
+     @Component({
+       selector: 'app-campground-map',
+       template: `<div #mapEl class="campground-map"></div>`,
+       styleUrl: './campground-map.component.scss',
+     })
+     export class CampgroundMapComponent implements AfterViewInit, OnDestroy {
+       private readonly supabase = inject(SupabaseService);
+       private readonly mapSize = inject(MapSizeService);
+
+       readonly campgrounds = input.required<Campground[]>();
+       readonly selectedId = input<string | null>(null);
+       readonly ordered = input(false);
+       readonly fitToCampgrounds = input(false);
+       readonly searchLocation = input<Coordinates | null>(null);
+       readonly allowLocationPick = input(false);
+
+       readonly viewDetails = output<string>();
+       readonly addToTrip = output<string>();
+       readonly locationPick = output<Coordinates>();
+
+       private readonly mapEl = viewChild.required<ElementRef<HTMLDivElement>>('mapEl');
+
+       private map: L.Map | null = null;
+       private cluster: L.MarkerClusterGroup | null = null;
+       private route: L.Polyline | null = null;
+       private locationMarker: L.Marker | null = null;
+       private resizeObserver: ResizeObserver | null = null;
+       private sizeButton: HTMLAnchorElement | null = null;
+       private markers = new Map<string, L.Marker>();
+       private lookup = new Map<string, Campground>();
+       private ready = false;
+
+       constructor() {
+         effect(() => {
+           const list = this.campgrounds();
+           const ordered = this.ordered();
+           const fit = this.fitToCampgrounds();
+           if (!this.ready) {
+             return;
+           }
+           untracked(() => this.renderMarkers(list, ordered, fit));
+         });
+
+         effect(() => {
+           const id = this.selectedId();
+           if (!this.ready || !id) {
+             return;
+           }
+           untracked(() => this.centreOn(id));
+         });
+
+         effect(() => {
+           const loc = this.searchLocation();
+           if (!this.ready) {
+             return;
+           }
+           untracked(() => this.renderSearchLocation(loc));
+         });
+
+         effect(() => {
+           this.mapSize.maximized();
+           untracked(() => this.paintSizeButton());
+         });
+       }
+
+       ngAfterViewInit(): void {
+         const map = L.map(this.mapEl().nativeElement).setView(US_CENTER, 6);
+         this.map = map;
+         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+           attribution: '&copy; OpenStreetMap contributors',
+         }).addTo(map);
+         // leaflet.markercluster attaches markerClusterGroup to the global Leaflet object (window.L).
+         // In production builds the bundler's `import * as L` copy is taken before that, so call it there.
+         this.cluster = (window as unknown as { L: typeof L }).L.markerClusterGroup({ chunkedLoading: true });
+         map.addLayer(this.cluster);
+
+         map.on('contextmenu', (e: L.LeafletMouseEvent) => {
+           if (this.allowLocationPick()) {
+             this.openPickPopup(e.latlng);
+           }
+         });
+
+         this.addSizeControl(map);
+
+         this.resizeObserver = new ResizeObserver(() => map.invalidateSize());
+         this.resizeObserver.observe(this.mapEl().nativeElement);
+
+         this.ready = true;
+         this.renderMarkers(this.campgrounds(), this.ordered(), this.fitToCampgrounds());
+         this.renderSearchLocation(this.searchLocation());
+         const id = this.selectedId();
+         if (id) {
+           this.centreOn(id);
+         }
+       }
+
+       ngOnDestroy(): void {
+         this.resizeObserver?.disconnect();
+         this.map?.remove();
+         this.map = null;
+       }
+
+       private renderMarkers(list: Campground[], ordered: boolean, fit: boolean): void {
+         const map = this.map;
+         const cluster = this.cluster;
+         if (!map || !cluster) {
+           return;
+         }
+         cluster.clearLayers();
+         this.route?.remove();
+         this.route = null;
+         this.markers = new Map();
+         this.lookup = new Map(list.map((c) => [c.id, c]));
+
+         const batch: L.Marker[] = [];
+         const points: L.LatLngTuple[] = [];
+         list.forEach((c, index) => {
+           if (!hasLocation(c)) {
+             return;
+           }
+           const marker = ordered
+             ? L.marker([c.lat, c.lng], {
+                 icon: L.divIcon({
+                   className: 'trip-stop-marker',
+                   html: String(index + 1),
+                   iconSize: [28, 28],
+                 }),
+               })
+             : L.marker([c.lat, c.lng]);
+           marker.bindPopup(() => this.buildPopup(c, marker));
+           marker.on('click', () => {
+             map.setView([c.lat, c.lng], Math.max(12, map.getZoom()));
+           });
+           this.markers.set(c.id, marker);
+           batch.push(marker);
+           points.push([c.lat, c.lng]);
+         });
+         cluster.addLayers(batch);
+
+         if (ordered) {
+           if (points.length >= 2) {
+             this.route = L.polyline(points).addTo(map);
+           }
+         }
+         if ((ordered || fit) && points.length > 0) {
+           map.fitBounds(L.latLngBounds(points), { padding: [32, 32] });
+         }
+       }
+
+       private buildPopup(c: Campground, marker: L.Marker): HTMLElement {
+         const root = document.createElement('div');
+         const title = document.createElement('strong');
+         title.textContent = c.name;
+         root.appendChild(title);
+
+         const details = document.createElement('button');
+         details.type = 'button';
+         details.className = 'view-details-button';
+         details.textContent = 'View details ▸';
+         details.addEventListener('click', () => {
+           marker.closePopup();
+           this.mapSize.reduce();
+           this.viewDetails.emit(c.id);
+         });
+         root.appendChild(document.createElement('br'));
+         root.appendChild(details);
+
+         if (this.supabase.session()) {
+           const add = document.createElement('button');
+           add.type = 'button';
+           add.className = 'view-details-button';
+           add.textContent = 'Add to trip…';
+           add.addEventListener('click', () => {
+             marker.closePopup();
+             this.mapSize.reduce();
+             this.addToTrip.emit(c.id);
+           });
+           root.appendChild(document.createElement('br'));
+           root.appendChild(add);
+         }
+         return root;
+       }
+
+       private centreOn(id: string): void {
+         const map = this.map;
+         const c = this.lookup.get(id);
+         const marker = this.markers.get(id);
+         if (!map || !c || !marker || !hasLocation(c)) {
+           return;
+         }
+         map.setView([c.lat, c.lng], Math.max(12, map.getZoom()));
+         this.cluster?.zoomToShowLayer(marker, () => undefined);
+       }
+
+       /**
+        * The maximize / reduce switch (spec 3, change #13): a Leaflet control bar, top-right, built
+        * like Leaflet's own zoom buttons (an <a role="button"> in a .leaflet-bar) so it looks like them.
+        */
+       private addSizeControl(map: L.Map): void {
+         const SizeControl = L.Control.extend({
+           onAdd: () => {
+             const bar = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+             const button = L.DomUtil.create('a', 'map-size-toggle', bar);
+             button.href = '#';
+             button.setAttribute('role', 'button');
+             L.DomUtil.create('span', 'pi', button).setAttribute('aria-hidden', 'true');
+             L.DomEvent.disableClickPropagation(bar);
+             L.DomEvent.on(button, 'click', (e) => {
+               L.DomEvent.preventDefault(e);
+               this.mapSize.toggle();
+             });
+             this.sizeButton = button;
+             this.paintSizeButton();
+             return bar;
+           },
+         });
+         new SizeControl({ position: 'topright' }).addTo(map);
+       }
+
+       private paintSizeButton(): void {
+         const button = this.sizeButton;
+         if (!button) {
+           return;
+         }
+         const max = this.mapSize.maximized();
+         const label = max ? 'Show list' : 'Enlarge map';
+         button.setAttribute('aria-pressed', String(max));
+         button.setAttribute('aria-label', label);
+         button.title = label;
+         const icon = button.querySelector('.pi');
+         icon?.classList.toggle('pi-window-maximize', !max);
+         icon?.classList.toggle('pi-window-minimize', max);
+       }
+
+       private renderSearchLocation(loc: Coordinates | null): void {
+         const map = this.map;
+         if (!map) {
+           return;
+         }
+         this.locationMarker?.remove();
+         this.locationMarker = null;
+         if (!loc) {
+           return;
+         }
+         this.locationMarker = L.marker([loc.lat, loc.lng], {
+           icon: L.divIcon({ className: 'current-location-marker', iconSize: [16, 16] }),
+           zIndexOffset: -1000,
+         })
+           .bindTooltip('Your search location')
+           .addTo(map);
+         map.setView([loc.lat, loc.lng], 9);
+       }
+
+       private openPickPopup(latlng: L.LatLng): void {
+         const map = this.map;
+         if (!map) {
+           return;
+         }
+         const root = document.createElement('div');
+         const coords = document.createElement('div');
+         coords.textContent = `${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)}`;
+         root.appendChild(coords);
+         const button = document.createElement('button');
+         button.type = 'button';
+         button.className = 'view-details-button';
+         button.textContent = 'Search from here';
+         button.addEventListener('click', () => {
+           map.closePopup();
+           this.locationPick.emit({ lat: latlng.lat, lng: latlng.lng });
+         });
+         root.appendChild(button);
+         L.popup().setLatLng(latlng).setContent(root).openOn(map);
+       }
+     }
+     ```
+  2. In `src/styles.scss`, make exactly these three insertions:
+     - right **before** the line `@media (max-width: 900px) {` that follows `.rt-scroll-list { … }` (the one whose first rule is `.rt-map-layout {`), insert:
+       ```scss
+       /* Map maximized (spec 3, change #13): the list column hides and the map takes the width. */
+       .rt-map-layout--max {
+         grid-template-columns: minmax(0, 1fr);
+       }
+
+       .rt-map-layout--max .rt-side {
+         display: none;
+       }
+
+       ```
+     - inside that same `@media (max-width: 900px)` block, right **after** its `.rt-map-frame { height: 45vh; }` rule, insert:
+       ```scss
+
+         /* Stacked: the big map takes the height of the scrolling area under the header (.app-main is
+            a size container), less the layout's padding, so scrolling past the filters shows only map. */
+         .rt-map-layout--max .rt-map-frame {
+           height: calc(100cqh - 32px);
+         }
+       ```
+     - right **before** the line `.view-details-button {`, insert:
+       ```scss
+       /* The map's maximize / reduce switch (spec 3, change #13): Leaflet's .leaflet-bar a gives the look. */
+       .map-size-toggle .pi {
+         font-size: 14px;
+       }
+
+       ```
+  3. In `src/app/app.scss`, inside `.app-main { … }`, right after its `min-height: 0;` line, add:
+     ```scss
+       /* A size container: a maximized map under 900px sizes itself to it (spec 3, change #13). */
+       container-type: size;
+     ```
+  Every color stays a token; the switch takes Leaflet's own control look (`style-task.md`; Leaflet's look never changes).
+
+- [ ] **Step 3: The three map pages follow the setting.**
+  In each of `src/app/features/finder/finder.component.*`, `src/app/features/favorites/favorites.component.*` and `src/app/features/trips/trip-detail.component.*`:
+  1. In the `.html`, change the one `<div class="rt-map-layout">` opening tag (keep its indentation) to `<div class="rt-map-layout" [class.rt-map-layout--max]="mapSize.maximized()">`.
+  2. In the `.ts`, add the line `import { MapSizeService } from '../../core/services/map-size.service';` after the last `import` statement, and add `  protected readonly mapSize = inject(MapSizeService);` as the last of the class's `private readonly … = inject(…)` lines at the top of the class (`inject` is already imported in all three).
+
+- [ ] **Step 4: Verify.**
+  ```bash
+  npx ng lint
+  # expect: "All files pass linting."
+  npx ng build --configuration production,local
+  # expect: "Application bundle generation complete", no errors (the existing initial-budget warning is fine)
+  node ralphloop/map-check.mjs dist/campsite-finder/browser; echo "exit $?"
+  # expect: six lines starting PASS (1–6), then "MAP CHECK PASSED: 6 of 6.", then "exit 0" (on "exit 2", run it once more, as in Step 1)
+  node ralphloop/scroll-check.mjs dist/campsite-finder/browser; echo "exit $?"
+  # expect: "SCROLL CHECK PASSED: 5 of 5.", then "exit 0" (Task 10's behavior is unchanged)
+  node ralphloop/header-check.mjs dist/campsite-finder/browser; echo "exit $?"
+  # expect: "HEADER CHECK PASSED: 7 of 7.", then "exit 0" (Task 11's header is unchanged)
+  grep -nE '#[0-9a-fA-F]{3,8}\b|rgb\(|rgba\(' src/app/core/services/map-size.service.ts src/app/shared/ui/campground-map/campground-map.component.ts src/app/app.scss; echo "grep exit $?"
+  # expect: no matches, then "grep exit 1"
+  grep -cE 'rgba?\(' src/styles.scss
+  # expect: 1 (the location marker's focus ring, as before)
+  grep -nE '#[0-9a-fA-F]{3,8}\b' src/styles.scss | grep -vcE '^[0-9]+:  --rt-'
+  # expect: 3 (the location marker's colors, as before)
+  MB=$(git merge-base main HEAD) || { echo "BLOCKED: no merge base with main"; exit 1; }
+  git diff --name-only "$MB" -- . ':(exclude)ralphloop/task.md' ':(exclude)ralphloop/activity.md' | sort
+  # expect exactly these ten lines:
+  #   src/app/app.scss
+  #   src/app/core/services/map-size.service.ts
+  #   src/app/features/favorites/favorites.component.html
+  #   src/app/features/favorites/favorites.component.ts
+  #   src/app/features/finder/finder.component.html
+  #   src/app/features/finder/finder.component.ts
+  #   src/app/features/trips/trip-detail.component.html
+  #   src/app/features/trips/trip-detail.component.ts
+  #   src/app/shared/ui/campground-map/campground-map.component.ts
+  #   src/styles.scss
+  git status --porcelain -- . ':(exclude)ralphloop/task.md' ':(exclude)ralphloop/activity.md'
+  # expect: nothing
+  bash ralphloop/app-check.sh
+  # expect: ends with "CONSOLE CHECK PASSED"
+  ```
+  Re-read spec 3 change #13 and run `style-task.md`'s self-check.
+
+- [ ] **Step 5: Commit.** `git commit -m "Task 12: a switch to maximize or reduce the map (spec 3, change #13)"`
+
+**QC (for Shawn, in the browser):**
+- Finder on a laptop: a small button at the map's top-right that looks like the zoom buttons. Click it: the list disappears and the map fills the width; the map doesn't jump. Click again: the list is back.
+- With the map big, pan and zoom around a region; click a marker: the bubble opens and the map stays big. Click **"View details ▸"**: the list comes back with that campground's card open at the top. Same with **"Add to trip…"** when signed in (the trip picker opens).
+- Reload the page: the map is still big. Open Favorites and a trip in the same tab: big there too. A new tab starts with the list.
+- On a phone: the button is there; with the map big, scroll past the filters and the map fills the screen under the header. Nothing scrolls sideways.
+- The header, the filters and everything else look as before.
+
+---
+
 ## Out of Scope (this plan)
 
 - V1.1's own Supabase cloud project, its Vercel site, and production settings (by hand, later, when V1.1 is ready).
 - Unit and end-to-end tests (dropped).
 - Any change to the database, edge functions or their tests.
 - V1.2 ideas: showing campground attributes to users, moderator powers, and a dark palette.
+- Task 12 leaves out: hiding the header, browser fullscreen, a details panel on the map, saving the choice to the account, and any other change to the list, filters or map look (spec 3, change #13).
 - Task 11 leaves out: a footer, a mobile menu, a new favicon, the section switcher, the patch logo and social image, the forgeoutdoors.app domain, and restyling anything beyond the shell and the token values (spec 2, change #6). Cream on plain teal (agency tags, the postcard and auth headers) is 3.26:1 (3.61:1 before, both under 4.5:1); not fixed here.
 - Filling in `state` for the campgrounds that have none (bug 6, option A): a hand-written migration, not loop work. (Bug 6's part B, `0022`, is live and in spec 1; part A is `0023`–`0024`, spec 1 **Fixes** #11.)
 
@@ -2651,3 +3115,14 @@ Task 11 (Lisa, 2026-11-16, ralph-architect):
 - **Round 2 (Shawn's answers, 2026-11-16):** F1: `--rt-cherry` is `#b8381f`, darker than the brand pack's `#c8402a`, so cream on the primary buttons is 4.86:1 and links on paper 4.8:1 (desktop is asked to update the brand pack, so GearForge matches). Case 4 now measures the `/login` primary button, case 6 pins the new value. F2: the CAMPSITES label hides above 640px and below 1240px; one row now holds down to 829px signed out, 967px as Pat and 1052px as the admin (today's header: 775px signed out, 1049px as the admin; the 775–829px band signed out now wraps, accepted with D12). Case 7 adds 1024px signed out and 1100px as the admin. F3: phone heights (222px at 390px, 253px at 360px, 297px at 320px) accepted as D3.
 - **Code review (2026-11-17, `/code-review` medium; 6 findings, all fixed):** the two `#f0e5cc` hover fills (old palette) become `color-mix` of cream and 8% ink (1.16:1, as before), with a `grep` for hex outside `:root`; Step 4's merge-base guard exits like Step 1's; the label rule uses range syntax `(640px < width < 1240px)` so fractional widths (zoom) have no gap; case 4 skips disabled primary buttons and checks the token pairs cream on cherry, cherry on paper and on card; the QC line no longer says signed-out wrapping is unchanged (775px → 829px); the hover pass includes Sign out and pairs by `:hover`, not by index.
 - **Parse:** `check-task-md.sh` reports Tasks 2–10 as "no unchecked steps; the loop would skip it" (and 2–9 as having no `# expect:` lines). They're done and merged, and skipping them is the point; Task 11 has 5 open steps, 7 `# expect:` lines, a commit step and QC.
+
+Task 12 (Lisa, 2026-11-21, ralph-architect):
+- **Run against a real stack.** A throwaway stack on Ralph (`t12`, ports 553xx, from `main` `0f0b1c3`'s migrations, torn down after) with `seed-dev.sh`. Built on Lisa against it (Playwright 1.63; the worker image has 1.64.1).
+- **The check fails when the step is wrong:**
+  - `main`: FAIL 1–5, PASS 6 (no switch: the list never hides; console clean).
+  - Task 12: 6 of 6 PASS; `scroll-check.mjs` 5 of 5; `header-check.mjs` 7 of 7; `console-check.mjs` 15 page loads; `ng lint` clean; the build has only the existing budget warning; the color counts unchanged (1 / 3).
+  - Breaks, each failing only its own case(s): the control top-left (FAIL 1); no `reduce()` before the popup emits, no `sessionStorage` write, and a planted `console.error` on toggle, in one run (FAIL 4, 5, 6); a `ResizeObserver` that does nothing (FAIL 2, 3, "Leaflet's size doesn't match"); no phone height rule (FAIL 3, 380 → 380).
+- **Two findings while testing, fixed in the plan:** the center drifts below a pixel on resize (Leaflet rounds), so case 2 compares the center in world pixels (≤ 2px), not degrees; on a 390px phone, "fill the space below the filters" made the map smaller (308px vs 380px), so the big map takes `calc(100cqh - 32px)` of `.app-main` (spec 3 change #13 records this, and the decisions file D2).
+- **Measured** (Chromium, the seed): 1280px, map 692 → 1216px wide; 390px, 380 → ~590px tall.
+- **The bug list** (`docs/next-loop-bugs.md` item 8) isn't touched here: it's added by docs PR #53, still open.
+
