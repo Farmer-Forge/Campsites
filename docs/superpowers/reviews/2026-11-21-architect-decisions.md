@@ -8,7 +8,7 @@ None. The plan was run against a real throwaway stack with the dev seed (task.md
 
 ## Default stands unless you object
 
-D1: The big map on a phone. The design said "fill the space below the filters". On a 390px phone the header and the Finder's filters leave only 308px there, less than today's 45vh (380px), so the map would *shrink*. Draft: the big map takes the height of the scrolling area under the header, less the layout's padding (`calc(100cqh - 32px)`, 590px at 390px); you scroll past the filters to a map that fills the screen (task.md: Step 2's `styles.scss`; case 3). Other: keep the filters and map in view together with a smaller gain.
+D1: The big map on a phone. The design said "fill the space below the filters". On a 390px phone the header and the Finder's filters leave only 308px there, less than today's 45vh (380px), so the map would *shrink*. Draft: the big map takes the height of the scrolling area under the header, less the layout's padding (`calc(100cqh - 32px)`, 590px at 390px), **and a maximize scrolls it into view** (adversary F2: without that, the tap seemed to do nothing). It then fills the screen: swipes pan the map, as in a map app, and "Show list" at its top-right brings everything back (task.md: Step 2; case 3). Other: keep the filters and map in view together with a smaller gain, or leave some room above the map to drag the page.
 
 D2: To size the phone map, `.app-main` (the shell's scrolling area) becomes a CSS size container (`container-type: size`). Draft: that (task.md: Step 2's `app.scss`). `scroll-check.mjs` and `header-check.mjs` still pass with it. Other: `100dvh` minus a hard-coded header height, which breaks whenever the header wraps.
 
@@ -23,6 +23,8 @@ D6: On Favorites and Trip detail, the popup's "View details ▸" also brings the
 D7: The setting's storage: `sessionStorage` key `campsite-finder.map-maximized` (`'1'` / `'0'`), per browser tab, shared by the three pages; a private window without storage keeps it until reload.
 
 D8: The spec and design-system edits come with this plan PR (spec 3 **Change #13**, `Design.md`'s map-layout row and Leaflet line). The bug list's item 8 (added by docs PR #53, merged 2026-11-22) is updated here to point at change #13 and Task 12.
+
+D9: Maximizing hides each page's top row too (adversary F1), because the title and actions live in the list column: the Finder's count, "Change location" and "Use my device location"; Favorites' heading and "Plan a trip"; a trip's name, "‹ All trips", Rename and Delete. The design said "the page title stays". Draft: accept it (the switch is for browsing, and "Show list" is one click); spec 3 change #13 says so. Other: move each page's top row out of `rt-side` on all three pages (three more templates and styles, and a check case).
 
 ## Notes (not decisions)
 

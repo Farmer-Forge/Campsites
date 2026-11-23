@@ -70,7 +70,7 @@ mkdir -p src/environments && printf "export const environment = {\n  production:
 
 1. **The list not coming back** (Task 12). With the map big, "View details ▸" or "Add to trip…" must restore the list before the card opens, or the card opens out of sight. `map-check.mjs` case 4 maximizes, clicks each popup button, and requires the list showing and the card open, matching the popup and in view. Break-tested: without `this.mapSize.reduce()` case 4 fails.
 2. **The map losing its place or size** (Task 12). A resize without `invalidateSize()` leaves Leaflet drawing at the old size. Case 2 and 3 require Leaflet's size to match its container, the same zoom and the center within 2px. Break-tested: a `ResizeObserver` that does nothing fails 2 and 3.
-3. **A phone map that shrinks** (Task 12). "Fill the space below the filters" is smaller than today's 45vh on a 390px phone (308px against 380px). Case 3 requires at least 100px more; the big map takes `100cqh` of `.app-main`. Break-tested: without that rule, 380 → 380 fails case 3.
+3. **A phone map that shrinks, overflows or stays out of sight** (Task 12). "Fill the space below the filters" is smaller than today's 45vh on a 390px phone (308px against 380px), so the big map takes `100cqh` of `.app-main` and a maximize scrolls it into view. Case 3 requires at least 100px more, a map that fits `.app-main`, fully in view, and no sideways scroll in `.app-main`. Break-tested: without the height rule (380 → 380), without `container-type` (812px in a 622px area), and without the scroll into view, each fails case 3.
 4. **Breaking Tasks 10 and 11** (Task 12). `.app-main` becomes a size container and the map component changes. Step 4 reruns `scroll-check.mjs` (5 of 5) and `header-check.mjs` (7 of 7).
 5. **Touching more than the ten files, or new raw colors** (Task 12). Step 4's whole-tree `git diff` must list exactly the ten files, `git status --porcelain` must be empty, and the `styles.scss` color counts must stay at 1 `rgba()` and 3 hex values outside `:root`.
 
@@ -2621,21 +2621,21 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
 
 **Interfaces:** Consumes: `app-campground-map`'s inputs and outputs, its `ResizeObserver` → `invalidateSize()` (Task 5, unchanged), `rt-map-layout` / `rt-side` / `rt-map-frame` (Task 2), the Finder's `viewDetails` / `addToTrip` handlers (Task 6, unchanged). Produces: `MapSizeService` (`maximized: Signal<boolean>`, `toggle()`, `reduce()`; `sessionStorage` key `campsite-finder.map-maximized`), the CSS modifier `rt-map-layout--max`, the Leaflet control `.map-size-toggle`, and `.app-main` as a size container.
 
-**Check script:** `ralphloop/map-check.mjs` (Lisa, 2026-11-21; like `scroll-check.mjs`, it's the loop's, so never edit it). It loads the production build in headless Chromium against the local stack and the dev seed and judges six cases: 1 the switch on every map page (top-right, "Enlarge map", list showing); 2 at 1280px the switch hides the list, the map takes the full width, Leaflet follows its container, zoom unchanged and center within 2px, and back again; 3 at 390px the map grows at least 100px taller with nothing scrolling sideways, and back again; 4 from the maximized map, "View details ▸" (signed out) and "Add to trip…" (admin) bring the list back with that card open and in view; 5 remembered across a reload and on Favorites in the same tab, not in a new tab; 6 no console errors. Exit 0 all pass, 1 a case fails, 2 the check couldn't run.
+**Check script:** `ralphloop/map-check.mjs` (Lisa, 2026-11-21; like `scroll-check.mjs`, it's the loop's, so never edit it). It loads the production build in headless Chromium against the local stack and the dev seed and judges six cases: 1 the switch on every map page (top-right, "Enlarge map", the maximize icon, list showing) and it maximizes on each; 2 at 1280px the switch hides the list, the map takes the full width, Leaflet follows its container, zoom unchanged and center within 2px, and back again; 3 at 390px the map grows at least 100px taller, fits the scrolling area under the header and is scrolled fully into view, with nothing scrolling sideways (page or `.app-main`), and back again; 4 from the maximized map, "View details ▸" (signed out, 1280px and 390px) and "Add to trip…" (admin) bring the list back with that card open and in view; 5 remembered across a reload and on Favorites in the same tab, not in a new tab; 6 no console errors. Exit 0 all pass, 1 a case fails, 2 the check couldn't run (including a missing build, or only network errors in the console).
 
 - [ ] **Step 1: Prove the check fails, then add the shared setting.**
   **First, the red check.** Write the local environment (Global Constraints, **Local settings**). Then, **only if `src/` still matches `main`** (on a retry or a resumed step it has already changed, so skip to "Then"):
   ```bash
   MB=$(git merge-base main HEAD) || { echo "BLOCKED: no merge base with main"; exit 1; }
   if git diff --quiet "$MB" -- src/; then
-    npx ng build --configuration production,local
+    for i in 1 2 3; do npx ng build --configuration production,local && break; echo "build failed (try $i)"; sleep 20; done
     node ralphloop/map-check.mjs dist/campsite-finder/browser; echo "exit $?"
   else
     echo "app already changed: red check skipped"
   fi
   # expect (first run): lines starting "FAIL 1 switch on every map page", "FAIL 2 maximize and reduce at 1280px", "FAIL 3 maximize and reduce at 390px", "FAIL 4 a popup action brings the list back", "FAIL 5 remembered for the tab" and "PASS 6 no console errors", then "MAP CHECK FAILED: 5 of 6.", then "exit 1"
   ```
-  If it ends `exit 2` (an `ERROR` line: the stack or the seed didn't answer), run the `node ralphloop/map-check.mjs …` line **once more**. Anything else, or `exit 2` twice: stop and write a `BLOCKED:` line (rule 6).
+  The build fetches Google Fonts to inline them, and a network blip fails it ("Inlining of fonts failed"); the loop retries it up to three times. If the check ends `exit 2` (an `ERROR` line: no build, the stack or the seed didn't answer, or only network errors in the console), run the `node ralphloop/map-check.mjs …` line **once more**. Anything else, `exit 2` twice, or three failed builds: stop and write a `BLOCKED:` line (rule 6).
 
   **Then** create `src/app/core/services/map-size.service.ts`:
      ```ts
@@ -2680,14 +2680,16 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
      ```
 
 - [ ] **Step 2: The switch on the map, and the layout.**
-  1. Replace the whole of `src/app/shared/ui/campground-map/campground-map.component.ts` with (as before, plus: `MapSizeService`, the `sizeButton` field, an effect that repaints the switch, `addSizeControl` and `paintSizeButton`, and `this.mapSize.reduce()` before each popup button's `emit`):
+  1. Replace the whole of `src/app/shared/ui/campground-map/campground-map.component.ts` with (as before, plus: `MapSizeService`, `host`/`injector`, the `sizeButton` field, an effect that repaints the switch, `addSizeControl`, `bringMapIntoView` (under 900px a maximize scrolls the map's frame to the top of the scrolling area), `paintSizeButton`, and `this.mapSize.reduce()` before each popup button's `emit`):
      ```ts
      import {
+       afterNextRender,
        AfterViewInit,
        Component,
        effect,
        ElementRef,
        inject,
+       Injector,
        input,
        OnDestroy,
        output,
@@ -2718,6 +2720,8 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
      export class CampgroundMapComponent implements AfterViewInit, OnDestroy {
        private readonly supabase = inject(SupabaseService);
        private readonly mapSize = inject(MapSizeService);
+       private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+       private readonly injector = inject(Injector);
 
        readonly campgrounds = input.required<Campground[]>();
        readonly selectedId = input<string | null>(null);
@@ -2920,6 +2924,9 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
              L.DomEvent.on(button, 'click', (e) => {
                L.DomEvent.preventDefault(e);
                this.mapSize.toggle();
+               if (this.mapSize.maximized()) {
+                 afterNextRender(() => this.bringMapIntoView(), { injector: this.injector });
+               }
              });
              this.sizeButton = button;
              this.paintSizeButton();
@@ -2927,6 +2934,16 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
            },
          });
          new SizeControl({ position: 'topright' }).addTo(map);
+       }
+
+       /**
+        * Under 900px the map stacks above the list, so the big map grows below the fold: scroll its
+        * frame to the top of the scrolling area, so maximizing shows the map at once (spec 3, change #13).
+        */
+       private bringMapIntoView(): void {
+         if (window.matchMedia('(max-width: 900px)').matches) {
+           (this.host.nativeElement.closest('.rt-map-frame') ?? this.host.nativeElement).scrollIntoView({ block: 'start' });
+         }
        }
 
        private paintSizeButton(): void {
@@ -3031,8 +3048,8 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
   ```bash
   npx ng lint
   # expect: "All files pass linting."
-  npx ng build --configuration production,local
-  # expect: "Application bundle generation complete", no errors (the existing initial-budget warning is fine)
+  for i in 1 2 3; do npx ng build --configuration production,local && break; echo "build failed (try $i)"; sleep 20; done
+  # expect: "Application bundle generation complete" within three tries, no errors (the existing initial-budget warning is fine; "Inlining of fonts failed" is a network blip, retried)
   node ralphloop/map-check.mjs dist/campsite-finder/browser; echo "exit $?"
   # expect: six lines starting PASS (1–6), then "MAP CHECK PASSED: 6 of 6.", then "exit 0" (on "exit 2", run it once more, as in Step 1)
   node ralphloop/scroll-check.mjs dist/campsite-finder/browser; echo "exit $?"
@@ -3071,7 +3088,8 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
 - Finder on a laptop: a small button at the map's top-right that looks like the zoom buttons. Click it: the list disappears and the map fills the width; the map doesn't jump. Click again: the list is back.
 - With the map big, pan and zoom around a region; click a marker: the bubble opens and the map stays big. Click **"View details ▸"**: the list comes back with that campground's card open at the top. Same with **"Add to trip…"** when signed in (the trip picker opens).
 - Reload the page: the map is still big. Open Favorites and a trip in the same tab: big there too. A new tab starts with the list.
-- On a phone: the button is there; with the map big, scroll past the filters and the map fills the screen under the header. Nothing scrolls sideways.
+- On a phone: tap the button and the page scrolls so the map fills the screen under the header. Swipes move the map (like a map app); "Show list" at its top-right brings everything back. Nothing scrolls sideways.
+- With the map big, the list column's top row is hidden too: on the Finder the count and the location buttons, on Favorites "Plan a trip", on a trip its name and Rename/Delete. "Show list" brings them back.
 - The header, the filters and everything else look as before.
 
 ---
@@ -3125,4 +3143,11 @@ Task 12 (Lisa, 2026-11-21, ralph-architect):
 - **Two findings while testing, fixed in the plan:** the center drifts below a pixel on resize (Leaflet rounds), so case 2 compares the center in world pixels (≤ 2px), not degrees; on a 390px phone, "fill the space below the filters" made the map smaller (308px vs 380px), so the big map takes `calc(100cqh - 32px)` of `.app-main` (spec 3 change #13 records this, and the decisions file D2).
 - **Measured** (Chromium, the seed): 1280px, map 692 → 1216px wide; 390px, 380 → ~590px tall.
 - **The bug list:** item 8 (added by docs PR #53, merged) now points at spec 3 change #13 and Task 12.
+- **Round 1 (plan-adversary r1, `docs/superpowers/reviews/2026-11-21-plan-adversary-r1.md`; 0 High, 4 Med, 1 Low):**
+  - F1 (decision): maximizing hides each page's title row, which lives in `rt-side`. Default: accepted, and spec 3 change #13 now says so (decisions D9).
+  - F2 (decision): on a phone the big map grew below the fold, so the tap seemed to do nothing. Default: a maximize under 900px scrolls the map's frame into view (`bringMapIntoView`); swipes then pan the map and "Show list" returns (decisions D1).
+  - F3: case 3 now requires the map to fit `.app-main` and be fully in view, and checks `.app-main`'s own sideways scroll (the document's never scrolls).
+  - F4: Steps 1 and 4 retry the build up to three times ("Inlining of fonts failed" is a network blip); `serveSpa` runs inside the check's `try`, so a missing build is exit 2; a console holding only `net::ERR_…` errors is exit 2 (rerun), not a FAIL. The network-only path was reasoned, not reproduced.
+  - F5: case 1 now maximizes on every page (Trip detail included) and asserts the icon; case 4 adds "View details ▸" at 390px.
+  - Retested against `t12`: `main` FAIL 1–5 / PASS 6; Task 12 6 of 6. Breaks: no `container-type` (FAIL 3, 812px in 622px), no Trip detail binding (FAIL 1), no scroll into view (FAIL 3); a missing build dir exits 2.
 

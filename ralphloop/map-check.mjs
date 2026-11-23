@@ -1,22 +1,25 @@
 // MAP CHECK — task.md Task 12 (spec 3, change #13: the map maximize / reduce switch).
 // Loads the app's production build in headless Chromium and checks six cases:
 //   1. The switch is on every map page (Finder, Favorites, Trip detail): one .map-size-toggle,
-//      in Leaflet's top-right corner, aria-pressed "false" and labelled "Enlarge map", list showing.
+//      in Leaflet's top-right corner, aria-pressed "false", labelled "Enlarge map", icon
+//      pi-window-maximize, list showing; and on each page it maximizes (list hidden, map full width).
 //   2. 1280px, Finder: the switch hides the list and the map takes the full width of the layout
 //      (and at least 300px more than before); Leaflet's size follows its container; the map's
 //      zoom doesn't change and its center moves 2 pixels at most; the switch now says "Show list" (aria-pressed "true").
 //      Switching back restores the list and the map's width (within 2px), center and zoom.
 //   3. 390px, Finder: the same switch hides the list and the map grows at least 100px taller
-//      (it takes the height of the scrolling area under the header), with nothing scrolling
-//      sideways; switching back restores its height (within 2px).
+//      (it takes the height of the scrolling area under the header): the map fits that area, is
+//      scrolled fully into view, and nothing scrolls sideways (page or .app-main); switching back
+//      restores its height (within 2px).
 //   4. While maximized, "View details ▸" in a map popup brings the list back with that
-//      campground's card open and fully in view; as the admin, "Add to trip…" does the same
-//      with the trip picker open.
+//      campground's card open and its top in view (at 1280px and 390px); as the admin,
+//      "Add to trip…" does the same with the trip picker open.
 //   5. Remembered for the tab: after a reload the map is still maximized, and Favorites opened in
 //      the same tab is maximized too; a new tab starts with the list showing.
 //   6. No console errors or uncaught page errors on any page load.
 // One PASS or FAIL line per case. Exit 0 if all pass, 1 if any fails, 2 if the check itself
-// couldn't run (usage, sign-in, a page or the map didn't load).
+// couldn't run (usage, no build, sign-in, a page or the map didn't load, or the only console
+// errors were network failures, net::ERR_…, which a rerun clears).
 //
 //   node ralphloop/map-check.mjs dist/campsite-finder/browser
 //
@@ -130,6 +133,8 @@ const LAYOUT = () => {
   const frame = document.querySelector('.rt-map-frame');
   const side = layout?.querySelector(':scope > .rt-side');
   const button = document.querySelector('.map-size-toggle');
+  const main = document.querySelector('.app-main');
+  const icon = button?.querySelector('.pi');
   const map = window.__map;
   const ls = layout ? getComputedStyle(layout) : null;
   const center = map?.getCenter();
@@ -148,7 +153,14 @@ const LAYOUT = () => {
     // The center in Leaflet's world pixels at this zoom, so drift is judged in pixels, not degrees.
     centerPx: center ? [map.project(center, map.getZoom()).x, map.project(center, map.getZoom()).y] : null,
     zoom: map?.getZoom() ?? null,
-    sideways: document.documentElement.scrollWidth > window.innerWidth,
+    icon: icon?.classList.contains('pi-window-minimize') ? 'minimize' : icon?.classList.contains('pi-window-maximize') ? 'maximize' : null,
+    sideways: document.documentElement.scrollWidth > window.innerWidth || (!!main && main.scrollWidth > main.clientWidth),
+    mainH: main?.clientHeight ?? 0,
+    frameInView: !!frame && !!main && (() => {
+      const f = frame.getBoundingClientRect();
+      const m = main.getBoundingClientRect();
+      return f.top >= m.top - 2 && f.bottom <= m.bottom + 2;
+    })(),
   };
 };
 
@@ -168,8 +180,8 @@ async function flip(page) {
 const sameView = (a, b) =>
   !!a.centerPx && !!b.centerPx && a.zoom === b.zoom &&
   Math.abs(a.centerPx[0] - b.centerPx[0]) <= 2 && Math.abs(a.centerPx[1] - b.centerPx[1]) <= 2;
-const reducedState = (s) => s.pressed === 'false' && s.label === 'Enlarge map' && s.sideShown;
-const maximizedState = (s) => s.pressed === 'true' && s.label === 'Show list' && !s.sideShown;
+const reducedState = (s) => s.pressed === 'false' && s.label === 'Enlarge map' && s.icon === 'maximize' && s.sideShown;
+const maximizedState = (s) => s.pressed === 'true' && s.label === 'Show list' && s.icon === 'minimize' && !s.sideShown;
 
 // Opens the popup of the campground nearest home and clicks one of its buttons.
 async function popupButton(page, text) {
@@ -212,10 +224,14 @@ async function popupButton(page, text) {
 }
 
 const results = {};
-const { server, url: base } = await serveSpa(BUILD_DIR);
-const browser = await chromium.launch();
 let broken = null;
+let server = null;
+let browser = null;
 try {
+  const served = await serveSpa(BUILD_DIR);
+  server = served.server;
+  const base = served.url;
+  browser = await chromium.launch();
   const camper = await signIn(CAMPER);
   const trip = await firstTripId(camper);
   const admin = await signIn(ADMIN);
@@ -226,7 +242,9 @@ try {
     for (const [path, session, label] of [['/', null, 'finder'], ['/favorites', camper, 'favorites'], [`/trips/${trip}`, camper, 'trip']]) {
       const ctx = await newContext(browser, WIDE, session);
       const page = await open(ctx, base, path, `case1 ${label}`);
-      one.push({ page: label, ...(await look(page)) });
+      const before = await look(page);
+      const max = await flip(page);
+      one.push({ page: label, before, max });
       await ctx.close();
     }
     results[1] = one;
@@ -257,11 +275,11 @@ try {
   // 4. From the maximized map: "View details ▸" (signed out), "Add to trip…" (the admin).
   {
     const out = [];
-    for (const [session, text, label] of [[null, 'View details', 'view'], [admin, 'Add to trip', 'add']]) {
-      const ctx = await newContext(browser, WIDE, session);
+    for (const [session, text, label, viewport] of [[null, 'View details', 'view', WIDE], [admin, 'Add to trip', 'add', WIDE], [null, 'View details', 'view 390px', PHONE]]) {
+      const ctx = await newContext(browser, viewport, session);
       const page = await open(ctx, base, '/', `case4 ${label}`);
       const max = await flip(page);
-      out.push({ text, max, ...(await popupButton(page, text)) });
+      out.push({ text: `${text} (${viewport.width}px)`, max, ...(await popupButton(page, text)) });
       await ctx.close();
     }
     results[4] = out;
@@ -284,8 +302,11 @@ try {
 } catch (e) {
   broken = e.message;
 } finally {
-  await browser.close();
-  server.close();
+  await browser?.close();
+  server?.close();
+}
+if (!broken && errors.length > 0 && errors.every((e) => /net::ERR_/.test(e))) {
+  broken = `only network errors in the console (rerun): ${errors.slice(0, 3).join('; ')}`;
 }
 
 if (broken) {
@@ -296,8 +317,12 @@ if (broken) {
 
 const CASES = [
   ['1 switch on every map page', () => {
-    const bad = results[1].filter((s) => !(s.toggles === 1 && s.topRight && reducedState(s)));
-    return [bad.length === 0, bad.map((s) => `${s.page}: ${JSON.stringify(s)}`)];
+    const bad = [];
+    for (const { page, before, max } of results[1]) {
+      if (!(before.toggles === 1 && before.topRight && reducedState(before))) bad.push(`${page}: ${JSON.stringify(before)}`);
+      if (!maximizedState(max) || max.frameW < max.layoutInnerW - 2) bad.push(`${page} maximized: ${JSON.stringify(max)}`);
+    }
+    return [bad.length === 0, bad];
   }],
   ['2 maximize and reduce at 1280px', () => {
     const { before, max, back } = results[2];
@@ -317,6 +342,8 @@ const CASES = [
     if (!reducedState(before)) bad.push(`before: ${JSON.stringify(before)}`);
     if (!maximizedState(max)) bad.push(`maximized state: pressed ${max.pressed}, list shown ${max.sideShown}`);
     if (max.frameH < before.frameH + 100) bad.push(`map height ${before.frameH} → ${max.frameH}px`);
+    if (max.frameH > max.mainH) bad.push(`the map (${max.frameH}px) is taller than the scrolling area (${max.mainH}px)`);
+    if (!max.frameInView) bad.push('the big map is not scrolled fully into view');
     if (max.sideways || back.sideways) bad.push('the page scrolls sideways');
     if (!max.leafletFits) bad.push("Leaflet's size doesn't match its container after maximizing");
     if (!reducedState(back) || Math.abs(back.frameH - before.frameH) > 2) bad.push(`after reducing: ${JSON.stringify(back)}`);
@@ -331,7 +358,7 @@ const CASES = [
       else {
         if (!r.popup || !r.card.name.toUpperCase().includes(r.popup.toUpperCase().slice(0, 15))) bad.push(`${r.text}: opened "${r.card.name}", popup was "${r.popup}"`);
         if (!r.card.inView) bad.push(`${r.text}: the open card isn't in view`);
-        if (r.text === 'Add to trip' && !r.card.picker) bad.push('Add to trip: the trip picker isn\'t open');
+        if (r.text.startsWith('Add to trip') && !r.card.picker) bad.push('Add to trip: the trip picker isn\'t open');
       }
     }
     return [bad.length === 0, bad];
