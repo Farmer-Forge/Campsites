@@ -1,12 +1,14 @@
 // MAP CHECK — task.md Task 12 (spec 3, change #13: the map maximize / reduce switch).
 // Loads the app's production build in headless Chromium and checks six cases:
 //   1. The switch is on every map page (Finder, Favorites, Trip detail): one .map-size-toggle,
-//      in Leaflet's top-right corner, aria-pressed "false", labelled "Enlarge map", icon
-//      pi-window-maximize, list showing; and on each page it maximizes (list hidden, map full width).
+//      in Leaflet's top-right corner, named "Enlarge map" (aria-pressed "false", tooltip "Enlarge
+//      map", icon pi-window-maximize), list showing; on each page it maximizes (list hidden, map full
+//      width); on Favorites a popup's "View details ▸" leaves the map big (only the Finder acts on it).
 //   2. 1280px, Finder: the switch hides the list and the map takes the full width of the layout
 //      (and at least 300px more than before); Leaflet's size follows its container; the map's
-//      zoom doesn't change and its center moves 2 pixels at most; the switch now says "Show list" (aria-pressed "true").
-//      Switching back restores the list and the map's width (within 2px), center and zoom.
+//      zoom doesn't change and its center moves 2 pixels at most; the switch is now pressed
+//      (aria-pressed "true", tooltip "Show list"). Switching back restores the list and the map's
+//      width (within 2px), center and zoom; Space on the focused switch maximizes it again.
 //   3. 390px, Finder: the same switch hides the list and the map grows at least 100px taller
 //      (it takes the height of the scrolling area under the header): the map fits that area, is
 //      scrolled fully into view, and nothing scrolls sideways (page or .app-main); switching back
@@ -14,8 +16,9 @@
 //   4. While maximized, "View details ▸" in a map popup brings the list back with that
 //      campground's card open and its top in view (at 1280px and 390px); as the admin,
 //      "Add to trip…" does the same with the trip picker open.
-//   5. Remembered for the tab: after a reload the map is still maximized, and Favorites opened in
-//      the same tab is maximized too; a new tab starts with the list showing.
+//   5. Remembered for the tab: after a reload the map is still maximized and Leaflet fits it (at
+//      390px also fully in view), and Favorites opened in the same tab is maximized too; a new tab
+//      starts with the list showing.
 //   6. No console errors or uncaught page errors on any page load.
 // One PASS or FAIL line per case. Exit 0 if all pass, 1 if any fails, 2 if the check itself
 // couldn't run (usage, no build, sign-in, a page or the map didn't load, or the only console
@@ -144,6 +147,7 @@ const LAYOUT = () => {
     topRight: !!button?.closest('.leaflet-top.leaflet-right'),
     pressed: button?.getAttribute('aria-pressed') ?? null,
     label: button?.getAttribute('aria-label') ?? null,
+    tip: button?.getAttribute('title') ?? null,
     sideShown: !!side && getComputedStyle(side).display !== 'none' && side.getBoundingClientRect().width > 0,
     frameW: Math.round(frame?.getBoundingClientRect().width ?? 0),
     frameH: Math.round(frame?.getBoundingClientRect().height ?? 0),
@@ -180,8 +184,8 @@ async function flip(page) {
 const sameView = (a, b) =>
   !!a.centerPx && !!b.centerPx && a.zoom === b.zoom &&
   Math.abs(a.centerPx[0] - b.centerPx[0]) <= 2 && Math.abs(a.centerPx[1] - b.centerPx[1]) <= 2;
-const reducedState = (s) => s.pressed === 'false' && s.label === 'Enlarge map' && s.icon === 'maximize' && s.sideShown;
-const maximizedState = (s) => s.pressed === 'true' && s.label === 'Show list' && s.icon === 'minimize' && !s.sideShown;
+const reducedState = (s) => s.pressed === 'false' && s.label === 'Enlarge map' && s.tip === 'Enlarge map' && s.icon === 'maximize' && s.sideShown;
+const maximizedState = (s) => s.pressed === 'true' && s.label === 'Enlarge map' && s.tip === 'Show list' && s.icon === 'minimize' && !s.sideShown;
 
 // Opens the popup of the campground nearest home and clicks one of its buttons.
 async function popupButton(page, text) {
@@ -244,7 +248,9 @@ try {
       const page = await open(ctx, base, path, `case1 ${label}`);
       const before = await look(page);
       const max = await flip(page);
-      one.push({ page: label, before, max });
+      const entry = { page: label, before, max };
+      if (label === 'favorites') entry.afterPopup = (await popupButton(page, 'View details')).after;
+      one.push(entry);
       await ctx.close();
     }
     results[1] = one;
@@ -257,7 +263,14 @@ try {
     const before = await look(page);
     const max = await flip(page);
     const back = await flip(page);
-    results[2] = { before, max, back };
+    let spaced = null;
+    if ((await page.locator('.map-size-toggle').count()) > 0) {
+      await page.focus('.map-size-toggle');
+      await page.keyboard.press(' ');
+      await page.waitForTimeout(SETTLE_MS);
+      spaced = await look(page);
+    }
+    results[2] = { before, max, back, spaced };
     await ctx.close();
   }
 
@@ -296,8 +309,14 @@ try {
     const favorites = await look(page);
     const fresh = await open(ctx, base, '/', 'case5 new tab');
     const newTab = await look(fresh);
-    results[5] = { max, reloaded, favorites, newTab };
     await ctx.close();
+    const phone = await newContext(browser, PHONE, null);
+    const pp = await open(phone, base, '/', 'case5 phone');
+    const phoneMax = await flip(pp);
+    await open(pp, base, '/', 'case5 phone reload');
+    const phoneReloaded = await look(pp);
+    await phone.close();
+    results[5] = { max, reloaded, favorites, newTab, phoneMax, phoneReloaded };
   }
 } catch (e) {
   broken = e.message;
@@ -318,15 +337,17 @@ if (broken) {
 const CASES = [
   ['1 switch on every map page', () => {
     const bad = [];
-    for (const { page, before, max } of results[1]) {
+    for (const { page, before, max, afterPopup } of results[1]) {
       if (!(before.toggles === 1 && before.topRight && reducedState(before))) bad.push(`${page}: ${JSON.stringify(before)}`);
       if (!maximizedState(max) || max.frameW < max.layoutInnerW - 2) bad.push(`${page} maximized: ${JSON.stringify(max)}`);
+      if (afterPopup && !maximizedState(afterPopup)) bad.push(`${page}: a popup's View details changed the layout`);
     }
     return [bad.length === 0, bad];
   }],
   ['2 maximize and reduce at 1280px', () => {
-    const { before, max, back } = results[2];
+    const { before, max, back, spaced } = results[2];
     const bad = [];
+    if (!spaced || !maximizedState(spaced)) bad.push('Space on the focused switch doesn\'t maximize');
     if (!reducedState(before)) bad.push(`before: ${JSON.stringify(before)}`);
     if (!maximizedState(max)) bad.push(`maximized state: pressed ${max.pressed}, label ${max.label}, list shown ${max.sideShown}`);
     if (max.frameW < max.layoutInnerW - 2 || max.frameW < before.frameW + 300) bad.push(`map ${before.frameW} → ${max.frameW}px, layout ${max.layoutInnerW}px`);
@@ -364,10 +385,12 @@ const CASES = [
     return [bad.length === 0, bad];
   }],
   ['5 remembered for the tab', () => {
-    const { max, reloaded, favorites, newTab } = results[5];
+    const { max, reloaded, favorites, newTab, phoneMax, phoneReloaded } = results[5];
     const bad = [];
     if (!maximizedState(max)) bad.push('the switch didn\'t maximize');
-    if (!maximizedState(reloaded)) bad.push(`after a reload: ${JSON.stringify(reloaded)}`);
+    if (!maximizedState(reloaded) || !reloaded.leafletFits || reloaded.frameW < reloaded.layoutInnerW - 2) bad.push(`after a reload: ${JSON.stringify(reloaded)}`);
+    if (!maximizedState(phoneMax)) bad.push('390px: the switch didn\'t maximize');
+    if (!maximizedState(phoneReloaded) || !phoneReloaded.leafletFits || !phoneReloaded.frameInView || phoneReloaded.frameH > phoneReloaded.mainH) bad.push(`390px after a reload: ${JSON.stringify(phoneReloaded)}`);
     if (!maximizedState(favorites)) bad.push(`Favorites in the same tab: ${JSON.stringify(favorites)}`);
     if (!reducedState(newTab)) bad.push(`a new tab: ${JSON.stringify(newTab)}`);
     return [bad.length === 0, bad];

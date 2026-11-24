@@ -68,10 +68,10 @@ mkdir -p src/environments && printf "export const environment = {\n  production:
 
 ## Review Focus
 
-1. **The list not coming back** (Task 12). With the map big, "View details ▸" or "Add to trip…" must restore the list before the card opens, or the card opens out of sight. `map-check.mjs` case 4 maximizes, clicks each popup button, and requires the list showing and the card open, matching the popup and in view. Break-tested: without `this.mapSize.reduce()` case 4 fails.
+1. **The list not coming back, or coming back for nothing** (Task 12). On the Finder, "View details ▸" or "Add to trip…" from the big map must restore the list before the card opens. `map-check.mjs` case 4 maximizes, clicks each popup button (1280px and 390px), and requires the list showing and the card open, matching the popup and in view; case 1 requires Favorites' big map to stay big after a popup click (that page doesn't act on it). Break-tested: without the Finder's `reduce()` case 4 fails; with `reduce()` back in the shared map's popup handlers case 1 fails.
 2. **The map losing its place or size** (Task 12). A resize without `invalidateSize()` leaves Leaflet drawing at the old size. Case 2 and 3 require Leaflet's size to match its container, the same zoom and the center within 2px. Break-tested: a `ResizeObserver` that does nothing fails 2 and 3.
 3. **A phone map that shrinks, overflows or stays out of sight** (Task 12). "Fill the space below the filters" is smaller than today's 45vh on a 390px phone (308px against 380px), so the big map takes `100cqh` of `.app-main` and a maximize scrolls it into view. Case 3 requires at least 100px more, a map that fits `.app-main`, fully in view, and no sideways scroll in `.app-main`. Break-tested: without the height rule (380 → 380), without `container-type` (812px in a 622px area), and without the scroll into view, each fails case 3.
-4. **Breaking Tasks 10 and 11** (Task 12). `.app-main` becomes a size container and the map component changes. Step 4 reruns `scroll-check.mjs` (5 of 5) and `header-check.mjs` (7 of 7).
+4. **Breaking Tasks 10 and 11, or other pages** (Task 12). `.app-main` becomes a size container only under 900px while a map is maximized (`:has(.rt-map-layout--max)`), so other pages and wide screens keep no containment. Step 4 reruns `scroll-check.mjs` (5 of 5) and `header-check.mjs` (7 of 7).
 5. **Touching more than the ten files, or new raw colors** (Task 12). Step 4's whole-tree `git diff` must list exactly the ten files, `git status --porcelain` must be empty, and the `styles.scss` color counts must stay at 1 `rgba()` and 3 hex values outside `:root`.
 
 Task 11's review focus (the header) is in this file's history (PR #50).
@@ -2621,7 +2621,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
 
 **Interfaces:** Consumes: `app-campground-map`'s inputs and outputs, its `ResizeObserver` → `invalidateSize()` (Task 5, unchanged), `rt-map-layout` / `rt-side` / `rt-map-frame` (Task 2), the Finder's `viewDetails` / `addToTrip` handlers (Task 6, unchanged). Produces: `MapSizeService` (`maximized: Signal<boolean>`, `toggle()`, `reduce()`; `sessionStorage` key `campsite-finder.map-maximized`), the CSS modifier `rt-map-layout--max`, the Leaflet control `.map-size-toggle`, and `.app-main` as a size container.
 
-**Check script:** `ralphloop/map-check.mjs` (Lisa, 2026-11-21; like `scroll-check.mjs`, it's the loop's, so never edit it). It loads the production build in headless Chromium against the local stack and the dev seed and judges six cases: 1 the switch on every map page (top-right, "Enlarge map", the maximize icon, list showing) and it maximizes on each; 2 at 1280px the switch hides the list, the map takes the full width, Leaflet follows its container, zoom unchanged and center within 2px, and back again; 3 at 390px the map grows at least 100px taller, fits the scrolling area under the header and is scrolled fully into view, with nothing scrolling sideways (page or `.app-main`), and back again; 4 from the maximized map, "View details ▸" (signed out, 1280px and 390px) and "Add to trip…" (admin) bring the list back with that card open and in view; 5 remembered across a reload and on Favorites in the same tab, not in a new tab; 6 no console errors. Exit 0 all pass, 1 a case fails, 2 the check couldn't run (including a missing build, or only network errors in the console).
+**Check script:** `ralphloop/map-check.mjs` (Lisa, 2026-11-21; like `scroll-check.mjs`, it's the loop's, so never edit it). It loads the production build in headless Chromium against the local stack and the dev seed and judges six cases: 1 the switch on every map page (top-right, named "Enlarge map", tooltip, the maximize icon, list showing), it maximizes on each, and on Favorites a popup's "View details ▸" leaves the map big; 2 at 1280px the switch hides the list, the map takes the full width, Leaflet follows its container, zoom unchanged and center within 2px, back again, and Space on the focused switch maximizes it; 3 at 390px the map grows at least 100px taller, fits the scrolling area under the header and is scrolled fully into view, with nothing scrolling sideways (page or `.app-main`), and back again; 4 from the maximized map, "View details ▸" (signed out, 1280px and 390px) and "Add to trip…" (admin) bring the list back with that card open and in view; 5 remembered across a reload (Leaflet fits the big map; at 390px it's fully in view) and on Favorites in the same tab, not in a new tab; 6 no console errors. Exit 0 all pass, 1 a case fails, 2 the check couldn't run (including a missing build, or only network errors in the console).
 
 - [ ] **Step 1: Prove the check fails, then add the shared setting.**
   **First, the red check.** Write the local environment (Global Constraints, **Local settings**). Then, **only if `src/` still matches `main`** (on a retry or a resumed step it has already changed, so skip to "Then"):
@@ -2680,7 +2680,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
      ```
 
 - [ ] **Step 2: The switch on the map, and the layout.**
-  1. Replace the whole of `src/app/shared/ui/campground-map/campground-map.component.ts` with (as before, plus: `MapSizeService`, `host`/`injector`, the `sizeButton` field, an effect that repaints the switch, `addSizeControl`, `bringMapIntoView` (under 900px a maximize scrolls the map's frame to the top of the scrolling area), `paintSizeButton`, and `this.mapSize.reduce()` before each popup button's `emit`):
+  1. Replace the whole of `src/app/shared/ui/campground-map/campground-map.component.ts` with (as before, plus: `MapSizeService`, `host`/`injector`, the `sizeButton` field, an effect that repaints the switch, `addSizeControl` (click and Space toggle it), `bringMapIntoView` (under 900px a maximize, or a page that opens already maximized, scrolls the map's frame to the top of the scrolling area), and `paintSizeButton`; the popup buttons are unchanged, since bringing the list back is the Finder's job, Step 3):
      ```ts
      import {
        afterNextRender,
@@ -2797,6 +2797,10 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
          });
 
          this.addSizeControl(map);
+         if (this.mapSize.maximized()) {
+           // Restored big (a reload, or another map page in this tab): show it, as a click would.
+           afterNextRender(() => this.bringMapIntoView(), { injector: this.injector });
+         }
 
          this.resizeObserver = new ResizeObserver(() => map.invalidateSize());
          this.resizeObserver.observe(this.mapEl().nativeElement);
@@ -2875,7 +2879,6 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
          details.textContent = 'View details ▸';
          details.addEventListener('click', () => {
            marker.closePopup();
-           this.mapSize.reduce();
            this.viewDetails.emit(c.id);
          });
          root.appendChild(document.createElement('br'));
@@ -2888,7 +2891,6 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
            add.textContent = 'Add to trip…';
            add.addEventListener('click', () => {
              marker.closePopup();
-             this.mapSize.reduce();
              this.addToTrip.emit(c.id);
            });
            root.appendChild(document.createElement('br'));
@@ -2921,11 +2923,18 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
              button.setAttribute('role', 'button');
              L.DomUtil.create('span', 'pi', button).setAttribute('aria-hidden', 'true');
              L.DomEvent.disableClickPropagation(bar);
-             L.DomEvent.on(button, 'click', (e) => {
+             const toggle = (e: Event): void => {
                L.DomEvent.preventDefault(e);
                this.mapSize.toggle();
                if (this.mapSize.maximized()) {
                  afterNextRender(() => this.bringMapIntoView(), { injector: this.injector });
+               }
+             };
+             L.DomEvent.on(button, 'click', toggle);
+             // An <a> answers Enter only; a button also answers Space.
+             L.DomEvent.on(button, 'keydown', (e) => {
+               if ((e as KeyboardEvent).key === ' ') {
+                 toggle(e);
                }
              });
              this.sizeButton = button;
@@ -2952,10 +2961,10 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
            return;
          }
          const max = this.mapSize.maximized();
-         const label = max ? 'Show list' : 'Enlarge map';
+         // A toggle keeps one name; aria-pressed says whether it's on. The tooltip says what a click does.
          button.setAttribute('aria-pressed', String(max));
-         button.setAttribute('aria-label', label);
-         button.title = label;
+         button.setAttribute('aria-label', 'Enlarge map');
+         button.title = max ? 'Show list' : 'Enlarge map';
          const icon = button.querySelector('.pi');
          icon?.classList.toggle('pi-window-maximize', !max);
          icon?.classList.toggle('pi-window-minimize', max);
@@ -3002,7 +3011,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
        }
      }
      ```
-  2. In `src/styles.scss`, make exactly these three insertions:
+  2. In `src/styles.scss`, make exactly these four edits:
      - right **before** the line `@media (max-width: 900px) {` that follows `.rt-scroll-list { … }` (the one whose first rule is `.rt-map-layout {`), insert:
        ```scss
        /* Map maximized (spec 3, change #13): the list column hides and the map takes the width. */
@@ -3015,13 +3024,14 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
        }
 
        ```
-     - inside that same `@media (max-width: 900px)` block, right **after** its `.rt-map-frame { height: 45vh; }` rule, insert:
+     - inside that same `@media (max-width: 900px)` block, in its `.rt-map-layout { … }` rule, replace the line `    padding: 16px;` with the two lines `    --rt-map-pad: 16px;` and `    padding: var(--rt-map-pad);`;
+     - in the same block, right **after** its `.rt-map-frame { height: 45vh; }` rule, insert:
        ```scss
 
          /* Stacked: the big map takes the height of the scrolling area under the header (.app-main is
-            a size container), less the layout's padding, so scrolling past the filters shows only map. */
+            then a size container), less the layout's padding; a maximize scrolls it into view. */
          .rt-map-layout--max .rt-map-frame {
-           height: calc(100cqh - 32px);
+           height: calc(100cqh - 2 * var(--rt-map-pad));
          }
        ```
      - right **before** the line `.view-details-button {`, insert:
@@ -3032,10 +3042,16 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
        }
 
        ```
-  3. In `src/app/app.scss`, inside `.app-main { … }`, right after its `min-height: 0;` line, add:
+  3. In `src/app/app.scss`, right **before** its line `@media (max-width: 900px) {`, insert:
      ```scss
-       /* A size container: a maximized map under 900px sizes itself to it (spec 3, change #13). */
-       container-type: size;
+     /* Under 900px a maximized map sizes itself to the scrolling area (spec 3, change #13), so only
+        then is .app-main a size container. */
+     @media (max-width: 900px) {
+       .app-main:has(.rt-map-layout--max) {
+         container-type: size;
+       }
+     }
+
      ```
   Every color stays a token; the switch takes Leaflet's own control look (`style-task.md`; Leaflet's look never changes).
 
@@ -3043,6 +3059,13 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
   In each of `src/app/features/finder/finder.component.*`, `src/app/features/favorites/favorites.component.*` and `src/app/features/trips/trip-detail.component.*`:
   1. In the `.html`, change the one `<div class="rt-map-layout">` opening tag (keep its indentation) to `<div class="rt-map-layout" [class.rt-map-layout--max]="mapSize.maximized()">`.
   2. In the `.ts`, add the line `import { MapSizeService } from '../../core/services/map-size.service';` after the last `import` statement, and add `  protected readonly mapSize = inject(MapSizeService);` as the last of the class's `private readonly … = inject(…)` lines at the top of the class (`inject` is already imported in all three).
+  3. In `src/app/features/finder/finder.component.ts` only, make the first lines of `viewDetails(id: string)` (which `addToTrip` also calls) bring the list back:
+     ```ts
+       protected viewDetails(id: string): void {
+         // From the big map, the list comes back so the card can open (spec 3, change #13).
+         this.mapSize.reduce();
+     ```
+     The rest of the method is unchanged. Favorites and Trip detail don't act on the map's popup buttons (as before), so their big map stays big.
 
 - [ ] **Step 4: Verify.**
   ```bash
@@ -3061,7 +3084,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
   grep -cE 'rgba?\(' src/styles.scss
   # expect: 1 (the location marker's focus ring, as before)
   grep -nE '#[0-9a-fA-F]{3,8}\b' src/styles.scss | grep -vcE '^[0-9]+:  --rt-'
-  # expect: 3 (the location marker's colors, as before)
+  # expect: 3 (the popup button's and the location marker's colors, as before)
   MB=$(git merge-base main HEAD) || { echo "BLOCKED: no merge base with main"; exit 1; }
   git diff --name-only "$MB" -- . ':(exclude)ralphloop/task.md' ':(exclude)ralphloop/activity.md' | sort
   # expect exactly these ten lines:
@@ -3086,7 +3109,8 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
 
 **QC (for Shawn, in the browser):**
 - Finder on a laptop: a small button at the map's top-right that looks like the zoom buttons. Click it: the list disappears and the map fills the width; the map doesn't jump. Click again: the list is back.
-- With the map big, pan and zoom around a region; click a marker: the bubble opens and the map stays big. Click **"View details ▸"**: the list comes back with that campground's card open at the top. Same with **"Add to trip…"** when signed in (the trip picker opens).
+- With the map big, pan and zoom around a region; click a marker: the bubble opens and the map stays big. Click **"View details ▸"**: the list comes back with that campground's card open at the top. Same with **"Add to trip…"** when signed in (the trip picker opens). On Favorites and a trip, those bubble buttons do nothing, as before, and the map stays big.
+- Keyboard: Tab to the switch; Enter or Space flips it.
 - Reload the page: the map is still big. Open Favorites and a trip in the same tab: big there too. A new tab starts with the list.
 - On a phone: tap the button and the page scrolls so the map fills the screen under the header. Swipes move the map (like a map app); "Show list" at its top-right brings everything back. Nothing scrolls sideways.
 - With the map big, the list column's top row is hidden too: on the Finder the count and the location buttons, on Favorites "Plan a trip", on a trip its name and Rename/Delete. "Show list" brings them back.
@@ -3150,4 +3174,5 @@ Task 12 (Lisa, 2026-11-21, ralph-architect):
   - F4: Steps 1 and 4 retry the build up to three times ("Inlining of fonts failed" is a network blip); `serveSpa` runs inside the check's `try`, so a missing build is exit 2; a console holding only `net::ERR_…` errors is exit 2 (rerun), not a FAIL. The network-only path was reasoned, not reproduced.
   - F5: case 1 now maximizes on every page (Trip detail included) and asserts the icon; case 4 adds "View details ▸" at 390px.
   - Retested against `t12`: `main` FAIL 1–5 / PASS 6; Task 12 6 of 6. Breaks: no `container-type` (FAIL 3, 812px in 622px), no Trip detail binding (FAIL 1), no scroll into view (FAIL 3); a missing build dir exits 2.
+- **Code review (`/code-review` medium, 2026-11-22; 9 findings):** bringing the list back moved from the shared map's popup handlers to the Finder's `viewDetails()` (Favorites and Trip detail don't act on popup buttons, so collapsing their big map for nothing was wrong); a page that opens already maximized scrolls the phone map into view too (case 5 now checks the reload at 390px: in view, fits, Leaflet sized); `container-type: size` only under 900px and only while a map is maximized (`.app-main:has(.rt-map-layout--max)`); the switch keeps one name ("Enlarge map") with `aria-pressed`, the tooltip says what a click does, and Space toggles it too (case 2); the phone height uses `--rt-map-pad` instead of a hard-coded 32px; the Step 4 comment now names the popup button's color. Not changed: the helpers copied across the four check scripts (the loop-template work on the TODO list). Break-tested: each change fails only its own case (4; 1; 5; 2; 3 and 5). A probe of the Finder's agency dropdown at 390px opens it in the same place with the map maximized as without.
 
