@@ -60,12 +60,12 @@ The Forge Outdoors header (spec 2, change #6): the brand link (`.brand`: `.brand
 | Inline panel | `rt-dashed-panel` | manual location, trip planner |
 | Tag | `rt-tag` | `--teal` (agency), `--outline` (park code) |
 | Scrolling page | `rt-content` | Trips, Account, Admin, 404 |
-| Map-and-list page | `rt-map-layout` + `rt-map-frame` + `rt-side` (+ `rt-scroll-list`) | Finder, Favorites, Trip detail. Under 900px the map stacks above the list. |
+| Map-and-list page | `rt-map-layout` + `rt-map-frame` + `rt-side` (+ `rt-scroll-list`) | Finder, Favorites, Trip detail. Under 900px the map stacks above the list. Add `rt-map-layout--max` (bound to `MapSizeService.maximized()`) to hide the list and give the map the room (spec 3, change #13). |
 | Admin table | `rt-table-card` + `rt-table` (+ `rt-row-actions`) | |
 
 **PrimeNG:** only `p-multiselect` (the Finder filters), `p-select` (the admin role) and `p-autocomplete` (the admin campground search). They're restyled globally in `styles.scss`; don't restyle them per page.
 
-**Leaflet:** the map's own look (tiles, default markers, clusters, popups) never changes. The app's only marker classes are `.trip-stop-marker`, `.current-location-marker` and `.view-details-button` (popup buttons).
+**Leaflet:** the map's own look (tiles, default markers, clusters, popups) never changes. The app's only marker classes are `.trip-stop-marker`, `.current-location-marker` and `.view-details-button` (popup buttons). Its one control is `.map-size-toggle`, the maximize / reduce switch: an `<a role="button">` in a `.leaflet-bar`, so Leaflet's own control styles give it the look of the zoom buttons (spec 3, change #13).
 
 ## Shared components: use these before writing markup
 
