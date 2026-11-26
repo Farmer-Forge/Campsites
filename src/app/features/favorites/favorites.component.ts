@@ -7,6 +7,7 @@ import { FavoritesService } from '../../core/services/favorites.service';
 import { TripsService } from '../../core/services/trips.service';
 import { CampgroundMapComponent } from '../../shared/ui/campground-map/campground-map.component';
 import { CampgroundTableComponent } from '../../shared/ui/campground-table/campground-table.component';
+import { MapSizeService } from '../../core/services/map-size.service';
 
 @Component({
   selector: 'app-favorites',
@@ -54,6 +55,7 @@ export class FavoritesComponent implements OnInit {
   private readonly favoritesService = inject(FavoritesService);
   private readonly trips = inject(TripsService);
   private readonly router = inject(Router);
+  protected readonly mapSize = inject(MapSizeService);
 
   protected readonly loaded = signal<Campground[]>([]);
   protected readonly loading = signal(true);

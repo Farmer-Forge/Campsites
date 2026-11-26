@@ -12,7 +12,7 @@
     <p>Trip not found.</p>
   </div>
 } @else if (trip(); as t) {
-  <div class="rt-map-layout">
+  <div class="rt-map-layout" [class.rt-map-layout--max]="mapSize.maximized()">
     <div class="rt-map-frame">
       <app-campground-map
         [campgrounds]="campgrounds()"

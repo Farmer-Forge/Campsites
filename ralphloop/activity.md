@@ -252,3 +252,7 @@ RATIFIED: Task 11
 ## Task 12, call 2
 - Step 2: replaced campground-map.component.ts with the plan's block and made the four styles.scss edits and the app.scss insert (all extracted by script from task.md, so verbatim).
 - Verified: ng lint passes; production build OK; app-check.sh ends "CONSOLE CHECK PASSED: 15 page loads". The pages don't bind the layout class until Step 3, so map-check isn't expected to pass yet.
+
+## Task 12, call 3
+- Step 3: in Finder, Favorites and Trip detail, bound `[class.rt-map-layout--max]="mapSize.maximized()"` on the layout div, added the MapSizeService import and `mapSize` field, and made Finder's `viewDetails` call `mapSize.reduce()` first (scripted edit).
+- Verified: ng lint clean; app-check.sh "CONSOLE CHECK PASSED: 15 page loads"; map-check.mjs PASSED 6 of 6 (exit 0).

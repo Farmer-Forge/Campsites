@@ -8,6 +8,7 @@ import { FinderStateService } from '../../core/services/finder-state.service';
 import { GeolocationService } from '../../core/services/geolocation.service';
 import { CampgroundMapComponent } from '../../shared/ui/campground-map/campground-map.component';
 import { CampgroundTableComponent } from '../../shared/ui/campground-table/campground-table.component';
+import { MapSizeService } from '../../core/services/map-size.service';
 
 const METERS_PER_MILE = 1609.34;
 const SHOW_ALL_METERS = 20038000;
@@ -38,6 +39,7 @@ export class FinderComponent implements OnInit {
   private readonly campgroundsService = inject(CampgroundsService);
   private readonly geolocation = inject(GeolocationService);
   private readonly finderState = inject(FinderStateService);
+  protected readonly mapSize = inject(MapSizeService);
 
   protected readonly agencies = AGENCIES;
   protected readonly radiusChoices = RADIUS_CHOICES;
@@ -265,6 +267,8 @@ export class FinderComponent implements OnInit {
   }
 
   protected viewDetails(id: string): void {
+    // From the big map, the list comes back so the card can open (spec 3, change #13).
+    this.mapSize.reduce();
     this.selected.set(this.results().find((c) => c.id === id) ?? null);
   }
 

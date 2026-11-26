@@ -3055,7 +3055,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
      ```
   Every color stays a token; the switch takes Leaflet's own control look (`style-task.md`; Leaflet's look never changes).
 
-- [ ] **Step 3: The three map pages follow the setting.**
+- [x] **Step 3: The three map pages follow the setting.**
   In each of `src/app/features/finder/finder.component.*`, `src/app/features/favorites/favorites.component.*` and `src/app/features/trips/trip-detail.component.*`:
   1. In the `.html`, change the one `<div class="rt-map-layout">` opening tag (keep its indentation) to `<div class="rt-map-layout" [class.rt-map-layout--max]="mapSize.maximized()">`.
   2. In the `.ts`, add the line `import { MapSizeService } from '../../core/services/map-size.service';` after the last `import` statement, and add `  protected readonly mapSize = inject(MapSizeService);` as the last of the class's `private readonly … = inject(…)` lines at the top of the class (`inject` is already imported in all three).
