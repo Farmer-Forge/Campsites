@@ -419,3 +419,7 @@ verify_jwt = false
 
 [functions.ridb-sync]
 verify_jwt = false
+
+# osm-sync checks its caller the same way (Shawn, 2026-11-26).
+[functions.osm-sync]
+verify_jwt = false

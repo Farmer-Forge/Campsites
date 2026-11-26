@@ -11,8 +11,20 @@ A place to camp, from one Source, at one Location.
 _Avoid_: site, campsite (a campsite is a pitch inside a Campground), facility
 
 **Source**:
-The public feed a Campground comes from (NPS or RIDB).
+The public feed a Campground comes from (NPS, RIDB or OSM).
 _Avoid_: provider, origin, agency (an agency is who manages the land)
+
+**State-run campground**:
+A Campground run by a state agency (a state park, state forest or state recreation area). They come from OSM, with the agency `STATE`.
+_Avoid_: state campground (ambiguous with a Campground's State), state park (not every one is a park)
+
+**Retired campground**:
+A Campground its Source no longer lists, or that turned out to be a duplicate or not state-run. Hidden from search, kept in favorites and trips. Only OSM campgrounds are retired, and none is ever deleted.
+_Avoid_: deleted, removed, inactive, closed (a retired campground may still be open; OSM just no longer lists it)
+
+**Sync run**:
+One fetch of one Source for one state, with its counts (`osm_sync_runs`).
+_Avoid_: import, job (the job is the cron entry that starts runs)
 
 **Searchable campground**:
 A Campground with a known Location; ones placed at 0,0 by their Source are not searchable.

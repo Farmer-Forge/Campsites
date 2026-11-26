@@ -5,8 +5,9 @@
 # First loads the US state boundaries (supabase/geo/, ForgeGeo v0.1.0) when the
 # database has the geo schema (0023), so campgrounds get their states from the
 # 0024 triggers as they're seeded. Then runs ralphloop/seed-dev.sql (the dev admin) and then, if they exist,
-# ralphloop/seed-app.sql (the campground reference data) and ralphloop/seed-sample.sql
-# (fake users and their favorites and trips, for reviewers), through the worker
+# ralphloop/seed-app.sql (the campground reference data), ralphloop/seed-sample.sql
+# (fake users and their favorites and trips, for reviewers) and ralphloop/seed-osm.sql
+# (three sample State campgrounds, one retired), through the worker
 # image's psql, since ralph's host has no psql of its own. The dev login it
 # guarantees is admin@campsites.test / campsites-admin.
 #
@@ -50,6 +51,7 @@ fi
 ARGS=(-v ON_ERROR_STOP=1 -f ralphloop/seed-dev.sql)
 [ -f ralphloop/seed-app.sql ] && ARGS+=(-f ralphloop/seed-app.sql)
 [ -f ralphloop/seed-sample.sql ] && ARGS+=(-f ralphloop/seed-sample.sql)
+[ -f ralphloop/seed-osm.sql ] && ARGS+=(-f ralphloop/seed-osm.sql)
 
 run_psql "${ARGS[@]}"
 
