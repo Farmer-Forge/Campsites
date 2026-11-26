@@ -2679,7 +2679,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
      }
      ```
 
-- [ ] **Step 2: The switch on the map, and the layout.**
+- [x] **Step 2: The switch on the map, and the layout.**
   1. Replace the whole of `src/app/shared/ui/campground-map/campground-map.component.ts` with (as before, plus: `MapSizeService`, `host`/`injector`, the `sizeButton` field, an effect that repaints the switch, `addSizeControl` (click and Space toggle it), `bringMapIntoView` (under 900px a maximize, or a page that opens already maximized, scrolls the map's frame to the top of the scrolling area), and `paintSizeButton`; the popup buttons are unchanged, since bringing the list back is the Finder's job, Step 3):
      ```ts
      import {

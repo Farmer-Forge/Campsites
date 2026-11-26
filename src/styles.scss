@@ -354,15 +354,31 @@ select.rt-input {
   padding: 2px 8px 8px 2px;
 }
 
+/* Map maximized (spec 3, change #13): the list column hides and the map takes the width. */
+.rt-map-layout--max {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.rt-map-layout--max .rt-side {
+  display: none;
+}
+
 @media (max-width: 900px) {
   .rt-map-layout {
     flex: none;
     grid-template-columns: minmax(0, 1fr);
-    padding: 16px;
+    --rt-map-pad: 16px;
+    padding: var(--rt-map-pad);
   }
 
   .rt-map-frame {
     height: 45vh;
+  }
+
+  /* Stacked: the big map takes the height of the scrolling area under the header (.app-main is
+     then a size container), less the layout's padding; a maximize scrolls it into view. */
+  .rt-map-layout--max .rt-map-frame {
+    height: calc(100cqh - 2 * var(--rt-map-pad));
   }
 
   .rt-scroll-list {
@@ -498,6 +514,11 @@ select.rt-input {
   justify-content: center;
   font-weight: 700;
   font-size: 0.85rem;
+}
+
+/* The map's maximize / reduce switch (spec 3, change #13): Leaflet's .leaflet-bar a gives the look. */
+.map-size-toggle .pi {
+  font-size: 14px;
 }
 
 .view-details-button {

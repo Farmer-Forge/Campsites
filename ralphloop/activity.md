@@ -248,3 +248,7 @@ RATIFIED: Task 11
 ## Task 12, call 1
 - Step 1: red check run first (src matched main): FAIL 1-5, PASS 6, "MAP CHECK FAILED: 5 of 6.", exit 1, as expected. Created map-size.service.ts verbatim from the plan.
 - Verified: ng lint clean; app-check.sh console check passed (15 page loads).
+
+## Task 12, call 2
+- Step 2: replaced campground-map.component.ts with the plan's block and made the four styles.scss edits and the app.scss insert (all extracted by script from task.md, so verbatim).
+- Verified: ng lint passes; production build OK; app-check.sh ends "CONSOLE CHECK PASSED: 15 page loads". The pages don't bind the layout class until Step 3, so map-check isn't expected to pass yet.
