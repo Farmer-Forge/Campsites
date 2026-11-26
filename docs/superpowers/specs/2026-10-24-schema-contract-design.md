@@ -12,7 +12,8 @@ The contract is these files:
 - `supabase/migrations/0001–0018`, unchanged from V1's `v1.0` tag;
 - `supabase/migrations/0019_function_search_path.sql`, which adds the one thing production had that `0001–0018` lacked (below);
 - `supabase/migrations/0020_security_fixes.sql`, the fixes Shawn asked for on 2026-10-24 (see **Fixes**). This is where V1.1's database **differs from V1's**;
-- `supabase/functions/`: V1's six edge functions, plus a caller check added to `nps-sync` and `ridb-sync` (`_shared/service-role.ts`, see **Fixes**) and the Priest Rock correction in `nps-sync/transform.ts` (**Fixes** #9);
+- `supabase/migrations/0025_osm_state_campgrounds.sql` and `0026_osm_sync_schedule.sql`: state-run campgrounds from OpenStreetMap, retired rather than deleted, and the sync's weekly schedule (Shawn, 2026-11-26; see **Fixes** #12). Hand-written, applied by hand;
+- `supabase/functions/`: V1's six edge functions, plus `osm-sync` (2026-11-26, **Fixes** #12), plus a caller check added to `nps-sync` and `ridb-sync` (`_shared/service-role.ts`, see **Fixes**) and the Priest Rock correction in `nps-sync/transform.ts` (**Fixes** #9);
 - `supabase/migrations/0021_skip_zero_locations.sql`: search leaves out campgrounds at 0,0 (Shawn, 2026-10-27; see **Fixes** #8);
 - `supabase/migrations/0022_state_filter_excludes_unknown_state.sql`: a state filter no longer lets in campgrounds with no state (Shawn, 2026-11-14; see **Fixes** #10);
 - `supabase/migrations/0023_forgegeo_v0_1_0.sql`: a byte-for-byte copy of ForgeGeo v0.1.0's `20261115000000_create_geo.sql` (the `geo` schema; sha256 `8f242e32c503055a0dfb3eb15709150df1ec53ebae068b79030b73050313ff26`). Never edited here: a new ForgeGeo release is a new migration;
@@ -54,7 +55,10 @@ Where this spec and the files disagree, the files win, and this spec gets fixed.
 | `pgcrypto` | `extensions` | `gen_random_uuid()` defaults; the dev seed's password hashing |
 | `uuid-ossp` | `extensions` | Supabase default, unused by V1's tables |
 | `pg_stat_statements` | `extensions` | Supabase default |
-| `supabase_vault` | `vault` | Supabase default, unused by V1 |
+| `supabase_vault` | `vault` | Supabase default. **Since `0026`:** holds `osm_sync_url` and `osm_sync_key`, which `call_osm_sync()` reads (created by hand) |
+| `pg_trgm` | `extensions` | **`0025`.** `similarity()` for the OSM duplicate check |
+| `pg_cron` | `pg_catalog` (`cron` schema) | **`0026`.** The `osm-sync` job, every 15 minutes |
+| `pg_net` | `extensions` (`net` schema) | **`0026`.** `call_osm_sync()` posts to the `osm-sync` edge function |
 
 ## Tables
 
@@ -64,28 +68,38 @@ All seven of V1's tables, and `campground_state_log` (`0024`), have RLS on. Supa
 
 | Column | Type | Notes |
 |---|---|---|
-| `id` | text, PK | NPS rows: NPS's campground id. RIDB rows: `ridb:<FacilityID>`. |
+| `id` | text, PK | NPS rows: NPS's campground id. RIDB rows: `ridb:<FacilityID>`. OSM rows (`0025`): `osm:<type>/<id>`, e.g. `osm:way/1104856366`. |
 | `park_code` | text, nullable | NPS park code; `null` for RIDB rows |
 | `name` | text, not null | |
 | `description` | text | |
 | `location` | `geography(Point,4326)`, not null | GiST index |
 | `amenities`, `fees`, `images`, `contact` | jsonb | as each source gives them |
 | `reservation_url`, `directions_url` | text | can be `''` (see the reserve/directions plan in V1) |
-| `agency` | text, not null, default `'NPS'` | btree index; e.g. `NPS`, `USFS`, `BLM`, `USACE` |
-| `source` | text, not null, default `'nps'` | `nps` or `ridb` |
+| `agency` | text, not null, default `'NPS'` | btree index; `NPS`, `USFS`, `BLM`, `USACE`, `FWS`, or `STATE` (OSM rows, `0025`) |
+| `source` | text, not null, default `'nps'` | `nps`, `ridb` or `osm` (`0025`) |
 | `state` | text, nullable | two-letter state; btree index. **Null means unknown, and state filters always include it.** In production, 463 of the 4,900 rows have no `state`: 163 NPS, 243 USFS, 43 BLM and 8 USACE (counted from the seed, 2026-10-25). *(An earlier draft said every NPS row lacked a state; the data says otherwise.)* **Since `0024`** (**Fixes** #11) it's set by trigger on every insert and update: the override, else the location's state, else the source's (see `state_reason`). Since `0022`, state filters leave out nulls. |
 | `source_state` | text, nullable (`0024`) | the state the source's address gave, as the sync sent it |
 | `state_override` | text, nullable (`0024`) | an admin's state for this campground; outranks location and source until cleared (`admin_set_campground_state_override`) |
 | `state_reason` | text, nullable, check (`0024`) | why `state` has its value: `manual`, `no_geo_data`, `no_location`, `no_boundary`, `location_filled`, `source`, `near_border` or `location_overrode` |
 | `updated_at` | timestamptz, not null, default `now()` | |
+| `retired_at` | timestamptz, nullable (`0025`) | set when its Source no longer lists it; null means live. **Only `osm` rows are ever retired** (a check), and both columns are set or both null |
+| `retired_reason` | text, nullable, check (`0025`) | `gone_from_osm`, `not_state_run` or `duplicate` |
 
 - **Policy:** "anyone can read campgrounds" (select, everyone).
-- **Writes:** none from the app. Only `nps-sync` and `ridb-sync` write, with the service role, upserting on `id`. **Since `0024`,** three triggers decide `state` on every write (see **Fixes** #11 and `docs/adr/0002-three-triggers-for-campground-state.md`).
+- **Writes:** none from the app. Only `nps-sync`, `ridb-sync` and (`0025`) `osm-sync` write, with the service role, upserting on `id`. `osm-sync` writes through `apply_osm_sync_state()` and only ever touches `osm` rows. **Since `0024`,** three triggers decide `state` on every write (see **Fixes** #11 and `docs/adr/0002-three-triggers-for-campground-state.md`).
 - **App use:** the `nearest_campgrounds` and `get_campgrounds_by_ids` RPCs; `select park_code where park_code is not null` (the Finder's park filter); and `select id, name ilike %q% limit 20` (search by name, for add-a-stop).
 
 ### `campground_state_log`: every change to a campground's state (`0024`)
 
 `id` (identity), `campground_id` (FK, cascade), `at`, `old_state`, `new_state`, `source_state`, `location_state`, `override_state`, `reason`, `distance_m` (to the source's state, for `near_border` and `location_overrode`), `changed_by` (`auth.uid()`, null for syncs). Written only by the `campground_state_resolve` trigger. RLS on with no policies; `anon` and `authenticated` have no privileges. Admins read it through `admin_campground_state_log`.
+
+### `osm_campgrounds`: the OSM-only facts for each `osm` row (`0025`)
+
+`campground_id` (PK, FK cascade), `overpass_state` (the 2-letter Overpass area it came from; the retire rule keys on this, not on `state`), `operator`, `operator_wikidata`, `first_seen_at`, `last_seen_at`, `created_at`. RLS on: "admins read osm_campgrounds" (select, `is_admin`). `anon` has no privileges, `authenticated` only `select`. Written only by `apply_osm_sync_state()`.
+
+### `osm_sync_runs`: one row per state per OSM sync run (`0025`)
+
+`id` (identity), `state`, `status` (`running`, `ok`, `failed`, `guarded`), `started_at`, `finished_at`, the counts (`fetched`, `kept_classified`, `kept_new`, `kept_updated`, `dropped_not_state_run`, `dropped_no_name`, `dropped_duplicate`, `dropped_no_point`, `retired`, `unretired`), `operators` (operator → kept/dropped), `near_misses` (OSM rows within 300 m of an NPS/RIDB row with a different name), `error`, `created_at`. RLS on: "admins read osm_sync_runs". Same privileges as `osm_campgrounds`. "How many did each state add" is one query on this table.
 
 ### `geo.us_states` and `geo.dataset`: ForgeGeo v0.1.0 (`0023`)
 
@@ -165,7 +179,7 @@ Reference geography from ForgeGeo (its README is the contract): the 56 Census st
 ### Deleting things
 
 - **Deleting an `auth.users` row** cascades to its `users`, `favorites` and `trips` rows, and through `trips` to `trip_stops`.
-- **Deleting a campground** cascades to favorites, trip stops and attributes. The syncs only upsert, so in practice this never happens.
+- **Deleting a campground** cascades to favorites, trip stops and attributes. The syncs only upsert, so in practice this never happens. **OSM rows are retired, never deleted** (`0025`, `docs/adr/0003-osm-campgrounds-retire-never-delete.md`).
 
 ## Functions (RPCs)
 
@@ -173,8 +187,8 @@ All are owned by `postgres` and pin `search_path`. "Admin-guarded" means the fun
 
 | Function | Kind | Who can execute | Does |
 |---|---|---|---|
-| `nearest_campgrounds(user_lat, user_lng, result_limit int = 50, agency_filter text[] = null, max_distance_m float = null, state_filter text[] = null, park_filter text[] = null)` | sql, stable | anon, authenticated | Campgrounds ordered by distance, with `lat`, `lng` and `distance_m`. Each filter is skipped when null. **Since `0022`,** `state_filter` returns only rows whose `state` is in it; rows with no `state` come back only when `state_filter` is null (**Fixes** #10). When `max_distance_m` is set, it returns **every** row within that radius and ignores `result_limit`; otherwise it returns the nearest `result_limit`. **V1.1** (`0021`) also leaves out rows at exactly 0,0 (**Fixes** #8). |
-| `get_campgrounds_by_ids(campground_ids text[], agency_filter text[] = null)` | sql, stable | anon, authenticated | The same columns minus `distance_m`, for the given ids, optionally filtered by agency. Used for favorites and trip stops. |
+| `nearest_campgrounds(user_lat, user_lng, result_limit int = 50, agency_filter text[] = null, max_distance_m float = null, state_filter text[] = null, park_filter text[] = null)` | sql, stable | anon, authenticated | Campgrounds ordered by distance, with `lat`, `lng` and `distance_m`. Each filter is skipped when null. **Since `0022`,** `state_filter` returns only rows whose `state` is in it; rows with no `state` come back only when `state_filter` is null (**Fixes** #10). When `max_distance_m` is set, it returns **every** row within that radius and ignores `result_limit`; otherwise it returns the nearest `result_limit`. **V1.1** (`0021`) also leaves out rows at exactly 0,0 (**Fixes** #8). **Since `0025`** it leaves out retired campgrounds (**Fixes** #12). |
+| `get_campgrounds_by_ids(campground_ids text[], agency_filter text[] = null)` | sql, stable | anon, authenticated | The same columns minus `distance_m`, for the given ids, optionally filtered by agency. Used for favorites and trip stops. **Since `0025`** it also returns `retired boolean`, and returns retired campgrounds too (re-created, since its return type changed). |
 | `is_admin(uid uuid)` | sql, stable | authenticated | `true` if that user's `role = 'admin'`. Used by RLS, every admin function and the admin edge functions. |
 | `get_users_for_admin()` | plpgsql, security definer, admin-guarded | authenticated | Every user: `id, email, display_name, role, suspended, created_at` (email and created_at from `auth.users`), newest first. |
 | `admin_update_user_role(target_user_id, new_role)` | plpgsql, security definer, admin-guarded | authenticated | Sets `role`. Refuses your own id (`'cannot modify your own role'`) and anything but the three roles (`'invalid role'`). |
@@ -184,6 +198,11 @@ All are owned by `postgres` and pin `search_path`. "Admin-guarded" means the fun
 | `recompute_campground_states()` | plpgsql, security definer | service_role | **`0024`.** Re-runs the state rules on every campground (the first backfill, and after a boundary reload); returns `(state_reason, n)`. |
 | `admin_set_campground_state_override(campground_id, state_code)` | plpgsql, security definer, admin-guarded (`42501`) | authenticated | **`0024`.** Sets (null clears) `state_override`. The code is trimmed and upper-cased; one not in `geo.us_states` raises `22023`, an unknown campground `P0002`. Returns the row's new `state, state_reason`. For the later Admin UI. |
 | `admin_campground_state_log(campground_id = null, result_limit = 100)` | plpgsql, stable, security definer, admin-guarded (`42501`) | authenticated | **`0024`.** `campground_state_log` rows, newest first, for one campground or all; at most 1,000. |
+| `start_osm_sync_run(p_state text = null)` | plpgsql | service_role | **`0025`.** Starts one state's run and returns `(run_id, state)`, or no row when another run is in progress (a run `running` for over 10 minutes is marked failed) or nothing is due. With no state it picks, of the 50, a state with no `ok` run in 6 days **and no attempt of any kind in 6 hours**, oldest attempt first, so a state that keeps failing is tried at most 4 times a day. An unknown state raises `22023`. |
+| `apply_osm_sync_state(p_run_id, p_rows jsonb, p_dropped_ids text[], p_unplaced_ids text[], p_fetched int, p_dropped_no_name int, p_operators jsonb)` | plpgsql | service_role | **`0025`.** In one transaction: drops duplicates (a live NPS/RIDB row within 300 m with name `similarity` > 0.5; an existing OSM row retires as `duplicate`), upserts the rest as `agency = 'STATE'`, `source = 'osm'` (unretiring any that come back), retires this state's `osm` rows that are gone or classified out (rows in `p_unplaced_ids`, kept but with no usable point, are left as they are), and logs the run. **The guard:** with 0 fetched, or under half the state's last `ok` kept count, nothing is retired as gone or not state-run and the run is `guarded`. A real drop is accepted on the 4th such run in a row (3 guarded runs with data before it); an empty result is always guarded. |
+| `fail_osm_sync_run(p_run_id, p_error)` | sql | service_role | **`0025`.** Marks a running run failed. |
+| `normalize_campground_name(text)`, `osm_sync_states()` | sql, immutable | service_role | **`0025`.** Helpers: a name lowercased with punctuation and the generic words dropped; the 50 state codes. |
+| `call_osm_sync()` | plpgsql, security definer | only `postgres` (the cron job); revoked from `public`, `anon`, `authenticated` and `service_role` | **`0026`.** Posts to `osm-sync` through `pg_net` with the URL and key from Vault; does nothing until both secrets exist. |
 | `handle_new_user()` | plpgsql, security definer, trigger | nobody directly (revoked; 0002) | Inserts the `users` row: `display_name` from the sign-up metadata's `display_name`, else the part of the email before `@`. |
 
 **Trigger:** `on_auth_user_created`: `after insert on auth.users for each row execute function public.handle_new_user()`.
@@ -206,7 +225,7 @@ All are owned by `postgres` and pin `search_path`. "Admin-guarded" means the fun
 
 ## Edge functions
 
-All six use `SUPABASE_URL`, plus `SUPABASE_SERVICE_ROLE_KEY` for privileged work. Supabase provides those automatically.
+All seven use `SUPABASE_URL`, plus `SUPABASE_SERVICE_ROLE_KEY` for privileged work. Supabase provides those automatically.
 
 | Function | Called by | Checks the caller | Does |
 |---|---|---|---|
@@ -216,9 +235,10 @@ All six use `SUPABASE_URL`, plus `SUPABASE_SERVICE_ROLE_KEY` for privileged work
 | `admin-update-user-email` | admin page | user JWT, then `is_admin` | `updateUserById(target_user_id, { email: new_email })`. |
 | `nps-sync` | run by hand (dashboard or CLI) | **none in code**; only the platform's JWT check | Pages through NPS `/campgrounds` and `/parks` (`NPS_API_KEY`) and upserts `campgrounds` and `parks`. |
 | `ridb-sync` | run by hand | **none in code** | Pages through RIDB `/facilities?activity=9&full=true` (`RIDB_API_KEY`) and upserts `campgrounds` with `ridb:` ids, `source = 'ridb'`, `park_code = null`, plus agency, state and the recreation.gov reservation URL. |
+| `osm-sync` (2026-11-26) | `pg_cron` every 15 minutes (`0026`), or by hand with `?state=MN` | the secret-key check (`_shared/service-role.ts`), `verify_jwt = false` | One state per call: Overpass `tourism=camp_site` for that state (`OVERPASS_URL` secret overrides the server), keeps state-run ones (`classify.ts`), and hands them to `apply_osm_sync_state()`. Never touches NPS or RIDB rows. |
 
-- **There's no schedule.** No `pg_cron` job exists in production or the migrations, so the syncs only run when someone runs them.
-- **Tests:** `deno test supabase/functions`, 34 tests, covering only the pure parts: `ridb-sync/transform.ts`, `ridb-sync/agency.ts` and `nps-sync/transform.ts`. They don't touch the network or a database. Each step that touches these files would run them. No step should touch them, since they're in the contract.
+- **There's no schedule for `nps-sync` or `ridb-sync`:** they only run when someone runs them. `osm-sync` is the one scheduled sync (`0026`), and only once its Vault secrets exist.
+- **Tests:** `deno test supabase/functions`, 67 tests (2026-11-26), covering only the pure parts: `ridb-sync/transform.ts`, `ridb-sync/agency.ts`, `nps-sync/transform.ts`, the caller check and, since 2026-11-26, `osm-sync/classify.ts`, `transform.ts` and `overpass.ts` (with a fake `fetch`). They don't touch the network or a database. Each step that touches these files would run them. No step should touch them, since they're in the contract.
 - **The loop never calls NPS or RIDB,** and never deploys a function. Locally, campground data comes from the seed (Phase 3), copied from production as it is.
 
 ## Fixes (Shawn, 2026-10-24)
@@ -238,6 +258,7 @@ Shawn reviewed the behaviors below and asked for them fixed in V1.1, except `mod
 | 9 | **"NPS Priest Rock Public Use Cabin" had its longitude's sign flipped** (+154.18, in Russia; added 2026-10-27) | `nps-sync` flips that one campground's longitude back when it's positive, so every sync stores the right value (+1 Deno test). It's not a general rule, because real US places such as Guam have a positive longitude. `ralphloop/seed-app.sql` makes the same correction after loading production's data. V1's own row is unchanged. | `nps-sync/transform.ts`; seed |
 | 10 | **The Where filter let in campgrounds from other states** (added 2026-11-14; `docs/next-loop-bugs.md`, bug 6). `state_filter` kept every row with a null `state` (0014), and 422 of the 4,688 searchable campgrounds in production have none, so "Midwest only" returned 897 campgrounds nationwide instead of 475. | `nearest_campgrounds` drops `c.state is null or`: a state filter returns only rows in those states. With no state filter ("All states") the null-state rows still come back. **Applied to production by hand 2026-11-14** (Lisa, Shawn's go-ahead; history 22/22). Filling in the missing states from each campground's location is a later, hand-written migration (bug 6, option A), not loop work. | `0022` |
 | 11 | **Campgrounds with no state** (added 2026-11-15; `docs/next-loop-bugs.md`, bug 6 part A). 457 rows (422 searchable) had no `state` because their source records have no address (checked against the NPS API, 2026-11-15), so since #10 no Where filter finds them. Source addresses can also name a mailing office in another state. | ForgeGeo's state boundaries (`0023`, Census 1:500k) and three triggers (`0024`): a campground's `state` is its `state_override`, else the state its location is in, except that the source's state is kept within 1 km of that state (`near_border`) or when there's no location, boundary or boundary data. Every change is written to `campground_state_log`; admins fix a wrong result with `admin_set_campground_state_override`. Spec `~/plans/2026-11-15-state-backfill-design.md` (on Lisa). **Applied to production by hand 2026-11-15** (Lisa, Shawn's go-ahead; history 24/24; boundaries `cb_2025_us_state_500k` loaded; 422 → 1 searchable with no state, Midwest only 475 → 540). | `0023`, `0024` |
+| 12 | **No state-run campgrounds** (added 2026-11-26; Shawn). The Finder only knew federal campgrounds (NPS, RIDB); state parks and state forests were missing. Design `~/plans/2026-11-26-campsites-state-parks-osm-design.md` (on Lisa). | A third Source, OpenStreetMap: `osm-sync` fetches one state per call from Overpass, keeps state-run campgrounds, drops duplicates of NPS/RIDB rows, and stores them as `agency = 'STATE'`, `source = 'osm'`. **OSM rows are retired, never deleted** (deletes cascade into favorites and trips): a retired campground leaves search but stays in favorites and trips, flagged `retired`. A guard stops a bad Overpass result retiring a state. Runs every 15 minutes through `pg_cron`, once its Vault secrets exist. NPS and RIDB rows are never touched. Tests: `supabase/tests/osm_state_campgrounds_test.sql` (71) and `supabase/functions/osm-sync/*.test.ts`. **Applied to production by hand** (not yet). | `0025`, `0026`, `osm-sync` |
 
 **Correction to the first draft.** It said an admin could demote or suspend every other admin, leaving none. That can't happen: admins can't change their own role or suspension, so the caller always stays an admin. The real gaps were #3 (a suspended admin kept its powers) and #4 (self-deletion).
 
