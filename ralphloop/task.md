@@ -3105,7 +3105,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
   ```
   Re-read spec 3 change #13 and run `style-task.md`'s self-check.
 
-- [ ] **Step 5: Commit.** `git commit -m "Task 12: a switch to maximize or reduce the map (spec 3, change #13)"`
+- [x] **Step 5: Commit.** `git commit -m "Task 12: a switch to maximize or reduce the map (spec 3, change #13)"`
 
 **QC (for Shawn, in the browser):**
 - Finder on a laptop: a small button at the map's top-right that looks like the zoom buttons. Click it: the list disappears and the map fills the width; the map doesn't jump. Click again: the list is back.

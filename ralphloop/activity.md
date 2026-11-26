@@ -259,3 +259,8 @@ RATIFIED: Task 11
 
 ## Task 12, call 4
 - Step 4 (Verify): ng lint clean; production build OK; map-check 6 of 6, scroll-check 5 of 5, header-check 7 of 7 (all exit 0); colour greps as expected (none, 1, 3); the ten-file diff list matches; no uncommitted app files; app-check.sh "CONSOLE CHECK PASSED: 15 page loads". No new code, so the style self-check is unchanged from Step 3.
+
+## Task 12, call 5
+- Step 5 (Commit): checkpoint commits already hold all ten files (confirmed in `git log main..HEAD --stat`); nothing to commit, no empty commit made. Step ticked.
+
+TASK 12 COMPLETE
