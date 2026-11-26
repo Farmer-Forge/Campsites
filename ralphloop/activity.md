@@ -256,3 +256,6 @@ RATIFIED: Task 11
 ## Task 12, call 3
 - Step 3: in Finder, Favorites and Trip detail, bound `[class.rt-map-layout--max]="mapSize.maximized()"` on the layout div, added the MapSizeService import and `mapSize` field, and made Finder's `viewDetails` call `mapSize.reduce()` first (scripted edit).
 - Verified: ng lint clean; app-check.sh "CONSOLE CHECK PASSED: 15 page loads"; map-check.mjs PASSED 6 of 6 (exit 0).
+
+## Task 12, call 4
+- Step 4 (Verify): ng lint clean; production build OK; map-check 6 of 6, scroll-check 5 of 5, header-check 7 of 7 (all exit 0); colour greps as expected (none, 1, 3); the ten-file diff list matches; no uncommitted app files; app-check.sh "CONSOLE CHECK PASSED: 15 page loads". No new code, so the style self-check is unchanged from Step 3.

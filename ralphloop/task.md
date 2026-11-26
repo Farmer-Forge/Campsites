@@ -3067,7 +3067,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
      ```
      The rest of the method is unchanged. Favorites and Trip detail don't act on the map's popup buttons (as before), so their big map stays big.
 
-- [ ] **Step 4: Verify.**
+- [x] **Step 4: Verify.**
   ```bash
   npx ng lint
   # expect: "All files pass linting."
