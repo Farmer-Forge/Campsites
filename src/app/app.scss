@@ -116,6 +116,14 @@
   }
 }
 
+/* Under 900px a maximized map sizes itself to the scrolling area (spec 3, change #13), so only
+   then is .app-main a size container. */
+@media (max-width: 900px) {
+  .app-main:has(.rt-map-layout--max) {
+    container-type: size;
+  }
+}
+
 @media (max-width: 900px) {
   .app-nav {
     padding: 12px 16px;

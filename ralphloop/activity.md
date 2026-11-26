@@ -244,3 +244,40 @@ What I ran (on this branch's final state):
 - For the person merging: the QC items are visual (Archivo body text, the warmer cream, the deeper red, phone wrapping). Check them in the browser as listed.
 - Cleanup: I rewrote the gitignored environment.local.ts from $SUPABASE_URL/$SUPABASE_ANON_KEY and rebuilt dist/ (both gitignored). I wrote nothing to the database and changed nothing in the repo.
 RATIFIED: Task 11
+
+## Task 12, call 1
+- Step 1: red check run first (src matched main): FAIL 1-5, PASS 6, "MAP CHECK FAILED: 5 of 6.", exit 1, as expected. Created map-size.service.ts verbatim from the plan.
+- Verified: ng lint clean; app-check.sh console check passed (15 page loads).
+
+## Task 12, call 2
+- Step 2: replaced campground-map.component.ts with the plan's block and made the four styles.scss edits and the app.scss insert (all extracted by script from task.md, so verbatim).
+- Verified: ng lint passes; production build OK; app-check.sh ends "CONSOLE CHECK PASSED: 15 page loads". The pages don't bind the layout class until Step 3, so map-check isn't expected to pass yet.
+
+## Task 12, call 3
+- Step 3: in Finder, Favorites and Trip detail, bound `[class.rt-map-layout--max]="mapSize.maximized()"` on the layout div, added the MapSizeService import and `mapSize` field, and made Finder's `viewDetails` call `mapSize.reduce()` first (scripted edit).
+- Verified: ng lint clean; app-check.sh "CONSOLE CHECK PASSED: 15 page loads"; map-check.mjs PASSED 6 of 6 (exit 0).
+
+## Task 12, call 4
+- Step 4 (Verify): ng lint clean; production build OK; map-check 6 of 6, scroll-check 5 of 5, header-check 7 of 7 (all exit 0); colour greps as expected (none, 1, 3); the ten-file diff list matches; no uncommitted app files; app-check.sh "CONSOLE CHECK PASSED: 15 page loads". No new code, so the style self-check is unchanged from Step 3.
+
+## Task 12, call 5
+- Step 5 (Commit): checkpoint commits already hold all ten files (confirmed in `git log main..HEAD --stat`); nothing to commit, no empty commit made. Step ticked.
+
+TASK 12 COMPLETE
+
+## Task 12, ratify
+What I ran: every Step 4 check, exactly as written. `npx ng lint` passed ("All files pass linting."). `ng build -c production,local` succeeded with no errors. `map-check.mjs` passed 6 of 6, `scroll-check.mjs` 5 of 5 and `header-check.mjs` 7 of 7. The color greps gave: no matches and grep exit 1 on the three files, 1 `rgba()` in styles.scss, and 3 hex values outside `--rt-` tokens. The merge-base `git diff --name-only` (task.md and activity.md excluded) listed exactly the ten planned files. `git status --porcelain` showed nothing beyond the read-only activity.md, which was already marked modified at the start. `bash ralphloop/app-check.sh` ended "CONSOLE CHECK PASSED: 15 page loads, no console errors." The committed environment.ts is still empty. I didn't rerun Step 1's red check: `src/` no longer matches main, so the plan says to skip it.
+
+Diff review: I extracted the plan's verbatim code from the task section and diffed it against the files. campground-map.component.ts and map-size.service.ts are identical to the plan. The styles.scss edits (four), the app.scss block, the three `[class.rt-map-layout--max]` bindings, the three `inject(MapSizeService)` lines and Finder's `reduce()` in `viewDetails()` all match the plan's wording. The only change to task.md is the five ticked step boxes. Nothing under supabase/, and no change to vercel.json, scripts/ or config.toml. No tests or check scripts were touched. No catch blocks were emptied beyond the plan's two sessionStorage guards, which the plan gives verbatim. No private details. Nothing beyond spec 3 change #13.
+
+What I tried to break: I wrote my own Playwright probe (scratch under /tmp, its own serveSpa, closed afterwards) against the production build, signed in as pat at 390px.
+- Trip detail: maximizing took the map frame from 380 to 590px inside the 622px `.app-main`. Nothing scrolled sideways, `.rt-side` was hidden, and the tooltip changed to "Show list".
+- Favorites in the same tab opened already maximized (the setting is remembered), and reducing it there worked.
+- With the setting still on, I visited /about, /account and /trips. On each, `.app-main` had `container-type: normal` and the full 622px height, and content rendered (/account still scrolls: scrollHeight 685). So size containment doesn't leak to pages without a map.
+- On the Finder, I went from 390px to 1280px and then pressed Enter on the focused switch. The list hid, sessionStorage held '1', and the URL didn't change (no '#' navigation).
+- The probe saw no console errors.
+All writes were browser-side only (sessionStorage). Nothing was written to the database.
+
+For the person merging: as spec 3 accepts (D9), maximizing also hides each page's title row (Rename/Delete on a trip, "Plan a trip" on Favorites), since those live in `.rt-side`. Worth a look in QC on a phone, together with the scroll into view.
+
+RATIFIED: Task 12

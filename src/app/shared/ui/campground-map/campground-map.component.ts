@@ -1,9 +1,11 @@
 import {
+  afterNextRender,
   AfterViewInit,
   Component,
   effect,
   ElementRef,
   inject,
+  Injector,
   input,
   OnDestroy,
   output,
@@ -14,6 +16,7 @@ import * as L from 'leaflet';
 import 'leaflet.markercluster';
 import { Campground, hasLocation } from '../../../core/models/campground.model';
 import { Coordinates } from '../../../core/services/campgrounds.service';
+import { MapSizeService } from '../../../core/services/map-size.service';
 import { SupabaseService } from '../../../core/services/supabase.service';
 
 L.Icon.Default.imagePath = '';
@@ -32,6 +35,9 @@ const US_CENTER: L.LatLngTuple = [39.8283, -98.5795];
 })
 export class CampgroundMapComponent implements AfterViewInit, OnDestroy {
   private readonly supabase = inject(SupabaseService);
+  private readonly mapSize = inject(MapSizeService);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly injector = inject(Injector);
 
   readonly campgrounds = input.required<Campground[]>();
   readonly selectedId = input<string | null>(null);
@@ -51,6 +57,7 @@ export class CampgroundMapComponent implements AfterViewInit, OnDestroy {
   private route: L.Polyline | null = null;
   private locationMarker: L.Marker | null = null;
   private resizeObserver: ResizeObserver | null = null;
+  private sizeButton: HTMLAnchorElement | null = null;
   private markers = new Map<string, L.Marker>();
   private lookup = new Map<string, Campground>();
   private ready = false;
@@ -81,6 +88,11 @@ export class CampgroundMapComponent implements AfterViewInit, OnDestroy {
       }
       untracked(() => this.renderSearchLocation(loc));
     });
+
+    effect(() => {
+      this.mapSize.maximized();
+      untracked(() => this.paintSizeButton());
+    });
   }
 
   ngAfterViewInit(): void {
@@ -99,6 +111,12 @@ export class CampgroundMapComponent implements AfterViewInit, OnDestroy {
         this.openPickPopup(e.latlng);
       }
     });
+
+    this.addSizeControl(map);
+    if (this.mapSize.maximized()) {
+      // Restored big (a reload, or another map page in this tab): show it, as a click would.
+      afterNextRender(() => this.bringMapIntoView(), { injector: this.injector });
+    }
 
     this.resizeObserver = new ResizeObserver(() => map.invalidateSize());
     this.resizeObserver.observe(this.mapEl().nativeElement);
@@ -206,6 +224,66 @@ export class CampgroundMapComponent implements AfterViewInit, OnDestroy {
     }
     map.setView([c.lat, c.lng], Math.max(12, map.getZoom()));
     this.cluster?.zoomToShowLayer(marker, () => undefined);
+  }
+
+  /**
+   * The maximize / reduce switch (spec 3, change #13): a Leaflet control bar, top-right, built
+   * like Leaflet's own zoom buttons (an <a role="button"> in a .leaflet-bar) so it looks like them.
+   */
+  private addSizeControl(map: L.Map): void {
+    const SizeControl = L.Control.extend({
+      onAdd: () => {
+        const bar = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+        const button = L.DomUtil.create('a', 'map-size-toggle', bar);
+        button.href = '#';
+        button.setAttribute('role', 'button');
+        L.DomUtil.create('span', 'pi', button).setAttribute('aria-hidden', 'true');
+        L.DomEvent.disableClickPropagation(bar);
+        const toggle = (e: Event): void => {
+          L.DomEvent.preventDefault(e);
+          this.mapSize.toggle();
+          if (this.mapSize.maximized()) {
+            afterNextRender(() => this.bringMapIntoView(), { injector: this.injector });
+          }
+        };
+        L.DomEvent.on(button, 'click', toggle);
+        // An <a> answers Enter only; a button also answers Space.
+        L.DomEvent.on(button, 'keydown', (e) => {
+          if ((e as KeyboardEvent).key === ' ') {
+            toggle(e);
+          }
+        });
+        this.sizeButton = button;
+        this.paintSizeButton();
+        return bar;
+      },
+    });
+    new SizeControl({ position: 'topright' }).addTo(map);
+  }
+
+  /**
+   * Under 900px the map stacks above the list, so the big map grows below the fold: scroll its
+   * frame to the top of the scrolling area, so maximizing shows the map at once (spec 3, change #13).
+   */
+  private bringMapIntoView(): void {
+    if (window.matchMedia('(max-width: 900px)').matches) {
+      (this.host.nativeElement.closest('.rt-map-frame') ?? this.host.nativeElement).scrollIntoView({ block: 'start' });
+    }
+  }
+
+  private paintSizeButton(): void {
+    const button = this.sizeButton;
+    if (!button) {
+      return;
+    }
+    const max = this.mapSize.maximized();
+    // A toggle keeps one name; aria-pressed says whether it's on. The tooltip says what a click does.
+    button.setAttribute('aria-pressed', String(max));
+    button.setAttribute('aria-label', 'Enlarge map');
+    button.title = max ? 'Show list' : 'Enlarge map';
+    const icon = button.querySelector('.pi');
+    icon?.classList.toggle('pi-window-maximize', !max);
+    icon?.classList.toggle('pi-window-minimize', max);
   }
 
   private renderSearchLocation(loc: Coordinates | null): void {

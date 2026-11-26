@@ -2623,7 +2623,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
 
 **Check script:** `ralphloop/map-check.mjs` (Lisa, 2026-11-21; like `scroll-check.mjs`, it's the loop's, so never edit it). It loads the production build in headless Chromium against the local stack and the dev seed and judges six cases: 1 the switch on every map page (top-right, named "Enlarge map", tooltip, the maximize icon, list showing), it maximizes on each, and on Favorites a popup's "View details ▸" leaves the map big; 2 at 1280px the switch hides the list, the map takes the full width, Leaflet follows its container, zoom unchanged and center within 2px, back again, and Space on the focused switch maximizes it; 3 at 390px the map grows at least 100px taller, fits the scrolling area under the header and is scrolled fully into view, with nothing scrolling sideways (page or `.app-main`), and back again; 4 from the maximized map, "View details ▸" (signed out, 1280px and 390px) and "Add to trip…" (admin) bring the list back with that card open and in view; 5 remembered across a reload (Leaflet fits the big map; at 390px it's fully in view) and on Favorites in the same tab, not in a new tab; 6 no console errors. Exit 0 all pass, 1 a case fails, 2 the check couldn't run (including a missing build, or only network errors in the console).
 
-- [ ] **Step 1: Prove the check fails, then add the shared setting.**
+- [x] **Step 1: Prove the check fails, then add the shared setting.**
   **First, the red check.** Write the local environment (Global Constraints, **Local settings**). Then, **only if `src/` still matches `main`** (on a retry or a resumed step it has already changed, so skip to "Then"):
   ```bash
   MB=$(git merge-base main HEAD) || { echo "BLOCKED: no merge base with main"; exit 1; }
@@ -2679,7 +2679,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
      }
      ```
 
-- [ ] **Step 2: The switch on the map, and the layout.**
+- [x] **Step 2: The switch on the map, and the layout.**
   1. Replace the whole of `src/app/shared/ui/campground-map/campground-map.component.ts` with (as before, plus: `MapSizeService`, `host`/`injector`, the `sizeButton` field, an effect that repaints the switch, `addSizeControl` (click and Space toggle it), `bringMapIntoView` (under 900px a maximize, or a page that opens already maximized, scrolls the map's frame to the top of the scrolling area), and `paintSizeButton`; the popup buttons are unchanged, since bringing the list back is the Finder's job, Step 3):
      ```ts
      import {
@@ -3055,7 +3055,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
      ```
   Every color stays a token; the switch takes Leaflet's own control look (`style-task.md`; Leaflet's look never changes).
 
-- [ ] **Step 3: The three map pages follow the setting.**
+- [x] **Step 3: The three map pages follow the setting.**
   In each of `src/app/features/finder/finder.component.*`, `src/app/features/favorites/favorites.component.*` and `src/app/features/trips/trip-detail.component.*`:
   1. In the `.html`, change the one `<div class="rt-map-layout">` opening tag (keep its indentation) to `<div class="rt-map-layout" [class.rt-map-layout--max]="mapSize.maximized()">`.
   2. In the `.ts`, add the line `import { MapSizeService } from '../../core/services/map-size.service';` after the last `import` statement, and add `  protected readonly mapSize = inject(MapSizeService);` as the last of the class's `private readonly … = inject(…)` lines at the top of the class (`inject` is already imported in all three).
@@ -3067,7 +3067,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
      ```
      The rest of the method is unchanged. Favorites and Trip detail don't act on the map's popup buttons (as before), so their big map stays big.
 
-- [ ] **Step 4: Verify.**
+- [x] **Step 4: Verify.**
   ```bash
   npx ng lint
   # expect: "All files pass linting."
@@ -3105,7 +3105,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
   ```
   Re-read spec 3 change #13 and run `style-task.md`'s self-check.
 
-- [ ] **Step 5: Commit.** `git commit -m "Task 12: a switch to maximize or reduce the map (spec 3, change #13)"`
+- [x] **Step 5: Commit.** `git commit -m "Task 12: a switch to maximize or reduce the map (spec 3, change #13)"`
 
 **QC (for Shawn, in the browser):**
 - Finder on a laptop: a small button at the map's top-right that looks like the zoom buttons. Click it: the list disappears and the map fills the width; the map doesn't jump. Click again: the list is back.

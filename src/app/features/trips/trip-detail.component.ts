@@ -9,6 +9,7 @@ import { FavoritesService } from '../../core/services/favorites.service';
 import { TripsService } from '../../core/services/trips.service';
 import { CampgroundDetailPanelComponent } from '../../shared/ui/campground-detail-panel/campground-detail-panel.component';
 import { CampgroundMapComponent } from '../../shared/ui/campground-map/campground-map.component';
+import { MapSizeService } from '../../core/services/map-size.service';
 
 @Component({
   selector: 'app-trip-detail',
@@ -162,6 +163,7 @@ export class TripDetailComponent implements OnInit {
   private readonly tripsService = inject(TripsService);
   private readonly favoritesService = inject(FavoritesService);
   private readonly campgroundsService = inject(CampgroundsService);
+  protected readonly mapSize = inject(MapSizeService);
 
   protected readonly trip = signal<Trip | null>(null);
   protected readonly stops = signal<TripStop[]>([]);
