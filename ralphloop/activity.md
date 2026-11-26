@@ -244,3 +244,7 @@ What I ran (on this branch's final state):
 - For the person merging: the QC items are visual (Archivo body text, the warmer cream, the deeper red, phone wrapping). Check them in the browser as listed.
 - Cleanup: I rewrote the gitignored environment.local.ts from $SUPABASE_URL/$SUPABASE_ANON_KEY and rebuilt dist/ (both gitignored). I wrote nothing to the database and changed nothing in the repo.
 RATIFIED: Task 11
+
+## Task 12, call 1
+- Step 1: red check run first (src matched main): FAIL 1-5, PASS 6, "MAP CHECK FAILED: 5 of 6.", exit 1, as expected. Created map-size.service.ts verbatim from the plan.
+- Verified: ng lint clean; app-check.sh console check passed (15 page loads).
