@@ -20,6 +20,8 @@ Deno.test("classify: state agencies by operator text are kept", () => {
       "Oregon Department of Fish and Wildlife",
       "Florida Fish and Wildlife Conservation Commission",
       "Minnesota Parks and Recreation",
+      "Delaware Forest Service",
+      "Texas A&M Forest Service",
     ]
   ) {
     assertEquals(classify({ name: "Some Campground", operator }), "kept", operator);
@@ -31,6 +33,14 @@ Deno.test("classify: federal, county, city and private operators are dropped", (
     const operator of [
       "National Park Service",
       "USDA Forest Service",
+      "U.S. Forest Service",
+      "United States Forest Service",
+      "Forest Service",
+      "U.S. Department of Agriculture Forest Service",
+      "USDA - Forest Service",
+      "Forest Service, Region 9",
+      "Forest Service (USFS)",
+      "Superior National Forest",
       "US Army Corps of Engineers",
       "Bureau of Land Management",
       "US Fish and Wildlife Service",

@@ -13,13 +13,26 @@ export type OsmTags = Record<string, string | undefined>;
 export type Verdict = "kept" | "no_name" | "not_state_run";
 
 // Federal agencies are named exactly, so state ones that share words ("Bureau of State
-// Parks", "Department of Fish and Wildlife") aren't caught. Local government (county,
-// city, town, township, village, district) and private operators are excluded too.
+// Parks", "Department of Fish and Wildlife", "Delaware Forest Service") aren't caught.
+// "Forest Service" is the federal one unless a state name (or "A&M", for Texas) comes
+// right before it ("Delaware Forest Service"). Local government (county, city, town,
+// township, village, district) and private operators are excluded too.
+const STATE_NAMES = [
+  "alabama", "alaska", "arizona", "arkansas", "california", "colorado", "connecticut",
+  "delaware", "florida", "georgia", "hawaii", "idaho", "illinois", "indiana", "iowa",
+  "kansas", "kentucky", "louisiana", "maine", "maryland", "massachusetts", "michigan",
+  "minnesota", "mississippi", "missouri", "montana", "nebraska", "nevada",
+  "new hampshire", "new jersey", "new mexico", "new york", "north carolina",
+  "north dakota", "ohio", "oklahoma", "oregon", "pennsylvania", "rhode island",
+  "south carolina", "south dakota", "tennessee", "texas", "utah", "vermont", "virginia",
+  "washington", "west virginia", "wisconsin", "wyoming", "a&m",
+];
+
 export const EXCLUDE = new RegExp(
   [
     "national",
     "usda",
-    "forest service",
+    `(?<!\\b(?:${STATE_NAMES.join("|")}) )forest service`,
     "\\busfs\\b",
     "corps of engineers",
     "\\busace\\b",
@@ -53,6 +66,7 @@ export const INCLUDE = new RegExp(
     "department of fish (and|&) (wildlife|game)",
     "fish (and|&) wildlife conservation",
     "department of forestry",
+    "forest service",
     "park service",
     "parks and recreation",
     "parks & recreation",
