@@ -3299,7 +3299,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
   ```
   Re-read spec 3 change #14 and run `style-task.md`'s self-check.
 
-- [ ] **Step 6: Commit.** `git commit -m "Task 13: state-run and retired campgrounds (spec 3, change #14)"`
+- [x] **Step 6: Commit.** `git commit -m "Task 13: state-run and retired campgrounds (spec 3, change #14)"`
 
 **QC (for Shawn, in the browser):**
 - Finder: the agency chips end with **STATE**, on. With Miles **All**, scroll or zoom to central Minnesota: "Sample Lake State Park" and "Sample River State Forest Campground" are there, tagged STATE. Turn STATE off: they go; the others stay. Reset filters turns it back on.
