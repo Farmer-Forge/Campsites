@@ -3259,7 +3259,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
        }
      ```
 
-- [ ] **Step 5: Verify.**
+- [x] **Step 5: Verify.**
   ```bash
   npx ng lint
   # expect: "All files pass linting."

@@ -297,3 +297,6 @@ RATIFIED: Task 12
 ## Task 13, call 4
 - Step 4: trip-detail `addable` now skips retired favorites; "No longer listed" tag on retired stops in trip-detail.html; OpenStreetMap credit section on About (+ `.credits` padding-top: 0 in the scss). Scripted exact-match edits.
 - Verified: ng lint run; app-check.sh "CONSOLE CHECK PASSED: 15 page loads".
+
+## Task 13, call 5
+- Step 5 (Verify): ng lint clean; production build OK; state-check 8 of 8, map-check 6 of 6, scroll-check 5 of 5, header-check 7 of 7 (all exit 0); colour greps 1 and 3 as expected; the twelve-file diff list matches; no uncommitted app files; app-check.sh "CONSOLE CHECK PASSED: 15 page loads". No new code, so the style self-check is unchanged from Steps 3–4.
