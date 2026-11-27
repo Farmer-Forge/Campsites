@@ -289,3 +289,7 @@ RATIFIED: Task 12
 ## Task 13, call 2
 - Step 2: added `agenciesVersion?` to FinderSnapshot; in finder.component.ts added STATE to AGENCIES, AGENCIES_VERSION = 2, the upgrade of older saved snapshots in ngOnInit, and saving agenciesVersion. (Scripted with node; no python here. The first app-check run hit transient ERR_NETWORK_CHANGED errors before edits applied; the rerun passed.)
 - Verified: ng lint clean; app-check.sh "CONSOLE CHECK PASSED: 15 page loads".
+
+## Task 13, call 3
+- Step 3: scripted edits (exact-match, each applied once): "No longer listed" tag, disabled + `plusTitle` on the add-to-trip and plan-check buttons in the table; OSM attribution link and `!c.retired` guard on the popup's add button in the map; "Visit website" for STATE in the detail panel; `.rt-icon-btn` disabled style in styles.scss.
+- Verified: ng lint clean; app-check.sh "CONSOLE CHECK PASSED: 15 page loads".

@@ -3181,7 +3181,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
        ```
      Nothing else in the Finder changes: the chips are drawn from `agencies`, and Reset filters already turns every one of `AGENCIES` on.
 
-- [ ] **Step 3: Retired cards and popups, and the attribution.**
+- [x] **Step 3: Retired cards and popups, and the attribution.**
   1. In `src/app/shared/ui/campground-table/campground-table.component.ts`:
      - In the template's `div.tags`, right after the `@if (c.parkCode) { … }` block (its closing `}` line, before `</div>`), insert at the same indentation:
        ```html
