@@ -61,6 +61,8 @@ Free-form notes that admins keep on a campground (type, name, value). **Nothing 
 - **Contact:** "Questions, bugs, or ideas? Reach the admin at admin@Farmer-Forge.com." The address is a `mailto:` link on its own line (a `<br>` before it, so it never wraps mid-address). (Shawn, 2026-10-27; V1 showed his personal address.)
 - The page has its own SCSS (`about.component.scss`, 58 lines), carried over verbatim.
 
+**Data credit (Shawn, 2026-11-26; spec 3, change #14):** a `section.credits` after `section.contact` holds one paragraph: "State campground data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, available under the Open Database License." (The ODbL licence condition, with the map's attribution.)
+
 ## Proposed changes from V1 (Claude's suggestions, approved by Shawn 2026-10-25)
 
 1. **Your own row says "You".** On the signed-in admin's own row, the role select, Suspend and Delete are replaced by "You" (`rt-notice`). The database refuses those changes anyway, so V1 showed raw errors such as "cannot modify your own role". Edit stays.

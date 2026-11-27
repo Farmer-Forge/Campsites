@@ -106,6 +106,10 @@ The map-and-list layout:
 9. **Creating a trip doesn't leave half a trip behind.** If inserting the stops fails after the trip was created, the app deletes that new trip before showing the error. V1 left an empty trip.
 10. **Reorder uses `reorder_trip_stops`.** This one is required: with V1.1's unique positions, V1's one-update-per-stop would fail part-way. It's listed so the trips task builds it.
 
+## Change: retired campgrounds (Shawn, 2026-11-26; spec 3, change #14)
+
+A favorite or a trip stop can be a **retired campground** (OpenStreetMap no longer lists it; spec 1, **Fixes** #12). It's kept, never removed. Its card shows "No longer listed", its **+** is disabled, and on Favorites its "Plan a trip" tick is disabled, so it can't start a new trip (spec 3, change #14). Trip detail's own stop cards show "No longer listed" too. On Trip detail, the "Choose a favorite to add..." list (`addable`) leaves retired favorites out, so a retired campground can't be added to a trip; a stop that's already there stays.
+
 ## Out of scope
 
 - Searching all campgrounds to add a stop: V1 adds only from favorites.

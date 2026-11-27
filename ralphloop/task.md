@@ -1,6 +1,6 @@
 # Campsite Finder V1.1 Implementation Plan
 
-> **For the loop:** `ralphloop/doloop.sh` (or `ralphloop/chain.sh`) works through this file task by task, one worker call per unchecked `- [ ]` step, one PR per task. Task 1 is manual infrastructure and stays checked. Tasks 2–9 build the app. Task 10 (added 2026-11-14) fixes bug 5 in the built app. Task 11 (added 2026-11-16) rebrands the shell as Forge Outdoors · Campsites (spec 2, change #6). Task 12 (added 2026-11-21) adds a switch to maximize or reduce the map (spec 3, change #13).
+> **For the loop:** `ralphloop/doloop.sh` (or `ralphloop/chain.sh`) works through this file task by task, one worker call per unchecked `- [ ]` step, one PR per task. Task 1 is manual infrastructure and stays checked. Tasks 2–9 build the app. Task 10 (added 2026-11-14) fixes bug 5 in the built app. Task 11 (added 2026-11-16) rebrands the shell as Forge Outdoors · Campsites (spec 2, change #6). Task 12 (added 2026-11-21) adds a switch to maximize or reduce the map (spec 3, change #13). Task 13 (added 2026-11-26) shows state-run and retired campgrounds (spec 3, change #14), on top of the hand-written database change `0025`–`0026`.
 >
 > **Specs (binding, all approved by Shawn):** read the one a task names before its first step.
 > - `docs/superpowers/specs/2026-10-24-schema-contract-design.md` (spec 1: the database you build on, unchanged);
@@ -68,13 +68,14 @@ mkdir -p src/environments && printf "export const environment = {\n  production:
 
 ## Review Focus
 
-1. **The list not coming back, or coming back for nothing** (Task 12). On the Finder, "View details ▸" or "Add to trip…" from the big map must restore the list before the card opens. `map-check.mjs` case 4 maximizes, clicks each popup button (1280px and 390px), and requires the list showing and the card open, matching the popup and in view; case 1 requires Favorites' big map to stay big after a popup click (that page doesn't act on it). Break-tested: without the Finder's `reduce()` case 4 fails; with `reduce()` back in the shared map's popup handlers case 1 fails.
-2. **The map losing its place or size** (Task 12). A resize without `invalidateSize()` leaves Leaflet drawing at the old size. Case 2 and 3 require Leaflet's size to match its container, the same zoom and the center within 2px. Break-tested: a `ResizeObserver` that does nothing fails 2 and 3.
-3. **A phone map that shrinks, overflows or stays out of sight** (Task 12). "Fill the space below the filters" is smaller than today's 45vh on a 390px phone (308px against 380px), so the big map takes `100cqh` of `.app-main` and a maximize scrolls it into view. Case 3 requires at least 100px more, a map that fits `.app-main`, fully in view, and no sideways scroll in `.app-main`. Break-tested: without the height rule (380 → 380), without `container-type` (812px in a 622px area), and without the scroll into view, each fails case 3.
-4. **Breaking Tasks 10 and 11, or other pages** (Task 12). `.app-main` becomes a size container only under 900px while a map is maximized (`:has(.rt-map-layout--max)`), so other pages and wide screens keep no containment. Step 4 reruns `scroll-check.mjs` (5 of 5) and `header-check.mjs` (7 of 7).
-5. **Touching more than the ten files, or new raw colors** (Task 12). Step 4's whole-tree `git diff` must list exactly the ten files, `git status --porcelain` must be empty, and the `styles.scss` color counts must stay at 1 `rgba()` and 3 hex values outside `:root`.
+1. **A retired campground that can still be planned** (Task 13). The + on its card, its tick in Favorites' "Plan a trip", "Add to trip…" in its popup, and Trip detail's "Choose a favorite to add..." are four ways in; each must be shut. `state-check.mjs` case 3 requires the retired card's + and plan tick to be disabled (and every live card's enabled), case 4 its popup without "Add to trip…" (and a live popup with it), case 7 the trip list without "Sample Bluff State Park" (and with a live favorite). Break-tested: `main`'s build fails 3, 4 and 7; with only the plan tick's `[disabled]` removed, case 3 fails.
+2. **A retired campground that looks live** (Task 13). The shared card list and Trip detail's own stop cards both need the "No longer listed" tag, and the + must look disabled. Cases 3 and 7 require the tag on the retired favorite and the retired stop (and on no live one), and the retired + at opacity 0.45. Break-tested: without the stop tag case 7 fails; without `rt-icon-btn:disabled` case 3 fails.
+3. **State campgrounds hidden by the filters** (Task 13). The Finder always sends its chips as `agency_filter`, so a missing `STATE` chip, or a restored tab whose saved agencies predate it, hides every state campground. Case 1 requires the six chips in order with STATE on and the live sample rows listed; case 2 restores an old snapshot (STATE must come back on, and the app must then save `agenciesVersion: 2`), then turns STATE off through the app's own save and reloads (it must stay off). Break-tested: `main` fails 1 and 2; with only `agenciesVersion` left out of `save()`, case 2 fails.
+4. **The licence credit and the link label** (Task 13). ODbL requires the OSM attribution; a state campground's link isn't recreation.gov. Cases 5 and 6 require the copyright link on the map and on About; case 3 requires "Visit website" on a live State card. Break-tested: `main` fails 5 and 6; with only the label reverted, case 3 fails.
+5. **Breaking Tasks 10–12, or other pages** (Task 13). Step 5 reruns `map-check.mjs` (6 of 6), `scroll-check.mjs` (5 of 5) and `header-check.mjs` (7 of 7). The sample State campgrounds sit 110–140 miles north of Minneapolis so `scroll-check.mjs`'s fixed cards don't move; with them near Minneapolis its case 5 failed (a different 4th card).
+6. **Touching more than the twelve files, or new raw colors** (Task 13). Step 5's whole-tree `git diff` must list exactly the twelve files, `git status --porcelain` must be empty, and the `styles.scss` color counts must stay at 1 `rgba()` and 3 hex values outside `:root`.
 
-Task 11's review focus (the header) is in this file's history (PR #50).
+Task 12's review focus (the map switch) is in this file's history (PR #54). Task 11's review focus (the header) is in this file's history (PR #50).
 
 ---
 
@@ -3118,12 +3119,206 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
 
 ---
 
+## Task 13: State-run campgrounds and retired campgrounds (spec 3, change #14)
+
+> Added 2026-11-26 (Shawn; spec 3, **Change #14**; design `~/plans/2026-11-26-campsites-state-parks-osm-design.md` on Lisa, §6.5). Tasks 1–12 are done and merged. The database side is already on `main`, hand-written by Lisa (`0025`–`0026`, PR #56; spec 1, **Fixes** #12): `campgrounds` can now hold state-run campgrounds from OpenStreetMap (`agency = 'STATE'`, `source = 'osm'`), and **retired** ones, which `nearest_campgrounds` leaves out and `get_campgrounds_by_ids` returns with `retired = true`. This task shows them: a sixth agency chip, saved filters that turn it on, a "No longer listed" card and popup, and the OpenStreetMap credit. Read spec 3's **Change #14**, the favorites-trips spec's **Change: retired campgrounds**, and the About section of the admin-about spec first. **Run this task with `doloop.sh` only, never `chain.sh`:** merging to `main` deploys to production, so Shawn QCs the PR first.
+
+**Files:** Modify: `src/app/core/models/campground.model.ts`, `src/app/core/services/campgrounds.service.ts`, `src/app/core/services/finder-state.service.ts`, `src/app/features/finder/finder.component.ts`, `src/app/shared/ui/campground-table/campground-table.component.ts`, `src/app/shared/ui/campground-map/campground-map.component.ts`, `src/app/shared/ui/campground-detail-panel/campground-detail-panel.component.ts`, `src/styles.scss`, `src/app/features/trips/trip-detail.component.ts`, `src/app/features/trips/trip-detail.component.html`, `src/app/features/about/about.component.html`, `src/app/features/about/about.component.scss`. No other file. (`docs/superpowers/Design.md` already has the disabled `rt-icon-btn` row; this plan added it.)
+
+**Interfaces:** Consumes: `get_campgrounds_by_ids`' `retired boolean` column (`0025`); the dev seed's four sample State campgrounds (`ralphloop/seed-osm.sql`: `osm:node/900000001` "Sample Lake State Park" live and in Pat's favorites, `osm:way/900000002` live, `osm:node/900000003` "Sample Bluff State Park" retired and in Pat's favorites, `osm:node/900000004` "Sample Pines State Forest Campground" retired and the last stop of Pat's trip); `CampgroundTableComponent` (its card + and its "Plan a trip" tick), `CampgroundMapComponent`'s `buildPopup`, `CampgroundDetailPanelComponent`'s link, Trip detail's own stop cards and `addable`, `FinderStateService` (Tasks 5–8, unchanged otherwise). Produces: `Campground.retired: boolean`, `FinderSnapshot.agenciesVersion?: number` (2), `AGENCIES` with `'STATE'` last, `CampgroundTableComponent.plusTitle(c)`, `section.credits` on About, and `rt-icon-btn:disabled`.
+
+**Check script:** `ralphloop/state-check.mjs` (Lisa, 2026-11-26; like `map-check.mjs`, it's the loop's, so never edit it). It loads the production build in headless Chromium against the local stack and the dev seed and judges eight cases: 1 the Finder's agency chips are the five federal ones then `STATE`, on by default, the live sample State campgrounds are in the list with a `STATE` tag and the retired one isn't, and clicking `STATE` removes them and leaves the rest; 2 a saved Finder snapshot with no `agenciesVersion` comes back with `STATE` on and the app then saves `agenciesVersion: 2`, and after clicking `STATE` off (the app's own save) a reload keeps it off; 3 on Favorites (Pat) the retired card shows "No longer listed", its + is disabled at opacity 0.45 and titled "No longer listed: can't be added to a trip", and in "Plan a trip" its tick is disabled, while every live card has none of that (opacity 1); a live State card's panel link reads "Visit website" and federal ones "Reserve on recreation.gov"; 4 on Favorites' map the retired campground's popup has "View details ▸" and no "Add to trip…", and a live one has both; 5 the map's attribution links to `https://www.openstreetmap.org/copyright` with the text "OpenStreetMap"; 6 About's `section.credits` links there and names the Open Database License; 7 on Pat's trip, "Choose a favorite to add..." doesn't offer "Sample Bluff State Park" and still offers a live favorite, and the "Sample Pines State Forest Campground" stop card shows "No longer listed" (and no live stop does); 8 no console errors. Exit 0 all pass, 1 a case fails, 2 the check couldn't run (no build, the stack or the seed missing, or only network errors in the console).
+
+- [ ] **Step 1: Prove the check fails, then carry `retired` into the app.**
+  **First, the red check.** Write the local environment (Global Constraints, **Local settings**). Then, **only if `src/` still matches `main`** (on a retry or a resumed step it has already changed, so skip to "Then"):
+  ```bash
+  MB=$(git merge-base main HEAD) || { echo "BLOCKED: no merge base with main"; exit 1; }
+  if git diff --quiet "$MB" -- src/; then
+    for i in 1 2 3; do npx ng build --configuration production,local && break; echo "build failed (try $i)"; sleep 20; done
+    node ralphloop/state-check.mjs dist/campsite-finder/browser; echo "exit $?"
+  else
+    echo "app already changed: red check skipped"
+  fi
+  # expect (first run): lines starting "FAIL 1 State chip on the Finder", "FAIL 2 saved state upgrade", "FAIL 3 retired card on Favorites", "FAIL 4 retired popup on the map", "FAIL 5 OSM attribution link", "FAIL 6 About data credit", "FAIL 7 trip: add list and retired stop" and "PASS 8 no console errors", then "STATE CHECK FAILED: 7 of 8.", then "exit 1"
+  ```
+  If the check ends `exit 2` (an `ERROR` line: no build, the stack or the seed didn't answer, or only network errors in the console), run the `node ralphloop/state-check.mjs …` line **once more**. Anything else, `exit 2` twice, or three failed builds: stop and write a `BLOCKED:` line (rule 6). An `ERROR … sample OSM campgrounds` line means the dev seed predates `seed-osm.sql`: that's `BLOCKED:` too (the gate reseeds; never write SQL).
+
+  **Then:**
+  1. In `src/app/core/models/campground.model.ts`, right after the line `  distanceMeters: number;` inside `interface Campground`, insert:
+     ```ts
+       /** No longer listed by its Source (spec 3, change #14); only get_campgrounds_by_ids returns these. */
+       retired: boolean;
+     ```
+  2. In `src/app/core/services/campgrounds.service.ts`, inside `toCampground`, right after the line `    distanceMeters: row.distance_m ?? 0,`, insert:
+     ```ts
+         retired: row.retired === true,
+     ```
+     (`nearest_campgrounds` has no `retired` column, so Finder rows get `false`.)
+
+- [ ] **Step 2: The STATE chip and the saved filters.**
+  1. In `src/app/core/services/finder-state.service.ts`, right after the line `  radiusMiles: number;` inside `interface FinderSnapshot`, insert:
+     ```ts
+       /** 2 since the STATE chip (spec 3, change #14); older snapshots get STATE turned on. */
+       agenciesVersion?: number;
+     ```
+     Don't change `isValidSnapshot`: the field is optional, so snapshots saved before this task still load.
+  2. In `src/app/features/finder/finder.component.ts`:
+     - Replace the line `const AGENCIES = ['NPS', 'USFS', 'BLM', 'USACE', 'FWS'];` with these two lines:
+       ```ts
+       const AGENCIES = ['NPS', 'USFS', 'BLM', 'USACE', 'FWS', 'STATE'];
+       const AGENCIES_VERSION = 2;
+       ```
+     - In `ngOnInit`, replace the line `    this.selectedAgencies.set(AGENCIES.filter((a) => saved.agencies.includes(a)));` with:
+       ```ts
+           // A snapshot from before the STATE chip has no agenciesVersion: turn STATE on for it.
+           const savedAgencies =
+             saved.agenciesVersion === AGENCIES_VERSION ? saved.agencies : [...saved.agencies, 'STATE'];
+           this.selectedAgencies.set(AGENCIES.filter((a) => savedAgencies.includes(a)));
+       ```
+     - In the `this.finderState.save({ … })` call, right after its line `        radiusMiles: this.radiusMiles(),`, insert:
+       ```ts
+               agenciesVersion: AGENCIES_VERSION,
+       ```
+     Nothing else in the Finder changes: the chips are drawn from `agencies`, and Reset filters already turns every one of `AGENCIES` on.
+
+- [ ] **Step 3: Retired cards and popups, and the attribution.**
+  1. In `src/app/shared/ui/campground-table/campground-table.component.ts`:
+     - In the template's `div.tags`, right after the `@if (c.parkCode) { … }` block (its closing `}` line, before `</div>`), insert at the same indentation:
+       ```html
+                       @if (c.retired) {
+                         <span class="rt-tag rt-tag--outline">No longer listed</span>
+                       }
+       ```
+     - On the `button.add-to-trip-toggle`, replace its line `                title="Add to trip"` with these two lines:
+       ```html
+                       [disabled]="c.retired"
+                       [attr.title]="plusTitle(c)"
+       ```
+       Keep `aria-label="Add to trip"` and every other attribute as they are.
+     - On the `button.plan-check` ("Plan a trip" mode), right before its line `                title="Include in trip"`, insert:
+       ```html
+                       [disabled]="c.retired"
+       ```
+     - In the class, right before the line `  protected togglePicker(event: Event, id: string): void {`, insert:
+       ```ts
+         protected plusTitle(c: Campground): string {
+           return c.retired ? "No longer listed: can't be added to a trip" : 'Add to trip';
+         }
+
+       ```
+  2. In `src/app/shared/ui/campground-map/campground-map.component.ts`:
+     - Replace the line `      attribution: '&copy; OpenStreetMap contributors',` with:
+       ```ts
+             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+       ```
+     - In `buildPopup`, replace the line `    if (this.supabase.session()) {` (the one that builds the "Add to trip…" button) with:
+       ```ts
+           if (this.supabase.session() && !c.retired) {
+       ```
+  3. In `src/app/shared/ui/campground-detail-panel/campground-detail-panel.component.ts`, replace the link text line `            >Reserve on recreation.gov</a` with:
+     ```html
+                 >{{ campground().agency === 'STATE' ? 'Visit website' : 'Reserve on recreation.gov' }}</a
+     ```
+     (A state campground's link is its own website, not recreation.gov; design D10.)
+  4. In `src/styles.scss`, inside the `.rt-icon-btn { … }` block only: change its `  &:hover {` line to `  &:hover:not(:disabled) {`, and right after that hover block's closing `  }` insert:
+     ```scss
+
+       &:disabled {
+         opacity: 0.45;
+         cursor: default;
+       }
+     ```
+     (The same disabled look as `rt-btn`; `Design.md`'s **Round icon button** row already says so.) No new colors.
+
+- [ ] **Step 4: Trips skip retired favorites, and the About credit.**
+  1. In `src/app/features/trips/trip-detail.component.ts`, inside `addable`, replace the line `    return this.favorites().filter((c) => !inTrip.has(c.id));` with:
+     ```ts
+         return this.favorites().filter((c) => !inTrip.has(c.id) && !c.retired);
+     ```
+     A retired stop already in a trip stays (nothing else changes).
+  2. In `src/app/features/trips/trip-detail.component.html` (Trip detail draws its own stop cards, not the shared list), right after the `@if (stop.campground.parkCode) { … }` block (its closing `}` line), insert at the same indentation:
+     ```html
+                       @if (stop.campground.retired) {
+                         <span class="rt-tag rt-tag--outline">No longer listed</span>
+                       }
+     ```
+  3. In `src/app/features/about/about.component.html`, after the closing `</section>` of `section.contact` (the file's last line), append:
+     ```html
+     <section class="contact credits">
+       <p>
+         State campground data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors,
+         available under the Open Database License.
+       </p>
+     </section>
+     ```
+     It reuses `.contact`'s styles. So the two sections don't stack two 48px paddings, in `src/app/features/about/about.component.scss`, right after the line `  padding: 48px 32px;` inside `.contact { … }`, insert:
+     ```scss
+
+       &.credits {
+         padding-top: 0;
+       }
+     ```
+
+- [ ] **Step 5: Verify.**
+  ```bash
+  npx ng lint
+  # expect: "All files pass linting."
+  for i in 1 2 3; do npx ng build --configuration production,local && break; echo "build failed (try $i)"; sleep 20; done
+  # expect: "Application bundle generation complete" within three tries, no errors (the existing initial-budget warning is fine; "Inlining of fonts failed" is a network blip, retried)
+  node ralphloop/state-check.mjs dist/campsite-finder/browser; echo "exit $?"
+  # expect: eight lines starting PASS (1–8), then "STATE CHECK PASSED: all 8.", then "exit 0" (on "exit 2", run it once more, as in Step 1)
+  node ralphloop/map-check.mjs dist/campsite-finder/browser; echo "exit $?"
+  # expect: "MAP CHECK PASSED: 6 of 6.", then "exit 0" (Task 12 unchanged; on "exit 2", run it once more)
+  node ralphloop/scroll-check.mjs dist/campsite-finder/browser; echo "exit $?"
+  # expect: "SCROLL CHECK PASSED: 5 of 5.", then "exit 0" (Task 10 unchanged)
+  node ralphloop/header-check.mjs dist/campsite-finder/browser; echo "exit $?"
+  # expect: "HEADER CHECK PASSED: 7 of 7.", then "exit 0" (Task 11 unchanged)
+  grep -cE 'rgba?\(' src/styles.scss
+  # expect: 1 (the location marker's focus ring, as before)
+  grep -nE '#[0-9a-fA-F]{3,8}\b' src/styles.scss | grep -vcE '^[0-9]+:  --rt-'
+  # expect: 3 (the popup button's and the location marker's colors, as before)
+  MB=$(git merge-base main HEAD) || { echo "BLOCKED: no merge base with main"; exit 1; }
+  git diff --name-only "$MB" -- . ':(exclude)ralphloop/task.md' ':(exclude)ralphloop/activity.md' | sort
+  # expect exactly these twelve lines:
+  #   src/app/core/models/campground.model.ts
+  #   src/app/core/services/campgrounds.service.ts
+  #   src/app/core/services/finder-state.service.ts
+  #   src/app/features/about/about.component.html
+  #   src/app/features/about/about.component.scss
+  #   src/app/features/finder/finder.component.ts
+  #   src/app/features/trips/trip-detail.component.html
+  #   src/app/features/trips/trip-detail.component.ts
+  #   src/app/shared/ui/campground-detail-panel/campground-detail-panel.component.ts
+  #   src/app/shared/ui/campground-map/campground-map.component.ts
+  #   src/app/shared/ui/campground-table/campground-table.component.ts
+  #   src/styles.scss
+  git status --porcelain -- . ':(exclude)ralphloop/task.md' ':(exclude)ralphloop/activity.md'
+  # expect: nothing
+  bash ralphloop/app-check.sh
+  # expect: ends with "CONSOLE CHECK PASSED"
+  ```
+  Re-read spec 3 change #14 and run `style-task.md`'s self-check.
+
+- [ ] **Step 6: Commit.** `git commit -m "Task 13: state-run and retired campgrounds (spec 3, change #14)"`
+
+**QC (for Shawn, in the browser):**
+- Finder: the agency chips end with **STATE**, on. With Miles **All**, scroll or zoom to central Minnesota: "Sample Lake State Park" and "Sample River State Forest Campground" are there, tagged STATE. Turn STATE off: they go; the others stay. Reset filters turns it back on.
+- Signed in as Pat (`pat@campsites.test` / `campsites-pat`), Favorites: "Sample Bluff State Park" shows **No longer listed**, and its + is greyed out and does nothing; its heart, note and card still work. In **Plan a trip**, its tick can't be ticked. On the map, its bubble has "View details ▸" but no "Add to trip…". Open "Sample Lake State Park": its button says **Visit website**; a federal campground's still says "Reserve on recreation.gov".
+- Pat's trip: the "Sample Pines State Forest Campground" stop shows **No longer listed**; "Choose a favorite to add..." doesn't list Sample Bluff.
+- About: the credit sits under the contact line without a big gap.
+- **After the state campgrounds are in production** (rollout), on the live site with Miles **All**: the list still appears in about a second and scrolls smoothly (design §6.5; the dev seed is too small to show this).
+- The map's bottom-right credit says "© OpenStreetMap contributors", and "OpenStreetMap" links to its copyright page. About has the same credit with the Open Database License.
+- Everything else (the five federal chips, other cards, the map switch, the header) looks as before.
+
+---
+
 ## Out of Scope (this plan)
 
 - V1.1's own Supabase cloud project, its Vercel site, and production settings (by hand, later, when V1.1 is ready).
 - Unit and end-to-end tests (dropped).
 - Any change to the database, edge functions or their tests.
 - V1.2 ideas: showing campground attributes to users, moderator powers, and a dark palette.
+- Task 13 leaves out: the sync itself and every database change (hand-written, `0025`–`0026`, PR #56), an admin screen for sync runs, a "Website" label for OSM links (they use the existing Reserve button), state-park boundaries for campgrounds with no operator tag (design phase 2), and showing amenities on the card.
 - Task 12 leaves out: hiding the header, browser fullscreen, a details panel on the map, saving the choice to the account, and any other change to the list, filters or map look (spec 3, change #13).
 - Task 11 leaves out: a footer, a mobile menu, a new favicon, the section switcher, the patch logo and social image, the forgeoutdoors.app domain, and restyling anything beyond the shell and the token values (spec 2, change #6). Cream on plain teal (agency tags, the postcard and auth headers) is 3.26:1 (3.61:1 before, both under 4.5:1); not fixed here.
 - Filling in `state` for the campgrounds that have none (bug 6, option A): a hand-written migration, not loop work. (Bug 6's part B, `0022`, is live and in spec 1; part A is `0023`–`0024`, spec 1 **Fixes** #11.)
@@ -3131,6 +3326,14 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
 ---
 
 ## Self-Review Notes
+
+Task 13 (Lisa, 2026-11-26, ralph-architect; decisions in `docs/superpowers/reviews/2026-11-26-architect-decisions.md`):
+- **Every snippet was built and judged before it went in here.** Lisa applied Steps 1–4 (first version) to `main` (`7f0ac9c`) on a throwaway stack on Ralph (553xx ports, dev seed with `seed-osm.sql`) and ran Step 5's checks: `app-check.sh` (lint, production build, CONSOLE CHECK PASSED, 15 page loads), `state-check.mjs` 8 of 8, `map-check.mjs` 6 of 6 (one `exit 2` for `net::ERR_NETWORK_CHANGED`, passed on the rerun, as the step allows), `scroll-check.mjs` 5 of 5, `header-check.mjs` 7 of 7. Then `src/` was put back to `main`, so the loop builds it.
+- **The red check is real.** `main`'s production build against the same stack: FAIL 1–7, PASS 8, "STATE CHECK FAILED: 7 of 8.", exit 1 (Step 1's expect line). Each of cases 1–7 fails on `main` because the change it guards is missing, so each is break-tested by the red run.
+- **Found and fixed while checking:** a `\'` inside the template literal would have broken the + title (now `plusTitle(c)`); the sample State campgrounds near Minneapolis moved a different card into `scroll-check.mjs`'s 4th place and failed its case 5, so `seed-osm.sql` moved them 110–140 miles north (scroll-check 5 of 5 after).
+- **Order:** Step 1 adds `Campground.retired` before Steps 3–4 read it; `state-check.mjs` and the seed exist before Step 1 (this plan's PR).
+- **Plan adversary round 1** (`docs/superpowers/reviews/2026-11-26-plan-adversary-r1.md`; 0 High, 4 Med, 4 Low), all fixed except F3, which is decision D10 with the fix drafted: F1 the plan tick (Step 3, case 3); F2 Trip detail's own stop cards (Step 4, the seed's retired stop "Sample Pines", case 7; the seed uses a second retired campground so case 7's add list can't pass just because the retired favorite is already a stop); F3 "Visit website" (Step 3, case 3); F4 case 2 now judges the app's own saves; F5 `doloop.sh` only (Task 13's note); F6 the credits padding (Step 4, `about.component.scss`); F7 the disabled + opacity (case 3); F8 "Show all stays fast" (a QC line after the rollout).
+- **Rerun after the revision:** the same throwaway stack, reset and reseeded: `app-check.sh` CONSOLE CHECK PASSED; state 8 of 8, map 6 of 6, scroll 5 of 5, header 7 of 7. `main`'s build still fails 1–7 (exit 1). The five new defences were each removed alone: B1 plan tick → case 3, B2 stop tag → case 7, B3 label → case 3, B4 no `agenciesVersion` saved → case 2, B5 no disabled look → case 3; restored → 8 of 8.
 
 Task 10 (Lisa, 2026-11-14, ralph-architect; plan-adversary round 1 in `docs/superpowers/reviews/2026-11-14-plan-adversary-r1.md`):
 - **The code in Step 1 was run, not just read.** On a throwaway stack on Ralph (`t10`, ports 553xx, torn down after): migrations `0001–0022`, the dev seed (4,900 campgrounds), `npm ci`, then `ng lint` (all files pass) and `ng build --configuration production,local` (no errors), with Step 1's code applied to the file from `main` at `8e654f9`. `console-check.mjs` passed on that build (15 page loads). The adversary applied Step 1's blocks with a script too: the anchors are unique and the result matched.
