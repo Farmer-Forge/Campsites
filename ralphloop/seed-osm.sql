@@ -1,6 +1,6 @@
--- OSM SAMPLE SEED: three made-up state-run campgrounds in central Minnesota, for reviewers and
+-- OSM SAMPLE SEED: made-up state-run campgrounds (4 in central Minnesota, 2 in Missouri), for reviewers and
 -- for the State chip / retired-card checks (design ~/plans/2026-11-26-campsites-state-parks-osm-design.md
--- on Lisa; needs 0025). Safe to run any time; run after seed-sample.sql (Pat must exist).
+-- on Lisa; needs 0025, and 0028 for Pat's saved filter). Safe to run any time; run after seed-sample.sql (Pat must exist).
 --   osm:node/900000001  Sample Lake State Park          live
 --   osm:way/900000002   Sample River State Forest Camp  live
 --   osm:node/900000003  Sample Bluff State Park         retired (gone_from_osm), in Pat's favorites
@@ -49,3 +49,40 @@ select t.id, 'osm:node/900000004', coalesce((select max(s.position) + 1 from pub
 from public.trips t join auth.users u on u.id = t.user_id
 where u.email = 'pat@campsites.test' and t.name = 'Sample road trip'
   and not exists (select 1 from public.trip_stops s where s.trip_id = t.id and s.campground_id = 'osm:node/900000004');
+
+-- Saved filters (0028; design ~/plans/2026-11-27-campsites-saved-filters-design.md on Lisa):
+-- two made-up Missouri State campgrounds near the Ozark National Scenic Riverways (whose NPS
+-- campgrounds, park code ozar, come from seed-app.sql), and Pat's saved filter that shows
+-- both on one map.
+insert into public.campgrounds (id, park_code, name, description, location, amenities, fees,
+  reservation_url, directions_url, images, contact, updated_at, agency, source, state)
+values
+  ('osm:node/900000005', null, 'Sample Current River State Park', 'Operated by Sample State Parks.',
+   st_setsrid(st_point(-91.65, 37.35), 4326)::geography, '{}', '[]',
+   'https://example.org/sample-current-river', '', '[]', '{"phone":"","email":""}', now(), 'STATE', 'osm', 'MO'),
+  ('osm:node/900000006', null, 'Sample Ozark Hills State Forest Campground', 'Operated by Sample State Parks.',
+   st_setsrid(st_point(-91.05, 36.75), 4326)::geography, '{}', '[]',
+   '', '', '[]', '{"phone":"","email":""}', now(), 'STATE', 'osm', 'MO')
+on conflict (id) do update set name = excluded.name, description = excluded.description, location = excluded.location,
+  agency = excluded.agency, park_code = null, retired_at = null, retired_reason = null;
+
+insert into public.osm_campgrounds (campground_id, overpass_state, operator, last_seen_at)
+values
+  ('osm:node/900000005', 'MO', 'Sample State Parks', now()),
+  ('osm:node/900000006', 'MO', 'Sample State Parks', now())
+on conflict (campground_id) do nothing;
+
+-- Needs 0028; on an older stack (not yet reset) it's skipped with a notice, not an error.
+do $$
+begin
+  if to_regclass('public.saved_filters') is null then
+    raise notice 'saved_filters missing (run supabase db reset): Pat''s saved filter not seeded';
+    return;
+  end if;
+  insert into public.saved_filters (user_id, name, agencies, states, parks, is_near_me, radius_miles)
+  select u.id, 'NSR + MO state parks', array['NPS', 'STATE'], array['MO'], array['ozar', ''], false, 50
+  from auth.users u
+  where u.email = 'pat@campsites.test'
+    and not exists (select 1 from public.saved_filters s where s.user_id = u.id and lower(s.name) = lower('NSR + MO state parks'));
+end;
+$$;
