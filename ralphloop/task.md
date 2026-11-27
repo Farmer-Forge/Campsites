@@ -3155,7 +3155,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
      ```
      (`nearest_campgrounds` has no `retired` column, so Finder rows get `false`.)
 
-- [ ] **Step 2: The STATE chip and the saved filters.**
+- [x] **Step 2: The STATE chip and the saved filters.**
   1. In `src/app/core/services/finder-state.service.ts`, right after the line `  radiusMiles: number;` inside `interface FinderSnapshot`, insert:
      ```ts
        /** 2 since the STATE chip (spec 3, change #14); older snapshots get STATE turned on. */

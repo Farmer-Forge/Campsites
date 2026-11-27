@@ -285,3 +285,7 @@ RATIFIED: Task 12
 ## Task 13, call 1
 - Step 1: red check run first (src matched main): FAIL 1-7, PASS 8, "STATE CHECK FAILED: 7 of 8.", exit 1, as expected. Added `retired: boolean` to the Campground model and `retired: row.retired === true` in `toCampground`.
 - Verified: ng lint clean; production build OK; app-check.sh "CONSOLE CHECK PASSED: 15 page loads".
+
+## Task 13, call 2
+- Step 2: added `agenciesVersion?` to FinderSnapshot; in finder.component.ts added STATE to AGENCIES, AGENCIES_VERSION = 2, the upgrade of older saved snapshots in ngOnInit, and saving agenciesVersion. (Scripted with node; no python here. The first app-check run hit transient ERR_NETWORK_CHANGED errors before edits applied; the rerun passed.)
+- Verified: ng lint clean; app-check.sh "CONSOLE CHECK PASSED: 15 page loads".
