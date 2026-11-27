@@ -167,3 +167,11 @@ Likely home: the Admin page's campground tools (spec 8), next to the campground 
 
 **Approved (Shawn, 2026-11-21):** the header stays; for browsing (nearby sites, a region); "View details ▸" / "Add to trip…" bring the list back (option A). Folded into spec 3 as change #13 and `task.md` Task 12 (with `ralphloop/map-check.mjs`). The code changes when the loop runs Task 12.
 
+
+## 9. A list click on a tall card scrolls further than expected (Lisa, 2026-11-26; seen, not diagnosed)
+
+**What happened:** while checking Task 13, the sample State campgrounds sat near Minneapolis (since moved, `seed-osm.sql`), so `scroll-check.mjs` case 5's "4th card" was **Highland Ridge (USACE)** instead of Middle St. Croix. Clicking that card in the list moved the list 290 px, and the open card wasn't fully in view (`offBy -2`, `fullyInView false`). With Middle St. Croix it moves 18 px and the card is fully in view.
+
+**Likely cause (not checked):** Highland Ridge's detail panel is tall, so V1's `scrollIntoView({ block: 'nearest' })` (kept for list clicks by spec 3 change #12) brings its bottom into view and pushes its top out.
+
+**Spec:** 3 (Finder), change #12 ("clicking a card in the list is unchanged"). Not scheduled; Shawn decides whether list clicks on tall cards should land like map clicks (card top at the top).

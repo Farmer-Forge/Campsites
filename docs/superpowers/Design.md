@@ -53,7 +53,7 @@ The Forge Outdoors header (spec 2, change #6): the brand link (`.brand`: `.brand
 | Error line | `rt-error` | |
 | Button | `rt-btn` | cream pill; add `--cherry` (primary), `--mustard` (secondary), `--danger-outline` (destructive), `--sm` (compact), `--shadow` (hard 2px shadow) |
 | Borderless action | `rt-text-btn` | `--teal` (neutral actions), `--cherry` (Delete) |
-| Round icon button | `rt-icon-btn` | 40px: favorite heart, add-to-trip plus |
+| Round icon button | `rt-icon-btn` | 40px: favorite heart, add-to-trip plus. Disabled: opacity 0.45, no hover (like `rt-btn`; a retired campground's plus, spec 3 change #14) |
 | Text input or select | `rt-input` | `--sm` for compact rows; also styles `select.rt-input` |
 | Page card | `rt-page-card` | Account cards, the 404 page |
 | Message box | `rt-message` | `--error` variant |
