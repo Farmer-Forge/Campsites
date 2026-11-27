@@ -22,6 +22,14 @@ _Avoid_: state campground (ambiguous with a Campground's State), state park (not
 A Campground its Source no longer lists, or that turned out to be a duplicate or not state-run. Hidden from search, kept in favorites and trips. Only OSM campgrounds are retired, and none is ever deleted.
 _Avoid_: deleted, removed, inactive, closed (a retired campground may still be open; OSM just no longer lists it)
 
+**Saved filter**:
+A named set of Finder filters (agencies, Where, Park, Miles) a user keeps on their account and applies in one click. It holds no location: "near me" is wherever you are.
+_Avoid_: saved search (suggests alerts), preset
+
+**Not in a national park**:
+The Park filter's choice for campgrounds with no park code (every RIDB and OSM campground).
+_Avoid_: no park (state campgrounds are in state parks)
+
 **Sync run**:
 One fetch of one Source for one state, with its counts (`osm_sync_runs`).
 _Avoid_: import, job (the job is the cron entry that starts runs)
