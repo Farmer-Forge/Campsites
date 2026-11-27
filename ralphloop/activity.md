@@ -305,3 +305,19 @@ RATIFIED: Task 12
 - Step 6 (Commit): checkpoint commits already hold all twelve files (confirmed in `git log main..HEAD --stat`); nothing to commit, no empty commit made. Step ticked.
 
 TASK 13 COMPLETE
+
+## Task 13, ratify
+What I ran: `bash ralphloop/app-check.sh` (lint "All files pass linting.", the production build with only the existing budget and leaflet ESM warnings and no Sass deprecation warnings, CONSOLE CHECK PASSED: 15 page loads). Then Step 5's checks on that build. `state-check.mjs` first exited 2 (ERROR: only net::ERR_NETWORK_CHANGED on case 6). The step allows one rerun, and the rerun passed all 8 (exit 0). `map-check.mjs` passed 6 of 6, `scroll-check.mjs` 5 of 5 and `header-check.mjs` 7 of 7. The styles.scss colour counts are 1 rgba() and 3 hex outside :root, as before. The whole-tree diff against the merge base lists exactly the twelve planned files, and `git status --porcelain` is empty apart from the read-only activity.md, which was already modified when I started. I didn't read the activity log.
+
+Diff review: every change matches Steps 1–4's snippets. The anchors are right, the `aria-label` on the + is kept, `.contact.credits` sits right after `padding: 48px 32px;` as the plan says, and the `.rt-icon-btn` hover and disabled rules are as written. In ralphloop/task.md only the six step checkboxes changed. Nothing changed under supabase/, and there are no changes to vercel.json, scripts/, config.toml or environment files. No console.error calls were removed, no catch blocks were emptied, no tests changed, and no private details were added.
+
+What I tried to break: I looked for every way the app can add a stop (addStop, createTrip, app-add-to-trip, the map's addToTrip output, the Favorites plan order).
+- The card + (disabled), the plan tick (disabled, so a disabled button's click never fires and planOrder can't get the id), the map popup's "Add to trip…" (dropped for retired) and Trip detail's `addable` (filters retired) are the only ways in from Favorites and Trip detail, and all four are shut.
+- Finder rows come from nearest_campgrounds, which leaves out retired ones (`retired` is always false there).
+- The Finder's saved snapshot: a missing or old agenciesVersion turns STATE on, and the save always writes 2. A version-2 snapshot with STATE off stays off (state-check case 2).
+
+The database itself doesn't stop a direct REST insert of a retired campground into trip_stops. That's out of this task's scope (no DB changes, `0025`–`0026` are hand-written) and isn't a task defect.
+
+For the person merging: the `state-check` network blip was a rerun-once case, not a failure. The QC list's after-rollout performance line can't be judged on the dev seed.
+
+RATIFIED: Task 13
