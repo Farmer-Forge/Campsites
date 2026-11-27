@@ -40,6 +40,11 @@ Deno.test("fetchState retries a timeout once, then reports it", async () => {
   assertEquals(calls, 2);
 });
 
+Deno.test("fetchState's error keeps the start of the reply, without HTML tags", async () => {
+  const refused = () => Promise.resolve(new Response("<html><h1>406 Not Acceptable</h1><hr>nginx</html>", { status: 406 }));
+  await assertRejects(() => fetchState("MN", refused, noSleep), Error, "Overpass 406 for MN: 406 Not Acceptable nginx");
+});
+
 Deno.test("fetchState doesn't retry a 400", async () => {
   let calls = 0;
   await assertRejects(() => fetchState("MN", () => Promise.resolve((++calls, status(400))), noSleep), Error, "Overpass 400");

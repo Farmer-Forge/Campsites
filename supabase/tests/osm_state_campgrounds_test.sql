@@ -1,4 +1,4 @@
--- Tests for 0025_osm_state_campgrounds.sql and 0026_osm_sync_schedule.sql (state-run
+-- Tests for 0025_osm_state_campgrounds.sql, 0026_osm_sync_schedule.sql and 0027_osm_dedupe_park_suffix.sql (state-run
 -- campgrounds from OpenStreetMap; Shawn, 2026-11-26; design
 -- ~/plans/2026-11-26-campsites-state-parks-osm-design.md on Lisa, sections 6–7).
 -- OSM campgrounds are retired, never deleted; only osm rows retire; a duplicate of an
@@ -6,7 +6,7 @@
 -- The tests use their own campgrounds, never the dev seed's, and no geo boundaries.
 -- Run on ralph from the repo root: supabase test db. Rolled back at the end.
 begin;
-select plan(71);
+select plan(74);
 
 insert into auth.users (instance_id, id, aud, role, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-000000000000', '11111111-1111-1111-1111-111111111111', 'authenticated', 'authenticated', 'user-a@test.local', '{"display_name":"A"}'),
@@ -40,7 +40,8 @@ $$;
 -- The existing federal campgrounds the OSM rows meet.
 insert into public.campgrounds (id, name, location, agency, source, state) values
   ('ridb:t1', 'Birch Lake Campground', st_setsrid(st_point(-94.5, 46.0), 4326)::geography, 'USFS', 'ridb', 'MN'),
-  ('nps:t2', 'Far Away Campground', st_setsrid(st_point(-100.0, 40.0), 4326)::geography, 'NPS', 'nps', 'NE');
+  ('nps:t2', 'Far Away Campground', st_setsrid(st_point(-100.0, 40.0), 4326)::geography, 'NPS', 'nps', 'NE'),
+  ('nps:t4', 'Gold Bluffs Beach Campground - Prairie Creek Redwoods State Park', st_setsrid(st_point(-91.0, 44.0), 4326)::geography, 'NPS', 'nps', 'WI');
 create temporary table before_hash as
   select id, md5(row(c.*)::text) as h from public.campgrounds c where source in ('ridb', 'nps');
 
@@ -69,17 +70,21 @@ select ok(not has_table_privilege('authenticated', 'public.osm_campgrounds', 'up
 select is((select schedule from cron.job where jobname = 'osm-sync'), '*/15 * * * *', 'S19: the osm-sync cron job runs every 15 minutes');
 select is(public.call_osm_sync(), null::bigint, 'S20: with no Vault secrets the sync call does nothing');
 select is(public.normalize_campground_name('Itasca State Park Campground'), 'itasca', 'S21: names lose punctuation and the generic words');
+select is(public.normalize_campground_name('Gold Bluffs Beach Campground - Prairie Creek Redwoods State Park'), 'gold bluffs beach', 'S22: an NPS " - <park>" suffix is dropped (0027)');
+select is(public.normalize_campground_name('Ah-Gwah-Ching Campground'), 'ah gwah ching', 'S23: a hyphen without spaces is kept as a word break');
 
 -- Run 1 (MN): A new; B a duplicate of ridb:t1 (15 m, same words); C near ridb:t1 with
 -- another name (a near miss, kept). ---------------------------------------------------
 create temporary table r1 as select pg_temp.run('MN', jsonb_build_array(
   pg_temp.el('osm:node/1', 'Itasca State Park Campground', -95.2, 47.2),
   pg_temp.el('osm:way/2', 'Birch Lake State Forest Campground', -94.5001, 46.0001),
-  pg_temp.el('osm:node/3', 'Pine Point', -94.5005, 46.0005)), '{osm:node/9}', 5) as j;
+  pg_temp.el('osm:node/3', 'Pine Point', -94.5005, 46.0005),
+  pg_temp.el('osm:node/7', 'Gold Bluffs Beach Campground', -91.0029, 44.0)), '{osm:node/9}', 5) as j;
 
 select is((select j->>'status' from r1), 'ok', 'R1: the first run is ok');
 select is((select (j->>'kept_new')::int from r1), 2, 'R1: two new campgrounds');
-select is((select (j->>'dropped_duplicate')::int from r1), 1, 'R1: one duplicate dropped');
+select is((select (j->>'dropped_duplicate')::int from r1), 2, 'R1: two duplicates dropped');
+select ok(not exists (select 1 from public.campgrounds where id = 'osm:node/7'), 'R1: a duplicate of an NPS name with a " - <park>" suffix is dropped (0027)');
 select ok(not exists (select 1 from public.campgrounds where id = 'osm:way/2'), 'R1: the duplicate was never inserted');
 select is((select agency || '/' || source from public.campgrounds where id = 'osm:node/1'), 'STATE/osm', 'R1: an OSM row is agency STATE, source osm');
 select is((select overpass_state from public.osm_campgrounds where campground_id = 'osm:node/1'), 'MN', 'R1: its Overpass state is recorded');
