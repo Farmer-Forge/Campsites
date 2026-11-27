@@ -63,10 +63,16 @@ export async function fetchState(
       if (!Array.isArray(json?.elements)) throw new Error(`Overpass sent no elements for ${state}`);
       return json.elements as OverpassElement[];
     }
-    await response.body?.cancel();
+    // Keep the start of the reply: a bare status code hid why the hosted runtime got 406s
+    // (Overpass refuses its "SupabaseEdgeRuntime" User-Agent; found 2026-11-27).
+    const detail = (await response.text().catch(() => ""))
+      .replace(/<[^>]*>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 160);
     const retryable = response.status === 429 || response.status >= 500;
     if (!retryable || attempt >= BACKOFF_MS.length) {
-      throw new Error(`Overpass ${response.status} for ${state}`);
+      throw new Error(`Overpass ${response.status} for ${state}${detail ? `: ${detail}` : ""}`);
     }
     await sleep(BACKOFF_MS[attempt]);
   }

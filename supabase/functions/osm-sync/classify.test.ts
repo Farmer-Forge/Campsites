@@ -65,6 +65,11 @@ Deno.test("classify: an operator:wikidata on the allowlist is kept even with odd
   assertEquals(classify({ name: "Lake Camp", operator: "MN Parks", "operator:wikidata": "Q1" }, allow), "not_state_run");
 });
 
+Deno.test("classify: the shipped allowlist keeps a listed state agency whatever its operator text", () => {
+  assertEquals(classify({ name: "Lake Camp", operator: "MI Parks", "operator:wikidata": "Q6837532" }), "kept");
+  assertEquals(classify({ name: "Lake Camp", operator: "MI Parks", "operator:wikidata": "Q1" }), "not_state_run");
+});
+
 Deno.test("classify: the exclude list wins over the allowlist", () => {
   const allow = new Set(["Q999"]);
   assertEquals(classify({ name: "Lake Camp", operator: "Anoka County", "operator:wikidata": "Q999" }, allow), "not_state_run");
