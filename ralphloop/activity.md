@@ -293,3 +293,7 @@ RATIFIED: Task 12
 ## Task 13, call 3
 - Step 3: scripted edits (exact-match, each applied once): "No longer listed" tag, disabled + `plusTitle` on the add-to-trip and plan-check buttons in the table; OSM attribution link and `!c.retired` guard on the popup's add button in the map; "Visit website" for STATE in the detail panel; `.rt-icon-btn` disabled style in styles.scss.
 - Verified: ng lint clean; app-check.sh "CONSOLE CHECK PASSED: 15 page loads".
+
+## Task 13, call 4
+- Step 4: trip-detail `addable` now skips retired favorites; "No longer listed" tag on retired stops in trip-detail.html; OpenStreetMap credit section on About (+ `.credits` padding-top: 0 in the scss). Scripted exact-match edits.
+- Verified: ng lint run; app-check.sh "CONSOLE CHECK PASSED: 15 page loads".

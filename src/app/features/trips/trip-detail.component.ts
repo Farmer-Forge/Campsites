@@ -184,7 +184,7 @@ export class TripDetailComponent implements OnInit {
   );
   protected readonly addable = computed(() => {
     const inTrip = new Set(this.stops().map((s) => s.campground.id));
-    return this.favorites().filter((c) => !inTrip.has(c.id));
+    return this.favorites().filter((c) => !inTrip.has(c.id) && !c.retired);
   });
 
   ngOnInit(): void {

@@ -3230,7 +3230,7 @@ Read the Admin section and Proposed changes #1–#3 in `2026-10-25-admin-about-d
      ```
      (The same disabled look as `rt-btn`; `Design.md`'s **Round icon button** row already says so.) No new colors.
 
-- [ ] **Step 4: Trips skip retired favorites, and the About credit.**
+- [x] **Step 4: Trips skip retired favorites, and the About credit.**
   1. In `src/app/features/trips/trip-detail.component.ts`, inside `addable`, replace the line `    return this.favorites().filter((c) => !inTrip.has(c.id));` with:
      ```ts
          return this.favorites().filter((c) => !inTrip.has(c.id) && !c.retired);

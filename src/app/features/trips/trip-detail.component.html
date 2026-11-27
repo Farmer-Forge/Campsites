@@ -89,6 +89,9 @@
                   @if (stop.campground.parkCode) {
                     <span class="rt-tag rt-tag--outline">{{ stop.campground.parkCode }}</span>
                   }
+                  @if (stop.campground.retired) {
+                    <span class="rt-tag rt-tag--outline">No longer listed</span>
+                  }
                 </div>
               </div>
               <div class="reorder">

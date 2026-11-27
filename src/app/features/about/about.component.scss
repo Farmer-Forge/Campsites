@@ -45,6 +45,10 @@
 
 .contact {
   padding: 48px 32px;
+
+  &.credits {
+    padding-top: 0;
+  }
   display: flex;
   justify-content: center;
 
