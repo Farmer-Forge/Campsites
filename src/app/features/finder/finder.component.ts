@@ -12,7 +12,8 @@ import { MapSizeService } from '../../core/services/map-size.service';
 
 const METERS_PER_MILE = 1609.34;
 const SHOW_ALL_METERS = 20038000;
-const AGENCIES = ['NPS', 'USFS', 'BLM', 'USACE', 'FWS'];
+const AGENCIES = ['NPS', 'USFS', 'BLM', 'USACE', 'FWS', 'STATE'];
+const AGENCIES_VERSION = 2;
 const RADIUS_CHOICES: (number | null)[] = [null, 25, 50, 100, 250];
 const DEFAULT_RADIUS = 50;
 const REGIONS: Record<string, string[]> = {
@@ -103,7 +104,10 @@ export class FinderComponent implements OnInit {
       void this.loadNearest();
       return;
     }
-    this.selectedAgencies.set(AGENCIES.filter((a) => saved.agencies.includes(a)));
+    // A snapshot from before the STATE chip has no agenciesVersion: turn STATE on for it.
+    const savedAgencies =
+      saved.agenciesVersion === AGENCIES_VERSION ? saved.agencies : [...saved.agencies, 'STATE'];
+    this.selectedAgencies.set(AGENCIES.filter((a) => savedAgencies.includes(a)));
     this.selectedStates.set(ALL_STATES.filter((s) => saved.states.includes(s)));
     this.nearMeEnabled.set(saved.nearMeEnabled);
     if (RADIUS_CHOICES.includes(saved.radiusMiles)) {
@@ -183,6 +187,7 @@ export class FinderComponent implements OnInit {
         parks: this.parkFilter() ?? null,
         nearMeEnabled: this.nearMeEnabled(),
         radiusMiles: this.radiusMiles(),
+        agenciesVersion: AGENCIES_VERSION,
       });
     } catch (err) {
       if (id !== this.requestId) return;

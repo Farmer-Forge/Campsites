@@ -212,8 +212,13 @@ a:hover {
   color: var(--rt-ink);
   cursor: pointer;
 
-  &:hover {
+  &:hover:not(:disabled) {
     background: color-mix(in srgb, var(--rt-cream), var(--rt-ink) 8%);
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: default;
   }
 
   &.is-active {

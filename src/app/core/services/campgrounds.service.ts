@@ -27,6 +27,7 @@ function toCampground(row: any): Campground {
     images: row.images ?? [],
     contact: row.contact,
     distanceMeters: row.distance_m ?? 0,
+    retired: row.retired === true,
   };
 }
 

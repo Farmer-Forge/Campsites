@@ -281,3 +281,43 @@ All writes were browser-side only (sessionStorage). Nothing was written to the d
 For the person merging: as spec 3 accepts (D9), maximizing also hides each page's title row (Rename/Delete on a trip, "Plan a trip" on Favorites), since those live in `.rt-side`. Worth a look in QC on a phone, together with the scroll into view.
 
 RATIFIED: Task 12
+
+## Task 13, call 1
+- Step 1: red check run first (src matched main): FAIL 1-7, PASS 8, "STATE CHECK FAILED: 7 of 8.", exit 1, as expected. Added `retired: boolean` to the Campground model and `retired: row.retired === true` in `toCampground`.
+- Verified: ng lint clean; production build OK; app-check.sh "CONSOLE CHECK PASSED: 15 page loads".
+
+## Task 13, call 2
+- Step 2: added `agenciesVersion?` to FinderSnapshot; in finder.component.ts added STATE to AGENCIES, AGENCIES_VERSION = 2, the upgrade of older saved snapshots in ngOnInit, and saving agenciesVersion. (Scripted with node; no python here. The first app-check run hit transient ERR_NETWORK_CHANGED errors before edits applied; the rerun passed.)
+- Verified: ng lint clean; app-check.sh "CONSOLE CHECK PASSED: 15 page loads".
+
+## Task 13, call 3
+- Step 3: scripted edits (exact-match, each applied once): "No longer listed" tag, disabled + `plusTitle` on the add-to-trip and plan-check buttons in the table; OSM attribution link and `!c.retired` guard on the popup's add button in the map; "Visit website" for STATE in the detail panel; `.rt-icon-btn` disabled style in styles.scss.
+- Verified: ng lint clean; app-check.sh "CONSOLE CHECK PASSED: 15 page loads".
+
+## Task 13, call 4
+- Step 4: trip-detail `addable` now skips retired favorites; "No longer listed" tag on retired stops in trip-detail.html; OpenStreetMap credit section on About (+ `.credits` padding-top: 0 in the scss). Scripted exact-match edits.
+- Verified: ng lint run; app-check.sh "CONSOLE CHECK PASSED: 15 page loads".
+
+## Task 13, call 5
+- Step 5 (Verify): ng lint clean; production build OK; state-check 8 of 8, map-check 6 of 6, scroll-check 5 of 5, header-check 7 of 7 (all exit 0); colour greps 1 and 3 as expected; the twelve-file diff list matches; no uncommitted app files; app-check.sh "CONSOLE CHECK PASSED: 15 page loads". No new code, so the style self-check is unchanged from Steps 3–4.
+
+## Task 13, call 6
+- Step 6 (Commit): checkpoint commits already hold all twelve files (confirmed in `git log main..HEAD --stat`); nothing to commit, no empty commit made. Step ticked.
+
+TASK 13 COMPLETE
+
+## Task 13, ratify
+What I ran: `bash ralphloop/app-check.sh` (lint "All files pass linting.", the production build with only the existing budget and leaflet ESM warnings and no Sass deprecation warnings, CONSOLE CHECK PASSED: 15 page loads). Then Step 5's checks on that build. `state-check.mjs` first exited 2 (ERROR: only net::ERR_NETWORK_CHANGED on case 6). The step allows one rerun, and the rerun passed all 8 (exit 0). `map-check.mjs` passed 6 of 6, `scroll-check.mjs` 5 of 5 and `header-check.mjs` 7 of 7. The styles.scss colour counts are 1 rgba() and 3 hex outside :root, as before. The whole-tree diff against the merge base lists exactly the twelve planned files, and `git status --porcelain` is empty apart from the read-only activity.md, which was already modified when I started. I didn't read the activity log.
+
+Diff review: every change matches Steps 1–4's snippets. The anchors are right, the `aria-label` on the + is kept, `.contact.credits` sits right after `padding: 48px 32px;` as the plan says, and the `.rt-icon-btn` hover and disabled rules are as written. In ralphloop/task.md only the six step checkboxes changed. Nothing changed under supabase/, and there are no changes to vercel.json, scripts/, config.toml or environment files. No console.error calls were removed, no catch blocks were emptied, no tests changed, and no private details were added.
+
+What I tried to break: I looked for every way the app can add a stop (addStop, createTrip, app-add-to-trip, the map's addToTrip output, the Favorites plan order).
+- The card + (disabled), the plan tick (disabled, so a disabled button's click never fires and planOrder can't get the id), the map popup's "Add to trip…" (dropped for retired) and Trip detail's `addable` (filters retired) are the only ways in from Favorites and Trip detail, and all four are shut.
+- Finder rows come from nearest_campgrounds, which leaves out retired ones (`retired` is always false there).
+- The Finder's saved snapshot: a missing or old agenciesVersion turns STATE on, and the save always writes 2. A version-2 snapshot with STATE off stays off (state-check case 2).
+
+The database itself doesn't stop a direct REST insert of a retired campground into trip_stops. That's out of this task's scope (no DB changes, `0025`–`0026` are hand-written) and isn't a task defect.
+
+For the person merging: the `state-check` network blip was a rerun-once case, not a failure. The QC list's after-rollout performance line can't be judged on the dev seed.
+
+RATIFIED: Task 13

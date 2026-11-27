@@ -9,6 +9,8 @@ export interface FinderSnapshot {
   parks: string[] | null;
   nearMeEnabled: boolean;
   radiusMiles: number;
+  /** 2 since the STATE chip (spec 3, change #14); older snapshots get STATE turned on. */
+  agenciesVersion?: number;
 }
 
 const STORAGE_KEY = 'campsite-finder.finder';

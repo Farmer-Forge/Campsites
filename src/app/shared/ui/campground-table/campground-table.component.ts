@@ -35,6 +35,7 @@ import { FavoriteToggleComponent } from '../favorite-toggle/favorite-toggle.comp
                 type="button"
                 class="plan-check"
                 [class.is-checked]="planSelected().has(c.id)"
+                [disabled]="c.retired"
                 title="Include in trip"
                 aria-label="Include in trip"
                 [attr.aria-pressed]="planSelected().has(c.id)"
@@ -68,6 +69,9 @@ import { FavoriteToggleComponent } from '../favorite-toggle/favorite-toggle.comp
                 @if (c.parkCode) {
                   <span class="rt-tag rt-tag--outline">{{ c.parkCode }}</span>
                 }
+                @if (c.retired) {
+                  <span class="rt-tag rt-tag--outline">No longer listed</span>
+                }
               </div>
             </div>
             <app-favorite-toggle [campgroundId]="c.id" />
@@ -76,7 +80,8 @@ import { FavoriteToggleComponent } from '../favorite-toggle/favorite-toggle.comp
                 type="button"
                 class="rt-icon-btn add-to-trip-toggle"
                 [class.is-active]="pickerId() === c.id"
-                title="Add to trip"
+                [disabled]="c.retired"
+                [attr.title]="plusTitle(c)"
                 aria-label="Add to trip"
                 [attr.aria-expanded]="pickerId() === c.id"
                 (click)="togglePicker($event, c.id)"
@@ -369,6 +374,10 @@ export class CampgroundTableComponent {
       this.clickedId = c.id;
       this.selectedChange.emit(c);
     }
+  }
+
+  protected plusTitle(c: Campground): string {
+    return c.retired ? "No longer listed: can't be added to a trip" : 'Add to trip';
   }
 
   protected togglePicker(event: Event, id: string): void {

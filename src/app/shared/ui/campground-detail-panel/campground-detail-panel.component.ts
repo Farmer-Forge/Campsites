@@ -13,7 +13,7 @@ import { Campground, hasLocation } from '../../../core/models/campground.model';
             [href]="campground().reservationUrl"
             target="_blank"
             rel="noopener"
-            >Reserve on recreation.gov</a
+            >{{ campground().agency === 'STATE' ? 'Visit website' : 'Reserve on recreation.gov' }}</a
           >
         }
         @if (showDirections()) {

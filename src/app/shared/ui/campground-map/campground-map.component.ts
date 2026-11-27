@@ -99,7 +99,7 @@ export class CampgroundMapComponent implements AfterViewInit, OnDestroy {
     const map = L.map(this.mapEl().nativeElement).setView(US_CENTER, 6);
     this.map = map;
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     }).addTo(map);
     // leaflet.markercluster attaches markerClusterGroup to the global Leaflet object (window.L).
     // In production builds the bundler's `import * as L` copy is taken before that, so call it there.
@@ -200,7 +200,7 @@ export class CampgroundMapComponent implements AfterViewInit, OnDestroy {
     root.appendChild(document.createElement('br'));
     root.appendChild(details);
 
-    if (this.supabase.session()) {
+    if (this.supabase.session() && !c.retired) {
       const add = document.createElement('button');
       add.type = 'button';
       add.className = 'view-details-button';
