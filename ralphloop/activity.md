@@ -281,3 +281,7 @@ All writes were browser-side only (sessionStorage). Nothing was written to the d
 For the person merging: as spec 3 accepts (D9), maximizing also hides each page's title row (Rename/Delete on a trip, "Plan a trip" on Favorites), since those live in `.rt-side`. Worth a look in QC on a phone, together with the scroll into view.
 
 RATIFIED: Task 12
+
+## Task 13, call 1
+- Step 1: red check run first (src matched main): FAIL 1-7, PASS 8, "STATE CHECK FAILED: 7 of 8.", exit 1, as expected. Added `retired: boolean` to the Campground model and `retired: row.retired === true` in `toCampground`.
+- Verified: ng lint clean; production build OK; app-check.sh "CONSOLE CHECK PASSED: 15 page loads".

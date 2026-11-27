@@ -14,6 +14,8 @@ export interface Campground {
   images: unknown[];
   contact: unknown;
   distanceMeters: number;
+  /** No longer listed by its Source (spec 3, change #14); only get_campgrounds_by_ids returns these. */
+  retired: boolean;
 }
 
 export function hasLocation(c: Pick<Campground, 'lat' | 'lng'>): boolean {
